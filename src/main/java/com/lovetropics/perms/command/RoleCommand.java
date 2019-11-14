@@ -1,6 +1,5 @@
 package com.lovetropics.perms.command;
 
-import com.google.common.collect.Lists;
 import com.lovetropics.perms.LTPerms;
 import com.lovetropics.perms.Role;
 import com.lovetropics.perms.RoleConfiguration;
@@ -26,7 +25,10 @@ import net.minecraft.util.text.TranslationTextComponent;
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static net.minecraft.command.Commands.argument;
 import static net.minecraft.command.Commands.literal;
@@ -62,22 +64,13 @@ public final class RoleCommand {
                                             return updateRoles(source, targets, roleName, PlayerRoles::remove, "commands." + LTPerms.ID + ".role.remove_success");
                                         }))))
                 .then(literal("list")
-                        .then(argument("target", EntityArgument.player())
-                                .executes(ctx -> {
-                                    CommandSource source = ctx.getSource();
-                                    ServerPlayerEntity target = EntityArgument.getPlayer(ctx, "target");
-                                    return listRoles(source, target);
-                                }))
+                        .then(argument("target", EntityArgument.player()).executes(ctx -> {
+                            CommandSource source = ctx.getSource();
+                            ServerPlayerEntity target = EntityArgument.getPlayer(ctx, "target");
+                            return listRoles(source, target);
+                        }))
                 )
-                .then(literal("reload")
-                        .executes(ctx -> {
-                            ctx.getSource().getServer().execute(() -> {
-                                RoleConfiguration.setup();
-                                ctx.getSource().sendFeedback(new TranslationTextComponent("commands." + LTPerms.ID + ".role.reloaded"), false);
-                            });
-                            return Command.SINGLE_SUCCESS;
-                        })
-                )
+                .then(literal("reload").executes(ctx -> reloadRoles(ctx.getSource())))
         );
     }
 
@@ -100,9 +93,24 @@ public final class RoleCommand {
 
     private static int listRoles(CommandSource source, ServerPlayerEntity player) {
         player.getCapability(LTPerms.playerRolesCap()).ifPresent(cap -> {
-            Collection<Role> roles = Lists.newArrayList(cap.asIterable());
+            Collection<Role> roles = cap.roles().collect(Collectors.toList());
             ITextComponent rolesComponent = TextComponentUtils.makeList(roles, role -> new StringTextComponent(TextFormatting.GRAY + role.getName()));
             source.sendFeedback(new TranslationTextComponent("commands." + LTPerms.ID + ".role.list", roles.size(), rolesComponent), false);
+        });
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int reloadRoles(CommandSource source) {
+        source.getServer().execute(() -> {
+            RoleConfiguration.setup();
+
+            List<ServerPlayerEntity> players = source.getServer().getPlayerList().getPlayers();
+            for (ServerPlayerEntity entity : players) {
+                entity.getCapability(LTPerms.playerRolesCap()).ifPresent(PlayerRoles::notifyReload);
+            }
+
+            source.sendFeedback(new TranslationTextComponent("commands." + LTPerms.ID + ".role.reloaded"), false);
         });
 
         return Command.SINGLE_SUCCESS;
@@ -131,15 +139,9 @@ public final class RoleCommand {
         Entity entity = source.getEntity();
         if (entity == null) return 0;
 
-        return entity.getCapability(LTPerms.playerRolesCap()).map(roles -> {
-            int maxLevel = 0;
-            for (Role role : roles.asIterable()) {
-                int level = role.getLevel();
-                if (level > maxLevel) {
-                    maxLevel = level;
-                }
-            }
-            return maxLevel;
+        return entity.getCapability(LTPerms.playerRolesCap()).map(player -> {
+            IntStream levels = player.roles().mapToInt(Role::getLevel);
+            return levels.max().orElse(0);
         }).orElse(0);
     }
 }

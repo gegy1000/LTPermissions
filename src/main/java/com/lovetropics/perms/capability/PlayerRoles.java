@@ -1,6 +1,5 @@
 package com.lovetropics.perms.capability;
 
-import com.google.common.collect.Iterables;
 import com.lovetropics.perms.LTPerms;
 import com.lovetropics.perms.Role;
 import com.lovetropics.perms.RoleConfiguration;
@@ -17,23 +16,24 @@ import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collections;
+import java.util.Objects;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
     private final ServerPlayerEntity player;
 
-    // TODO: These should be references so that when the roles reload it updates
-    //  also on reload we need to notifyChange on everything
-
-    private TreeSet<Role> roles = new TreeSet<>();
-    private Role everyone = Role.empty(Role.EVERYONE);
+    private TreeSet<String> roleIds = new TreeSet<>((n1, n2) -> {
+        RoleConfiguration config = RoleConfiguration.get();
+        Role r1 = config.get(n1);
+        Role r2 = config.get(n2);
+        if (r1 == null || r2 == null) return 0;
+        return r1.compareTo(r2);
+    });
 
     public PlayerRoles(ServerPlayerEntity player) {
         this.player = player;
-        // TODO: this duplication we need to fix
-        this.everyone = RoleConfiguration.get().everyone();
     }
 
     @Nonnull
@@ -42,8 +42,13 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
         return LTPerms.playerRolesCap().orEmpty(cap, LazyOptional.of(() -> this));
     }
 
+    public void notifyReload() {
+        this.removeInvalidRoles();
+        this.roles().forEach(role -> role.notifyChange(this.player));
+    }
+
     public boolean add(Role role) {
-        if (this.roles.add(role)) {
+        if (this.roleIds.add(role.getName())) {
             role.notifyChange(this.player);
             return true;
         }
@@ -51,63 +56,63 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
     }
 
     public boolean remove(Role role) {
-        if (this.roles.remove(role)) {
+        if (this.roleIds.remove(role.getName())) {
             role.notifyChange(this.player);
             return true;
         }
         return false;
     }
 
+    public Stream<Role> roles() {
+        RoleConfiguration roleConfig = RoleConfiguration.get();
+        return Stream.concat(
+                this.roleIds.stream().map(roleConfig::get).filter(Objects::nonNull),
+                Stream.of(roleConfig.everyone())
+        );
+    }
+
+    public <T extends RoleOverride> Stream<T> overrides(RoleOverrideType<T> type) {
+        return this.roles().map(role -> role.getOverride(type)).filter(Objects::nonNull);
+    }
+
     public <T extends RoleOverride> PermissionResult test(RoleOverrideType<T> type, Function<T, PermissionResult> function) {
-        for (Role role : this.asIterable()) {
-            T override = role.getOverride(type);
-            if (override != null) {
-                PermissionResult result = function.apply(override);
-                if (result.isDefinitive()) return result;
-            }
-        }
-        return PermissionResult.PASS;
+        return this.overrides(type).map(function)
+                .filter(PermissionResult::isDefinitive)
+                .findFirst().orElse(PermissionResult.PASS);
     }
 
     @Nullable
     public <T extends RoleOverride> T getHighest(RoleOverrideType<T> type) {
-        for (Role role : this.asIterable()) {
-            T override = role.getOverride(type);
-            if (override != null) return override;
-        }
-        return null;
-    }
-
-    public Iterable<Role> asIterable() {
-        return Iterables.concat(this.roles, Collections.singleton(this.everyone));
+        return this.overrides(type).findFirst().orElse(null);
     }
 
     @Override
     public ListNBT serializeNBT() {
         ListNBT list = new ListNBT();
-        for (Role role : this.roles) {
-            list.add(new StringNBT(role.getName()));
+        for (String role : this.roleIds) {
+            list.add(new StringNBT(role));
         }
         return list;
     }
 
     @Override
     public void deserializeNBT(ListNBT list) {
-        RoleConfiguration roleConfig = RoleConfiguration.get();
-
-        this.roles.clear();
-        this.everyone = roleConfig.everyone();
-
+        this.roleIds.clear();
         for (int i = 0; i < list.size(); i++) {
-            String name = list.getString(i);
-            Role role = roleConfig.get(name);
-
-            if (role == null || role.getName().equalsIgnoreCase(Role.EVERYONE)) {
-                LTPerms.LOGGER.warn("Encountered invalid role '{}' in nbt", name);
-                continue;
-            }
-
-            this.roles.add(role);
+            this.roleIds.add(list.getString(i));
         }
+
+        this.removeInvalidRoles();
+    }
+
+    private void removeInvalidRoles() {
+        this.roleIds.removeIf(name -> {
+            Role role = RoleConfiguration.get().get(name);
+            if (role == null || role.getName().equalsIgnoreCase(Role.EVERYONE)) {
+                LTPerms.LOGGER.warn("Encountered invalid role '{}'", name);
+                return true;
+            }
+            return false;
+        });
     }
 }

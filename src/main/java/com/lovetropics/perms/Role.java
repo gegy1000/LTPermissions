@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-// TODO: Default roles? How should that be handled?
 public final class Role implements Comparable<Role> {
     public static final String EVERYONE = "everyone";
 
