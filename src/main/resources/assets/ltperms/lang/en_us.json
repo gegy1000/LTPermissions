@@ -1,0 +1,8 @@
+{
+  "commands.ltperms.role.not_found": "Role with name '%s' was not found!",
+  "commands.ltperms.role.assign_success": "'%s' assigned to %s players",
+  "commands.ltperms.role.remove_success": "'%s' removed from %s players",
+  "commands.ltperms.role.list": "Found %s roles on player: %s",
+  "commands.ltperms.role.power_too_low": "You do not have sufficient power to manage this role",
+  "commands.ltperms.role.reloaded": "Role configuration successfully reloaded"
+}
