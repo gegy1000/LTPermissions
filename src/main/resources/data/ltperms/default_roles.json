@@ -1,0 +1,10 @@
+{
+  "everyone": {
+    "modifiers": {
+      "commands": {
+        "help": "allow",
+        "role": "deny"
+      }
+    }
+  }
+}

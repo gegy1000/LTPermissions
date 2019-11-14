@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.lovetropics.perms.modifier.RoleModifier;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.command.CommandSource;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.JSONUtils;
 
 import java.util.Collection;
@@ -41,6 +43,12 @@ public final class CommandPermModifier implements RoleModifier {
         }
 
         return new CommandPermModifier(commands.build());
+    }
+
+    @Override
+    public void notifyChange(ServerPlayerEntity player) {
+        MinecraftServer server = player.getServer();
+        if (server != null) server.getCommandManager().send(player);
     }
 
     @Override

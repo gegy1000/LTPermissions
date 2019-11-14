@@ -1,10 +1,11 @@
 package com.lovetropics.perms.command;
 
-import com.lovetropics.perms.modifier.command.CommandPermEvaluator;
+import com.google.common.collect.Lists;
 import com.lovetropics.perms.LTPerms;
 import com.lovetropics.perms.Role;
 import com.lovetropics.perms.RoleConfiguration;
-import com.lovetropics.perms.RoleSet;
+import com.lovetropics.perms.capability.PlayerRoles;
+import com.lovetropics.perms.modifier.command.CommandPermEvaluator;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -20,6 +21,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextComponentUtils;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import org.apache.commons.lang3.mutable.MutableInt;
 
@@ -48,7 +50,7 @@ public final class RoleCommand {
                                             CommandSource source = ctx.getSource();
                                             Collection<ServerPlayerEntity> targets = EntityArgument.getPlayers(ctx, "targets");
                                             String roleName = StringArgumentType.getString(ctx, "role");
-                                            return updateRoles(source, targets, roleName, RoleSet::add, "commands." + LTPerms.ID + ".role.assign_success");
+                                            return updateRoles(source, targets, roleName, PlayerRoles::add, "commands." + LTPerms.ID + ".role.assign_success");
                                         }))))
                 .then(literal("remove")
                         .then(argument("targets", EntityArgument.players())
@@ -57,7 +59,7 @@ public final class RoleCommand {
                                             CommandSource source = ctx.getSource();
                                             Collection<ServerPlayerEntity> targets = EntityArgument.getPlayers(ctx, "targets");
                                             String roleName = StringArgumentType.getString(ctx, "role");
-                                            return updateRoles(source, targets, roleName, RoleSet::remove, "commands." + LTPerms.ID + ".role.remove_success");
+                                            return updateRoles(source, targets, roleName, PlayerRoles::remove, "commands." + LTPerms.ID + ".role.remove_success");
                                         }))))
                 .then(literal("list")
                         .then(argument("target", EntityArgument.player())
@@ -79,14 +81,14 @@ public final class RoleCommand {
         );
     }
 
-    private static int updateRoles(CommandSource source, Collection<ServerPlayerEntity> players, String roleName, BiPredicate<RoleSet, Role> apply, String successKey) throws CommandSyntaxException {
+    private static int updateRoles(CommandSource source, Collection<ServerPlayerEntity> players, String roleName, BiPredicate<PlayerRoles, Role> apply, String successKey) throws CommandSyntaxException {
         Role role = getRole(roleName);
         assertHasPower(source, role);
 
         MutableInt count = new MutableInt();
         for (ServerPlayerEntity player : players) {
-            player.getCapability(LTPerms.playerRoleCap()).ifPresent(cap -> {
-                if (apply.test(cap.getRoles(), role)) {
+            player.getCapability(LTPerms.playerRolesCap()).ifPresent(roles -> {
+                if (apply.test(roles, role)) {
                     count.increment();
                 }
             });
@@ -97,9 +99,9 @@ public final class RoleCommand {
     }
 
     private static int listRoles(CommandSource source, ServerPlayerEntity player) {
-        player.getCapability(LTPerms.playerRoleCap()).ifPresent(cap -> {
-            Collection<Role> roles = cap.getRoles().asCollection();
-            ITextComponent rolesComponent = TextComponentUtils.makeList(roles, role -> new StringTextComponent(role.getName()));
+        player.getCapability(LTPerms.playerRolesCap()).ifPresent(cap -> {
+            Collection<Role> roles = Lists.newArrayList(cap.asIterable());
+            ITextComponent rolesComponent = TextComponentUtils.makeList(roles, role -> new StringTextComponent(TextFormatting.GRAY + role.getName()));
             source.sendFeedback(new TranslationTextComponent("commands." + LTPerms.ID + ".role.list", roles.size(), rolesComponent), false);
         });
 
@@ -129,9 +131,9 @@ public final class RoleCommand {
         Entity entity = source.getEntity();
         if (entity == null) return 0;
 
-        return entity.getCapability(LTPerms.playerRoleCap()).map(cap -> {
+        return entity.getCapability(LTPerms.playerRolesCap()).map(roles -> {
             int maxLevel = 0;
-            for (Role role : cap.getRoles()) {
+            for (Role role : roles.asIterable()) {
                 int level = role.getLevel();
                 if (level > maxLevel) {
                     maxLevel = level;

@@ -1,8 +1,7 @@
 package com.lovetropics.perms.modifier.command;
 
 import com.lovetropics.perms.LTPerms;
-import com.lovetropics.perms.RoleSet;
-import com.lovetropics.perms.capability.PlayerRoleCapability;
+import com.lovetropics.perms.capability.PlayerRoles;
 import com.lovetropics.perms.modifier.RoleModifierType;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.command.CommandSource;
@@ -15,11 +14,10 @@ public class CommandPermEvaluator {
 
         Entity entity = source.getEntity();
         if (entity instanceof PlayerEntity) {
-            RoleSet roleSet = entity.getCapability(LTPerms.playerRoleCap())
-                    .map(PlayerRoleCapability::getRoles)
-                    .orElse(RoleSet.EMPTY);
-
-            return roleSet.test(RoleModifierType.COMMANDS, m -> m.test(node));
+            PlayerRoles roles = entity.getCapability(LTPerms.playerRolesCap()).orElse(null);
+            if (roles != null) {
+                return roles.test(RoleModifierType.COMMANDS, m -> m.test(node));
+            }
         }
 
         return PermissionResult.PASS;

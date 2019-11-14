@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lovetropics.perms.modifier.RoleModifier;
 import com.lovetropics.perms.modifier.RoleModifierType;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.JSONUtils;
 
 import javax.annotation.Nullable;
@@ -12,6 +13,8 @@ import java.util.Map;
 
 // TODO: Default roles? How should that be handled?
 public final class Role implements Comparable<Role> {
+    public static final String EVERYONE = "everyone";
+
     private final String name;
     private int level;
 
@@ -19,6 +22,10 @@ public final class Role implements Comparable<Role> {
 
     Role(String name) {
         this.name = name;
+    }
+
+    public static Role empty(String name) {
+        return new Role(name);
     }
 
     public static Role parse(String name, JsonObject root) {
@@ -41,6 +48,12 @@ public final class Role implements Comparable<Role> {
         return role;
     }
 
+    public void notifyChange(ServerPlayerEntity player) {
+        for (RoleModifier modifier : this.modifiers.values()) {
+            modifier.notifyChange(player);
+        }
+    }
+
     public String getName() {
         return this.name;
     }
@@ -58,6 +71,23 @@ public final class Role implements Comparable<Role> {
     @Override
     public int compareTo(Role role) {
         return Integer.compare(role.level, this.level);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+
+        if (obj instanceof Role) {
+            Role role = (Role) obj;
+            return role.name.equalsIgnoreCase(this.name);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
     }
 
     @Override

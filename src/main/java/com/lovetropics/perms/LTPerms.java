@@ -2,7 +2,7 @@ package com.lovetropics.perms;
 
 import com.google.common.base.Preconditions;
 import com.lovetropics.perms.capability.DelegatedCapStorage;
-import com.lovetropics.perms.capability.PlayerRoleCapability;
+import com.lovetropics.perms.capability.PlayerRoles;
 import com.lovetropics.perms.command.RoleCommand;
 import com.lovetropics.perms.modifier.ChatStyleModifier;
 import com.lovetropics.perms.modifier.RoleModifierType;
@@ -12,7 +12,6 @@ import com.lovetropics.perms.modifier.command.PermissionResult;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -35,8 +34,8 @@ public class LTPerms {
 
     public static final Logger LOGGER = LogManager.getLogger(ID);
 
-    @CapabilityInject(PlayerRoleCapability.class)
-    private static Capability<PlayerRoleCapability> playerRoleCap;
+    @CapabilityInject(PlayerRoles.class)
+    private static Capability<PlayerRoles> playerRoleCap;
 
     public LTPerms() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -51,7 +50,9 @@ public class LTPerms {
     private void setup(FMLCommonSetupEvent event) {
         RoleConfiguration.setup();
 
-        CapabilityManager.INSTANCE.register(PlayerRoleCapability.class, new DelegatedCapStorage<>(), PlayerRoleCapability::new);
+        CapabilityManager.INSTANCE.register(PlayerRoles.class, new DelegatedCapStorage<>(), () -> {
+            throw new UnsupportedOperationException();
+        });
     }
 
     private void serverStarting(FMLServerStartingEvent event) {
@@ -79,25 +80,26 @@ public class LTPerms {
     }
 
     private void attachEntityCapabilities(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof PlayerEntity) {
-            event.addCapability(new ResourceLocation(LTPerms.ID, "roles"), new PlayerRoleCapability());
+        Entity entity = event.getObject();
+        if (entity.world.isRemote) return;
+
+        if (entity instanceof ServerPlayerEntity) {
+            event.addCapability(new ResourceLocation(LTPerms.ID, "roles"), new PlayerRoles((ServerPlayerEntity) entity));
         }
     }
 
     private void onChat(ServerChatEvent event) {
         ServerPlayerEntity player = event.getPlayer();
 
-        RoleSet roleSet = player.getCapability(playerRoleCap())
-                .map(PlayerRoleCapability::getRoles)
-                .orElse(RoleSet.EMPTY);
-
-        ChatStyleModifier chatStyle = roleSet.getTop(RoleModifierType.CHAT_STYLE);
-        if (chatStyle != null) {
-            event.setComponent(chatStyle.make(player.getDisplayName(), event.getMessage()));
-        }
+        player.getCapability(playerRolesCap()).ifPresent(roles -> {
+            ChatStyleModifier chatStyle = roles.getHighest(RoleModifierType.CHAT_STYLE);
+            if (chatStyle != null) {
+                event.setComponent(chatStyle.make(player.getDisplayName(), event.getMessage()));
+            }
+        });
     }
 
-    public static Capability<PlayerRoleCapability> playerRoleCap() {
+    public static Capability<PlayerRoles> playerRolesCap() {
         Preconditions.checkNotNull(playerRoleCap, "player role capability not initialized");
         return playerRoleCap;
     }
