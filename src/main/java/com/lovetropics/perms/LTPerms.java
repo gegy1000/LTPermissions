@@ -80,7 +80,7 @@ public class LTPerms {
 
     private void attachEntityCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof PlayerEntity) {
-            event.addCapability(new ResourceLocation(LTPerms.ID, "com/lovetropics/perms"), new PlayerRoleCapability());
+            event.addCapability(new ResourceLocation(LTPerms.ID, "roles"), new PlayerRoleCapability());
         }
     }
 

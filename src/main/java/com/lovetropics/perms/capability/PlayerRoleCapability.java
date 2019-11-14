@@ -28,14 +28,14 @@ public final class PlayerRoleCapability implements ICapabilitySerializable<Compo
     public CompoundNBT serializeNBT() {
         CompoundNBT compound = new CompoundNBT();
         if (!this.roleSet.isEmpty()) {
-            compound.put("com/lovetropics/perms", this.roleSet.serialize());
+            compound.put("roles", this.roleSet.serialize());
         }
         return compound;
     }
 
     @Override
     public void deserializeNBT(CompoundNBT nbt) {
-        ListNBT roleList = nbt.getList("com/lovetropics/perms", Constants.NBT.TAG_STRING);
+        ListNBT roleList = nbt.getList("roles", Constants.NBT.TAG_STRING);
         this.roleSet = RoleConfiguration.get().readSet(roleList);
     }
 
