@@ -4,12 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lovetropics.perms.override.RoleOverride;
-import com.mojang.brigadier.tree.CommandNode;
-import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.JSONUtils;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +21,9 @@ public final class CommandPermOverride implements RoleOverride {
         this.commands = commands;
     }
 
-    public PermissionResult test(CommandNode<CommandSource> node) {
+    public PermissionResult test(MatchableCommand command) {
         for (Command permission : this.commands) {
-            PermissionResult result = permission.test(node);
+            PermissionResult result = permission.test(command);
             if (result.isDefinitive()) return result;
         }
         return PermissionResult.PASS;
@@ -34,12 +33,12 @@ public final class CommandPermOverride implements RoleOverride {
         ImmutableList.Builder<Command> commands = ImmutableList.builder();
 
         for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
-            String patternString = entry.getKey();
+            String[] patternStrings = entry.getKey().split(" ");
             String ruleName = JSONUtils.getString(entry.getValue(), "rule");
 
-            Pattern pattern = Pattern.compile(patternString);
+            Pattern[] patterns = Arrays.stream(patternStrings).map(Pattern::compile).toArray(Pattern[]::new);
             PermissionResult rule = PermissionResult.byName(ruleName);
-            commands.add(new Command(pattern, rule));
+            commands.add(new Command(patterns, rule));
         }
 
         return new CommandPermOverride(commands.build());
@@ -57,25 +56,21 @@ public final class CommandPermOverride implements RoleOverride {
     }
 
     private static class Command {
-        final Pattern pattern;
+        final Pattern[] patterns;
         final PermissionResult rule;
 
-        Command(Pattern pattern, PermissionResult rule) {
-            this.pattern = pattern;
+        Command(Pattern[] patterns, PermissionResult rule) {
+            this.patterns = patterns;
             this.rule = rule;
         }
 
-        // TODO: can't support specific sub-commands yet because only called on roots
-        PermissionResult test(CommandNode<CommandSource> node) {
-            if (this.pattern.matcher(node.getName()).matches()) {
-                return this.rule;
-            }
-            return PermissionResult.PASS;
+        PermissionResult test(MatchableCommand command) {
+            return command.matches(this.patterns) ? this.rule : PermissionResult.PASS;
         }
 
         @Override
         public String toString() {
-            return "\"" + this.pattern.pattern() + "\"=" + this.rule;
+            return "\"" + Arrays.toString(this.patterns) + "\"=" + this.rule;
         }
     }
 }

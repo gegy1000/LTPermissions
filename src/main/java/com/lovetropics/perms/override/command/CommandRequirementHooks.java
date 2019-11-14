@@ -5,9 +5,12 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.CommandNode;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Predicate;
 
+// TODO: This can probably be optimized to only hook the required commands and cleverly handle when commands are
+//  removed from the config.. but for now this is good enough!
 public final class CommandRequirementHooks<S> {
     private final RequirementOverride<S> override;
     private final Field requirementField;
@@ -25,19 +28,36 @@ public final class CommandRequirementHooks<S> {
 
     public void hookAll(CommandDispatcher<S> dispatcher) {
         Collection<CommandNode<S>> nodes = dispatcher.getRoot().getChildren();
-        nodes.forEach(this::hookCommand);
+        nodes.forEach(this::hookAll);
     }
 
-    public void hookCommand(CommandNode<S> node) {
+    @SuppressWarnings("unchecked")
+    public void hookAll(CommandNode<S> node) {
+        this.hookRecursive(new CommandNode[] { node });
+    }
+
+    private void hookRecursive(CommandNode<S>[] nodes) {
+        CommandNode<S> tail = nodes[nodes.length - 1];
+        this.hookCommand(nodes);
+
+        for (CommandNode<S> child : tail.getChildren()) {
+            CommandNode<S>[] childNodes = Arrays.copyOf(nodes, nodes.length + 1);
+            childNodes[childNodes.length - 1] = child;
+            this.hookRecursive(childNodes);
+        }
+    }
+
+    private void hookCommand(CommandNode<S>[] nodes) {
+        CommandNode<S> tail = nodes[nodes.length - 1];
         try {
-            Predicate<S> requirement = node.getRequirement();
-            this.requirementField.set(node, this.override.apply(node, requirement));
+            Predicate<S> requirement = tail.getRequirement();
+            this.requirementField.set(tail, this.override.apply(nodes, requirement));
         } catch (IllegalAccessException e) {
-            LTPerms.LOGGER.error("Failed to hook command node {}", node, e);
+            LTPerms.LOGGER.error("Failed to hook command node {}", tail, e);
         }
     }
 
     public interface RequirementOverride<S> {
-        Predicate<S> apply(CommandNode<S> node, Predicate<S> predicate);
+        Predicate<S> apply(CommandNode<S>[] nodes, Predicate<S> predicate);
     }
 }

@@ -8,6 +8,7 @@ import com.lovetropics.perms.override.ChatStyleOverride;
 import com.lovetropics.perms.override.RoleOverrideType;
 import com.lovetropics.perms.override.command.CommandPermEvaluator;
 import com.lovetropics.perms.override.command.CommandRequirementHooks;
+import com.lovetropics.perms.override.command.MatchableCommand;
 import com.lovetropics.perms.override.command.PermissionResult;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.CommandSource;
@@ -63,9 +64,11 @@ public class LTPerms {
         CommandDispatcher<CommandSource> dispatcher = event.getServer().getCommandManager().getDispatcher();
 
         try {
-            CommandRequirementHooks<CommandSource> hooks = CommandRequirementHooks.tryCreate((node, predicate) -> {
+            CommandRequirementHooks<CommandSource> hooks = CommandRequirementHooks.tryCreate((nodes, predicate) -> {
+                MatchableCommand command = MatchableCommand.compile(nodes);
+
                 return source -> {
-                    PermissionResult result = CommandPermEvaluator.canUseCommand(source, node);
+                    PermissionResult result = CommandPermEvaluator.canUseCommand(source, command);
                     if (result == PermissionResult.ALLOW) return true;
                     if (result == PermissionResult.DENY) return false;
 

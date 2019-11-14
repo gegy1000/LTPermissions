@@ -132,7 +132,15 @@ public final class RoleCommand {
     }
 
     private static SuggestionProvider<CommandSource> roleSuggestions() {
-        return (ctx, builder) -> ISuggestionProvider.suggest(RoleConfiguration.get().stream().map(Role::getName), builder);
+        return (ctx, builder) -> {
+            int highestPowerLevel = getHighestPowerLevel(ctx.getSource());
+            return ISuggestionProvider.suggest(
+                    RoleConfiguration.get().stream()
+                            .filter(role -> role.getLevel() < highestPowerLevel)
+                            .map(Role::getName),
+                    builder
+            );
+        };
     }
 
     private static int getHighestPowerLevel(CommandSource source) {
