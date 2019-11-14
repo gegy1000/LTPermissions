@@ -1,6 +1,6 @@
 {
   "everyone": {
-    "modifiers": {
+    "overrides": {
       "commands": {
         "help": "allow",
         "role": "deny"

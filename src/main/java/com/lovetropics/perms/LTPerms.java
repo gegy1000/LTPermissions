@@ -4,11 +4,11 @@ import com.google.common.base.Preconditions;
 import com.lovetropics.perms.capability.DelegatedCapStorage;
 import com.lovetropics.perms.capability.PlayerRoles;
 import com.lovetropics.perms.command.RoleCommand;
-import com.lovetropics.perms.modifier.ChatStyleModifier;
-import com.lovetropics.perms.modifier.RoleModifierType;
-import com.lovetropics.perms.modifier.command.CommandPermEvaluator;
-import com.lovetropics.perms.modifier.command.CommandRequirementHooks;
-import com.lovetropics.perms.modifier.command.PermissionResult;
+import com.lovetropics.perms.override.ChatStyleOverride;
+import com.lovetropics.perms.override.RoleOverrideType;
+import com.lovetropics.perms.override.command.CommandPermEvaluator;
+import com.lovetropics.perms.override.command.CommandRequirementHooks;
+import com.lovetropics.perms.override.command.PermissionResult;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
@@ -92,7 +92,7 @@ public class LTPerms {
         ServerPlayerEntity player = event.getPlayer();
 
         player.getCapability(playerRolesCap()).ifPresent(roles -> {
-            ChatStyleModifier chatStyle = roles.getHighest(RoleModifierType.CHAT_STYLE);
+            ChatStyleOverride chatStyle = roles.getHighest(RoleOverrideType.CHAT_STYLE);
             if (chatStyle != null) {
                 event.setComponent(chatStyle.make(player.getDisplayName(), event.getMessage()));
             }

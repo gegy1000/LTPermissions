@@ -1,9 +1,9 @@
-package com.lovetropics.perms.modifier.command;
+package com.lovetropics.perms.override.command;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.lovetropics.perms.modifier.RoleModifier;
+import com.lovetropics.perms.override.RoleOverride;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public final class CommandPermModifier implements RoleModifier {
+public final class CommandPermOverride implements RoleOverride {
     private final Collection<Command> commands;
 
-    private CommandPermModifier(List<Command> commands) {
+    private CommandPermOverride(List<Command> commands) {
         this.commands = commands;
     }
 
@@ -30,7 +30,7 @@ public final class CommandPermModifier implements RoleModifier {
         return PermissionResult.PASS;
     }
 
-    public static CommandPermModifier parse(JsonObject root) {
+    public static CommandPermOverride parse(JsonObject root) {
         ImmutableList.Builder<Command> commands = ImmutableList.builder();
 
         for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
@@ -42,7 +42,7 @@ public final class CommandPermModifier implements RoleModifier {
             commands.add(new Command(pattern, rule));
         }
 
-        return new CommandPermModifier(commands.build());
+        return new CommandPermOverride(commands.build());
     }
 
     @Override
@@ -53,7 +53,7 @@ public final class CommandPermModifier implements RoleModifier {
 
     @Override
     public String toString() {
-        return "CommandPermModifier[" + this.commands.toString() + "]";
+        return "CommandPermOverride[" + this.commands.toString() + "]";
     }
 
     private static class Command {

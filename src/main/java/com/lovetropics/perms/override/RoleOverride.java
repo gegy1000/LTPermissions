@@ -1,8 +1,8 @@
-package com.lovetropics.perms.modifier;
+package com.lovetropics.perms.override;
 
 import net.minecraft.entity.player.ServerPlayerEntity;
 
-public interface RoleModifier {
+public interface RoleOverride {
     default void notifyChange(ServerPlayerEntity player) {
     }
 }

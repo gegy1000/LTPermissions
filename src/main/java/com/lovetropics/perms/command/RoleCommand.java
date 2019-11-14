@@ -5,7 +5,7 @@ import com.lovetropics.perms.LTPerms;
 import com.lovetropics.perms.Role;
 import com.lovetropics.perms.RoleConfiguration;
 import com.lovetropics.perms.capability.PlayerRoles;
-import com.lovetropics.perms.modifier.command.CommandPermEvaluator;
+import com.lovetropics.perms.override.command.CommandPermEvaluator;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;

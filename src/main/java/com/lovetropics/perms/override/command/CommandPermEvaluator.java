@@ -1,8 +1,8 @@
-package com.lovetropics.perms.modifier.command;
+package com.lovetropics.perms.override.command;
 
 import com.lovetropics.perms.LTPerms;
 import com.lovetropics.perms.capability.PlayerRoles;
-import com.lovetropics.perms.modifier.RoleModifierType;
+import com.lovetropics.perms.override.RoleOverrideType;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
@@ -16,7 +16,7 @@ public class CommandPermEvaluator {
         if (entity instanceof PlayerEntity) {
             PlayerRoles roles = entity.getCapability(LTPerms.playerRolesCap()).orElse(null);
             if (roles != null) {
-                return roles.test(RoleModifierType.COMMANDS, m -> m.test(node));
+                return roles.test(RoleOverrideType.COMMANDS, m -> m.test(node));
             }
         }
 

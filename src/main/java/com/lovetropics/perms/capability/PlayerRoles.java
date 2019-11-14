@@ -4,9 +4,9 @@ import com.google.common.collect.Iterables;
 import com.lovetropics.perms.LTPerms;
 import com.lovetropics.perms.Role;
 import com.lovetropics.perms.RoleConfiguration;
-import com.lovetropics.perms.modifier.RoleModifier;
-import com.lovetropics.perms.modifier.RoleModifierType;
-import com.lovetropics.perms.modifier.command.PermissionResult;
+import com.lovetropics.perms.override.RoleOverride;
+import com.lovetropics.perms.override.RoleOverrideType;
+import com.lovetropics.perms.override.command.PermissionResult;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.StringNBT;
@@ -58,11 +58,11 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
         return false;
     }
 
-    public <T extends RoleModifier> PermissionResult test(RoleModifierType<T> type, Function<T, PermissionResult> function) {
+    public <T extends RoleOverride> PermissionResult test(RoleOverrideType<T> type, Function<T, PermissionResult> function) {
         for (Role role : this.asIterable()) {
-            T modifier = role.getModifier(type);
-            if (modifier != null) {
-                PermissionResult result = function.apply(modifier);
+            T override = role.getOverride(type);
+            if (override != null) {
+                PermissionResult result = function.apply(override);
                 if (result.isDefinitive()) return result;
             }
         }
@@ -70,10 +70,10 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
     }
 
     @Nullable
-    public <T extends RoleModifier> T getHighest(RoleModifierType<T> type) {
+    public <T extends RoleOverride> T getHighest(RoleOverrideType<T> type) {
         for (Role role : this.asIterable()) {
-            T modifier = role.getModifier(type);
-            if (modifier != null) return modifier;
+            T override = role.getOverride(type);
+            if (override != null) return override;
         }
         return null;
     }

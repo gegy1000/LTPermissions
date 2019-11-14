@@ -1,12 +1,12 @@
-package com.lovetropics.perms.modifier;
+package com.lovetropics.perms.override;
 
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public final class ChatStyleModifier implements RoleModifier {
+public final class ChatStyleOverride implements RoleOverride {
     private final String format;
 
-    public ChatStyleModifier(String format) {
+    public ChatStyleOverride(String format) {
         this.format = format;
     }
 

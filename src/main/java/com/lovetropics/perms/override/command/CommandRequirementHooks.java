@@ -1,4 +1,4 @@
-package com.lovetropics.perms.modifier.command;
+package com.lovetropics.perms.override.command;
 
 import com.lovetropics.perms.LTPerms;
 import com.mojang.brigadier.CommandDispatcher;
