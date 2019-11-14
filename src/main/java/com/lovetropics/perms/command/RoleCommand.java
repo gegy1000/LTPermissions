@@ -35,11 +35,11 @@ import static net.minecraft.command.Commands.literal;
 
 public final class RoleCommand {
     public static final DynamicCommandExceptionType ROLE_NOT_FOUND = new DynamicCommandExceptionType(arg -> {
-        return new TranslationTextComponent("commands." + LTPerms.ID + ".role.not_found", arg);
+        return new TranslationTextComponent("Role with name '%s' was not found!", arg);
     });
 
     public static final SimpleCommandExceptionType ROLE_POWER_TOO_LOW = new SimpleCommandExceptionType(
-            new TranslationTextComponent("commands." + LTPerms.ID + ".role.power_too_low")
+            new StringTextComponent("You do not have sufficient power to manage this role")
     );
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
@@ -52,7 +52,7 @@ public final class RoleCommand {
                                             CommandSource source = ctx.getSource();
                                             Collection<ServerPlayerEntity> targets = EntityArgument.getPlayers(ctx, "targets");
                                             String roleName = StringArgumentType.getString(ctx, "role");
-                                            return updateRoles(source, targets, roleName, PlayerRoles::add, "commands." + LTPerms.ID + ".role.assign_success");
+                                            return updateRoles(source, targets, roleName, PlayerRoles::add, "'%s' assigned to %s players");
                                         }))))
                 .then(literal("remove")
                         .then(argument("targets", EntityArgument.players())
@@ -61,7 +61,7 @@ public final class RoleCommand {
                                             CommandSource source = ctx.getSource();
                                             Collection<ServerPlayerEntity> targets = EntityArgument.getPlayers(ctx, "targets");
                                             String roleName = StringArgumentType.getString(ctx, "role");
-                                            return updateRoles(source, targets, roleName, PlayerRoles::remove, "commands." + LTPerms.ID + ".role.remove_success");
+                                            return updateRoles(source, targets, roleName, PlayerRoles::remove, "'%s' removed from %s players");
                                         }))))
                 .then(literal("list")
                         .then(argument("target", EntityArgument.player()).executes(ctx -> {
@@ -74,7 +74,7 @@ public final class RoleCommand {
         );
     }
 
-    private static int updateRoles(CommandSource source, Collection<ServerPlayerEntity> players, String roleName, BiPredicate<PlayerRoles, Role> apply, String successKey) throws CommandSyntaxException {
+    private static int updateRoles(CommandSource source, Collection<ServerPlayerEntity> players, String roleName, BiPredicate<PlayerRoles, Role> apply, String success) throws CommandSyntaxException {
         Role role = getRole(roleName);
         assertHasPower(source, role);
 
@@ -87,7 +87,7 @@ public final class RoleCommand {
             });
         }
 
-        source.sendFeedback(new TranslationTextComponent(successKey, roleName, count.intValue()), true);
+        source.sendFeedback(new TranslationTextComponent(success, roleName, count.intValue()), true);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -95,7 +95,7 @@ public final class RoleCommand {
         player.getCapability(LTPerms.playerRolesCap()).ifPresent(cap -> {
             Collection<Role> roles = cap.roles().collect(Collectors.toList());
             ITextComponent rolesComponent = TextComponentUtils.makeList(roles, role -> new StringTextComponent(TextFormatting.GRAY + role.getName()));
-            source.sendFeedback(new TranslationTextComponent("commands." + LTPerms.ID + ".role.list", roles.size(), rolesComponent), false);
+            source.sendFeedback(new TranslationTextComponent("Found %s roles on player: %s", roles.size(), rolesComponent), false);
         });
 
         return Command.SINGLE_SUCCESS;
@@ -110,7 +110,7 @@ public final class RoleCommand {
                 entity.getCapability(LTPerms.playerRolesCap()).ifPresent(PlayerRoles::notifyReload);
             }
 
-            source.sendFeedback(new TranslationTextComponent("commands." + LTPerms.ID + ".role.reloaded"), false);
+            source.sendFeedback(new TranslationTextComponent("Role configuration successfully reloaded"), false);
         });
 
         return Command.SINGLE_SUCCESS;
@@ -145,7 +145,7 @@ public final class RoleCommand {
 
     private static int getHighestPowerLevel(CommandSource source) {
         Entity entity = source.getEntity();
-        if (entity == null) return 0;
+        if (entity == null || CommandPermEvaluator.doesBypassPermissions(source)) return Integer.MAX_VALUE;
 
         return entity.getCapability(LTPerms.playerRolesCap()).map(player -> {
             IntStream levels = player.roles().mapToInt(Role::getLevel);
