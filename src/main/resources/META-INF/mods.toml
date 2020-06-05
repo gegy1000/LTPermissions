@@ -1,11 +1,11 @@
 modLoader="javafml"
-loaderVersion="[28,)"
+loaderVersion="[31,)"
 
 [[mods]]
 modId="ltperms"
 version="${file.jarVersion}"
 displayName="LoveTropics: Perms"
-authors="LoveTropics19"
+authors="LoveTropics"
 credits=""
 description='''
 '''
@@ -13,13 +13,13 @@ description='''
 [[dependencies.ltperms]]
     modId="forge"
     mandatory=true
-    versionRange="[28.1.76,)"
+    versionRange="[31.2.0,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.ltperms]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.14.4]"
+    versionRange="[1.15.2]"
     ordering="NONE"
     side="BOTH"

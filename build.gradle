@@ -18,7 +18,7 @@ archivesBaseName = "ltperms"
 sourceCompatibility = targetCompatibility = '1.8'
 
 minecraft {
-  mappings channel: 'snapshot', version: '20191113-1.14.3'
+  mappings channel: 'snapshot', version: '20200605-1.15.1'
   runs {
     client {
       workingDirectory project.file('run')
@@ -45,7 +45,7 @@ minecraft {
 
 
 dependencies {
-  minecraft 'net.minecraftforge:forge:1.14.4-28.1.76'
+  minecraft 'net.minecraftforge:forge:1.15.2-31.2.0'
 }
 
 jar {

@@ -21,6 +21,7 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.ServerChatEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
@@ -44,6 +45,7 @@ public class LTPerms {
         MinecraftForge.EVENT_BUS.addListener(this::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(this::serverStarted);
         MinecraftForge.EVENT_BUS.addListener(this::onChat);
+        MinecraftForge.EVENT_BUS.addListener(this::playerClone);
 
         MinecraftForge.EVENT_BUS.addGenericListener(Entity.class, this::attachEntityCapabilities);
     }
@@ -89,6 +91,14 @@ public class LTPerms {
         if (entity instanceof ServerPlayerEntity) {
             event.addCapability(new ResourceLocation(LTPerms.ID, "roles"), new PlayerRoles((ServerPlayerEntity) entity));
         }
+    }
+
+    private void playerClone(PlayerEvent.Clone event) {
+        event.getOriginal().getCapability(playerRolesCap()).ifPresent(oldCap -> {
+            event.getPlayer().getCapability(playerRolesCap()).ifPresent(newCap -> {
+                newCap.copyFrom(oldCap);
+            });
+        });
     }
 
     private void onChat(ServerChatEvent event) {

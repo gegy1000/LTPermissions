@@ -90,7 +90,7 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
     public ListNBT serializeNBT() {
         ListNBT list = new ListNBT();
         for (String role : this.roleIds) {
-            list.add(new StringNBT(role));
+            list.add(StringNBT.valueOf(role));
         }
         return list;
     }
@@ -114,5 +114,9 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
             }
             return false;
         });
+    }
+
+    public void copyFrom(PlayerRoles old) {
+        this.deserializeNBT(old.serializeNBT());
     }
 }
