@@ -3,6 +3,7 @@ package com.lovetropics.perms;
 import com.google.common.base.Preconditions;
 import com.lovetropics.perms.capability.DelegatedCapStorage;
 import com.lovetropics.perms.capability.PlayerRoles;
+import com.lovetropics.perms.command.FlyCommand;
 import com.lovetropics.perms.command.RoleCommand;
 import com.lovetropics.perms.override.ChatStyleOverride;
 import com.lovetropics.perms.override.RoleOverrideType;
@@ -60,6 +61,7 @@ public class LTPerms {
 
     private void serverStarting(FMLServerStartingEvent event) {
         RoleCommand.register(event.getCommandDispatcher());
+        FlyCommand.register(event.getCommandDispatcher());
     }
 
     private void serverStarted(FMLServerStartedEvent event) {
