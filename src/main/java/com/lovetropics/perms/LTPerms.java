@@ -1,9 +1,5 @@
 package com.lovetropics.perms;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.google.common.base.Preconditions;
 import com.lovetropics.perms.capability.DelegatedCapStorage;
 import com.lovetropics.perms.capability.PlayerRoles;
@@ -15,9 +11,11 @@ import com.lovetropics.perms.override.command.CommandPermEvaluator;
 import com.lovetropics.perms.override.command.CommandRequirementHooks;
 import com.lovetropics.perms.override.command.MatchableCommand;
 import com.lovetropics.perms.override.command.PermissionResult;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
@@ -36,6 +34,11 @@ import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
 
 @Mod(LTPerms.ID)
 public class LTPerms {
@@ -54,15 +57,16 @@ public class LTPerms {
         MinecraftForge.EVENT_BUS.addListener(this::onChat);
         MinecraftForge.EVENT_BUS.addListener(this::playerClone);
 
-		MinecraftForge.EVENT_BUS.addGenericListener(Entity.class, this::attachEntityCapabilities);
+        MinecraftForge.EVENT_BUS.addGenericListener(Entity.class, this::attachEntityCapabilities);
 
-		// Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
-		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, 
-				() -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-	}
+        // Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
+        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
+                () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+    }
 
     private void setup(FMLCommonSetupEvent event) {
         RoleConfiguration.setup();
+        CommandAliasConfiguration.setup();
 
         CapabilityManager.INSTANCE.register(PlayerRoles.class, new DelegatedCapStorage<>(), () -> {
             throw new UnsupportedOperationException();
@@ -70,8 +74,31 @@ public class LTPerms {
     }
 
     private void serverStarting(FMLServerStartingEvent event) {
-        RoleCommand.register(event.getCommandDispatcher());
-        FlyCommand.register(event.getCommandDispatcher());
+        CommandDispatcher<CommandSource> dispatcher = event.getCommandDispatcher();
+
+        RoleCommand.register(dispatcher);
+        FlyCommand.register(dispatcher);
+
+        CommandAliasConfiguration aliasConfig = CommandAliasConfiguration.get();
+        for (Map.Entry<String, String[]> entry : aliasConfig.getAliases().entrySet()) {
+            String[] literals = entry.getKey().split(" ");
+
+            LiteralArgumentBuilder<CommandSource> node = Commands.literal(literals[0]);
+            for (int i = 1; i < literals.length; i++) {
+                node = node.then(Commands.literal(literals[i]));
+            }
+
+            String[] commands = entry.getValue();
+            node.executes(context -> {
+                int result = Command.SINGLE_SUCCESS;
+                for (String command : commands) {
+                    result = dispatcher.execute(command, context.getSource());
+                }
+                return result;
+            });
+
+            dispatcher.register(node);
+        }
     }
 
     private void serverStarted(FMLServerStartedEvent event) {
