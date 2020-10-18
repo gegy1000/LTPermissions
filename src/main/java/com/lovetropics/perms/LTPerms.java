@@ -90,9 +90,10 @@ public class LTPerms {
 
             String[] commands = entry.getValue();
             node.executes(context -> {
+                CommandSource source = context.getSource().withPermissionLevel(4);
                 int result = Command.SINGLE_SUCCESS;
                 for (String command : commands) {
-                    result = dispatcher.execute(command, context.getSource());
+                    result = dispatcher.execute(command, source);
                 }
                 return result;
             });
