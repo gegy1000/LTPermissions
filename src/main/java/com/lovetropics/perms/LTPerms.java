@@ -83,15 +83,13 @@ public class LTPerms {
         for (Map.Entry<String, String[]> entry : aliasConfig.getAliases().entrySet()) {
             String[] literals = entry.getKey().split(" ");
 
-            LiteralArgumentBuilder<CommandSource> node = Commands.literal(literals[0]);
-            for (int i = 1; i < literals.length; i++) {
-                LiteralArgumentBuilder<CommandSource> next = Commands.literal(literals[i]);
-                node.then(next);
-                node = next;
+            LiteralArgumentBuilder<CommandSource>[] nodes = new LiteralArgumentBuilder[literals.length];
+            for (int i = 0; i < literals.length; i++) {
+                nodes[i] = Commands.literal(literals[i]);
             }
 
             String[] commands = entry.getValue();
-            node.executes(context -> {
+            nodes[nodes.length - 1].executes(context -> {
                 CommandSource source = context.getSource().withPermissionLevel(4);
                 int result = Command.SINGLE_SUCCESS;
                 for (String command : commands) {
@@ -100,7 +98,14 @@ public class LTPerms {
                 return result;
             });
 
-            dispatcher.register(node);
+            LiteralArgumentBuilder<CommandSource> chain = nodes[0];
+            for (int i = 1; i < nodes.length; i++) {
+                LiteralArgumentBuilder<CommandSource> next = nodes[i];
+                chain.then(next);
+                chain = next;
+            }
+
+            dispatcher.register(nodes[0]);
         }
     }
 
