@@ -85,7 +85,9 @@ public class LTPerms {
 
             LiteralArgumentBuilder<CommandSource> node = Commands.literal(literals[0]);
             for (int i = 1; i < literals.length; i++) {
-                node = node.then(Commands.literal(literals[i]));
+                LiteralArgumentBuilder<CommandSource> next = Commands.literal(literals[i]);
+                node.then(next);
+                node = next;
             }
 
             String[] commands = entry.getValue();
