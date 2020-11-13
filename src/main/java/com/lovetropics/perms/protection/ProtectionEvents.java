@@ -84,7 +84,7 @@ public final class ProtectionEvents {
         IWorld world = event.getWorld();
         if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
             ProtectionManager regions = getRegions((ServerWorld) world);
-            PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT);
+            PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT_ENTITIES);
             if (result == PermissionResult.DENY) {
                 event.setCanceled(true);
             }
