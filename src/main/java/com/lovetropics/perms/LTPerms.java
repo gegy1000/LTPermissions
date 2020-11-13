@@ -1,8 +1,5 @@
 package com.lovetropics.perms;
 
-import com.google.common.base.Preconditions;
-import com.lovetropics.perms.capability.DelegatedCapStorage;
-import com.lovetropics.perms.capability.PlayerRoles;
 import com.lovetropics.perms.command.FlyCommand;
 import com.lovetropics.perms.command.RoleCommand;
 import com.lovetropics.perms.override.ChatStyleOverride;
@@ -11,21 +8,16 @@ import com.lovetropics.perms.override.command.CommandPermEvaluator;
 import com.lovetropics.perms.override.command.CommandRequirementHooks;
 import com.lovetropics.perms.override.command.MatchableCommand;
 import com.lovetropics.perms.override.command.PermissionResult;
+import com.lovetropics.perms.storage.PlayerRoleStorage;
+import com.lovetropics.perms.storage.PlayerRoles;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -46,18 +38,12 @@ public class LTPerms {
 
     public static final Logger LOGGER = LogManager.getLogger(ID);
 
-    @CapabilityInject(PlayerRoles.class)
-    private static Capability<PlayerRoles> playerRoleCap;
-
     public LTPerms() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
 
         MinecraftForge.EVENT_BUS.addListener(this::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(this::serverStarted);
         MinecraftForge.EVENT_BUS.addListener(this::onChat);
-        MinecraftForge.EVENT_BUS.addListener(this::playerClone);
-
-        MinecraftForge.EVENT_BUS.addGenericListener(Entity.class, this::attachEntityCapabilities);
 
         // Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
@@ -67,10 +53,6 @@ public class LTPerms {
     private void setup(FMLCommonSetupEvent event) {
         RoleConfiguration.setup();
         CommandAliasConfiguration.setup();
-
-        CapabilityManager.INSTANCE.register(PlayerRoles.class, new DelegatedCapStorage<>(), () -> {
-            throw new UnsupportedOperationException();
-        });
     }
 
     private void serverStarting(FMLServerStartingEvent event) {
@@ -131,36 +113,16 @@ public class LTPerms {
         }
     }
 
-    private void attachEntityCapabilities(AttachCapabilitiesEvent<Entity> event) {
-        Entity entity = event.getObject();
-        if (entity.world.isRemote) return;
-
-        if (entity instanceof ServerPlayerEntity) {
-            event.addCapability(new ResourceLocation(LTPerms.ID, "roles"), new PlayerRoles((ServerPlayerEntity) entity));
-        }
-    }
-
-    private void playerClone(PlayerEvent.Clone event) {
-        event.getOriginal().getCapability(playerRolesCap()).ifPresent(oldCap -> {
-            event.getPlayer().getCapability(playerRolesCap()).ifPresent(newCap -> {
-                newCap.copyFrom(oldCap);
-            });
-        });
-    }
-
     private void onChat(ServerChatEvent event) {
         ServerPlayerEntity player = event.getPlayer();
 
-        player.getCapability(playerRolesCap()).ifPresent(roles -> {
+        PlayerRoleStorage storage = PlayerRoleStorage.forServer(player.server);
+        PlayerRoles roles = storage.getOrNull(player);
+        if (roles != null) {
             ChatStyleOverride chatStyle = roles.getHighest(RoleOverrideType.CHAT_STYLE);
             if (chatStyle != null) {
                 event.setComponent(chatStyle.make(player.getDisplayName(), event.getMessage()));
             }
-        });
-    }
-
-    public static Capability<PlayerRoles> playerRolesCap() {
-        Preconditions.checkNotNull(playerRoleCap, "player role capability not initialized");
-        return playerRoleCap;
+        }
     }
 }

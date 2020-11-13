@@ -4,12 +4,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lovetropics.perms.override.RoleOverride;
 import com.lovetropics.perms.override.RoleOverrideType;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.JSONUtils;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public final class Role implements Comparable<Role> {
     public static final String EVERYONE = "everyone";
@@ -47,9 +48,9 @@ public final class Role implements Comparable<Role> {
         return role;
     }
 
-    public void notifyChange(ServerPlayerEntity player) {
+    public void notifyChange(MinecraftServer server, UUID player) {
         for (RoleOverride override : this.overrides.values()) {
-            override.notifyChange(player);
+            override.notifyChange(server, player);
         }
     }
 

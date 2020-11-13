@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public final class CommandPermOverride implements RoleOverride {
@@ -45,9 +46,11 @@ public final class CommandPermOverride implements RoleOverride {
     }
 
     @Override
-    public void notifyChange(ServerPlayerEntity player) {
-        MinecraftServer server = player.getServer();
-        if (server != null) server.getCommandManager().send(player);
+    public void notifyChange(MinecraftServer server, UUID id) {
+        ServerPlayerEntity player = server.getPlayerList().getPlayerByUUID(id);
+        if (player != null) {
+            server.getCommandManager().send(player);
+        }
     }
 
     @Override

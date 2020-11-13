@@ -1,4 +1,4 @@
-package com.lovetropics.perms.capability;
+package com.lovetropics.perms.storage;
 
 import com.lovetropics.perms.LTPerms;
 import com.lovetropics.perms.Role;
@@ -6,25 +6,22 @@ import com.lovetropics.perms.RoleConfiguration;
 import com.lovetropics.perms.override.RoleOverride;
 import com.lovetropics.perms.override.RoleOverrideType;
 import com.lovetropics.perms.override.command.PermissionResult;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.StringNBT;
-import net.minecraft.util.Direction;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
+import net.minecraft.server.MinecraftServer;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
-    private final ServerPlayerEntity player;
+public final class PlayerRoles {
+    private final MinecraftServer server;
+    private final UUID player;
 
-    private TreeSet<String> roleIds = new TreeSet<>((n1, n2) -> {
+    private final TreeSet<String> roleIds = new TreeSet<>((n1, n2) -> {
         RoleConfiguration config = RoleConfiguration.get();
         Role r1 = config.get(n1);
         Role r2 = config.get(n2);
@@ -32,24 +29,19 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
         return r1.compareTo(r2);
     });
 
-    public PlayerRoles(ServerPlayerEntity player) {
+    public PlayerRoles(MinecraftServer server, UUID player) {
+        this.server = server;
         this.player = player;
-    }
-
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return LTPerms.playerRolesCap().orEmpty(cap, LazyOptional.of(() -> this));
     }
 
     public void notifyReload() {
         this.removeInvalidRoles();
-        this.roles().forEach(role -> role.notifyChange(this.player));
+        this.roles().forEach(role -> role.notifyChange(this.server, this.player));
     }
 
     public boolean add(Role role) {
         if (this.roleIds.add(role.getName())) {
-            role.notifyChange(this.player);
+            role.notifyChange(this.server, this.player);
             return true;
         }
         return false;
@@ -57,7 +49,7 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
 
     public boolean remove(Role role) {
         if (this.roleIds.remove(role.getName())) {
-            role.notifyChange(this.player);
+            role.notifyChange(this.server, this.player);
             return true;
         }
         return false;
@@ -86,8 +78,7 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
         return this.overrides(type).findFirst().orElse(null);
     }
 
-    @Override
-    public ListNBT serializeNBT() {
+    public ListNBT serialize() {
         ListNBT list = new ListNBT();
         for (String role : this.roleIds) {
             list.add(StringNBT.valueOf(role));
@@ -95,8 +86,7 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
         return list;
     }
 
-    @Override
-    public void deserializeNBT(ListNBT list) {
+    public void deserialize(ListNBT list) {
         this.roleIds.clear();
         for (int i = 0; i < list.size(); i++) {
             this.roleIds.add(list.getString(i));
@@ -117,6 +107,6 @@ public final class PlayerRoles implements ICapabilitySerializable<ListNBT> {
     }
 
     public void copyFrom(PlayerRoles old) {
-        this.deserializeNBT(old.serializeNBT());
+        this.deserialize(old.serialize());
     }
 }
