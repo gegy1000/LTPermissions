@@ -35,6 +35,10 @@ public final class ProtectCommand {
         return new LiteralMessage("There is no region with the id '" + id + "'");
     });
 
+    private static final DynamicCommandExceptionType REGION_ALREADY_EXISTS = new DynamicCommandExceptionType(id -> {
+        return new LiteralMessage("Region with the id '" + id + "' already exists!");
+    });
+
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         // @formatter:off
         dispatcher.register(
@@ -76,32 +80,40 @@ public final class ProtectCommand {
         BlockPos max = BlockPosArgument.getBlockPos(context, "max");
 
         ProtectionManager protection = ProtectionManager.get(context.getSource().getServer());
-        protection.add(new ProtectionRegion(key, ProtectionScope.box(dimension, min, max), level));
+        if (protection.add(new ProtectionRegion(key, ProtectionScope.box(dimension, min, max), level))) {
+            context.getSource().sendFeedback(new StringTextComponent("Added region in " + dimension + " " + key + "@" + level), true);
+        } else {
+            throw REGION_ALREADY_EXISTS.create(key);
+        }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int addDimension(CommandContext<CommandSource> context) {
+    private static int addDimension(CommandContext<CommandSource> context) throws CommandSyntaxException {
         String key = StringArgumentType.getString(context, "key");
         int level = IntegerArgumentType.getInteger(context, "level");
         DimensionType dimension = DimensionArgument.getDimensionArgument(context, "dimension");
 
         ProtectionManager protection = ProtectionManager.get(context.getSource().getServer());
-        protection.add(new ProtectionRegion(key, ProtectionScope.dimension(dimension), level));
-
-        context.getSource().sendFeedback(new StringTextComponent("Added region in " + dimension + " " + key + "@" + level), true);
+        if (protection.add(new ProtectionRegion(key, ProtectionScope.dimension(dimension), level))) {
+            context.getSource().sendFeedback(new StringTextComponent("Added region in " + dimension + " " + key + "@" + level), true);
+        } else {
+            throw REGION_ALREADY_EXISTS.create(key);
+        }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int addGlobal(CommandContext<CommandSource> context) {
+    private static int addGlobal(CommandContext<CommandSource> context) throws CommandSyntaxException {
         String key = StringArgumentType.getString(context, "key");
         int level = IntegerArgumentType.getInteger(context, "level");
 
         ProtectionManager protection = ProtectionManager.get(context.getSource().getServer());
-        protection.add(new ProtectionRegion(key, ProtectionScope.global(), level));
-
-        context.getSource().sendFeedback(new StringTextComponent("Added global region " + key + "@" + level), true);
+        if (protection.add(new ProtectionRegion(key, ProtectionScope.global(), level))) {
+            context.getSource().sendFeedback(new StringTextComponent("Added global region " + key + "@" + level), true);
+        } else {
+            throw REGION_ALREADY_EXISTS.create(key);
+        }
 
         return Command.SINGLE_SUCCESS;
     }
@@ -141,7 +153,7 @@ public final class ProtectCommand {
         }
 
         region.rules.put(rule, result);
-        context.getSource().sendFeedback(new StringTextComponent("Set rule " + ruleId + " = " + resultId + " for " + region), true);
+        context.getSource().sendFeedback(new StringTextComponent("Set rule " + ruleId + " = " + resultId + " for " + key), true);
 
         return Command.SINGLE_SUCCESS;
     }

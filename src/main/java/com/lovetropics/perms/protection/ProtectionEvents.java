@@ -46,7 +46,7 @@ public final class ProtectionEvents {
     @SubscribeEvent
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         IWorld world = event.getWorld();
-        if (world instanceof ServerWorld && !doesBypassProtection(event.getEntity())) {
+        if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
             ProtectionManager regions = getRegions((ServerWorld) world);
             PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT);
             if (result == PermissionResult.DENY) {
@@ -58,7 +58,7 @@ public final class ProtectionEvents {
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         IWorld world = event.getWorld();
-        if (world instanceof ServerWorld && !doesBypassProtection(event.getEntity())) {
+        if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
             ProtectionManager regions = getRegions((ServerWorld) world);
             PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT);
             if (result == PermissionResult.DENY) {
@@ -70,7 +70,7 @@ public final class ProtectionEvents {
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         IWorld world = event.getWorld();
-        if (world instanceof ServerWorld && !doesBypassProtection(event.getEntity())) {
+        if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
             ProtectionManager regions = getRegions((ServerWorld) world);
             PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT);
             if (result == PermissionResult.DENY) {
@@ -82,7 +82,7 @@ public final class ProtectionEvents {
     @SubscribeEvent
     public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
         IWorld world = event.getWorld();
-        if (world instanceof ServerWorld && !doesBypassProtection(event.getTarget())) {
+        if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
             ProtectionManager regions = getRegions((ServerWorld) world);
             PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT);
             if (result == PermissionResult.DENY) {

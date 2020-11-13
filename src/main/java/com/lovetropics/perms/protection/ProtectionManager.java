@@ -31,14 +31,16 @@ public final class ProtectionManager extends WorldSavedData {
         return server.getWorld(DimensionType.OVERWORLD).getSavedData().getOrCreate(ProtectionManager::new, KEY);
     }
 
-    public void add(ProtectionRegion region) {
-        this.regions.add(region);
+    public boolean add(ProtectionRegion region) {
+        boolean added = this.regions.add(region);
 
         for (DimensionType dimension : DimensionType.getAll()) {
             if (region.scope.contains(dimension)) {
                 this.regionsByDimension(dimension).add(region);
             }
         }
+
+        return added;
     }
 
     public boolean remove(String key) {
