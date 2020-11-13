@@ -15,7 +15,7 @@ public class CommandPermEvaluator {
         Entity entity = source.getEntity();
         if (entity instanceof PlayerEntity) {
             PlayerRoleStorage storage = PlayerRoleStorage.forServer(source.getServer());
-            PlayerRoles roles = storage.getOrNull(entity);
+            PlayerRoles roles = storage.getOrCreate(entity);
             if (roles != null) {
                 return roles.test(RoleOverrideType.COMMANDS, m -> m.test(command));
             }

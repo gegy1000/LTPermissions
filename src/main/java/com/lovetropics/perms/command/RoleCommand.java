@@ -100,7 +100,7 @@ public final class RoleCommand {
         Set<Role> roles = new ObjectOpenHashSet<>();
 
         for (GameProfile player : players) {
-            PlayerRoles playerRoles = storage.getOrNull(player.getId());
+            PlayerRoles playerRoles = storage.getOrCreate(player.getId());
             if (playerRoles != null) {
                 playerRoles.roles().forEach(roles::add);
             }
@@ -120,7 +120,7 @@ public final class RoleCommand {
 
             List<ServerPlayerEntity> players = source.getServer().getPlayerList().getPlayers();
             for (ServerPlayerEntity player : players) {
-                PlayerRoles roles = storage.getOrNull(player);
+                PlayerRoles roles = storage.getOrCreate(player);
                 if (roles != null) {
                     roles.notifyReload();
                 }
@@ -163,7 +163,7 @@ public final class RoleCommand {
         Entity entity = source.getEntity();
         if (entity == null || CommandPermEvaluator.doesBypassPermissions(source)) return Integer.MAX_VALUE;
 
-        PlayerRoles roles = PlayerRoleStorage.forServer(source.getServer()).getOrNull(entity);
+        PlayerRoles roles = PlayerRoleStorage.forServer(source.getServer()).getOrCreate(entity);
         if (roles != null) {
             IntStream levels = roles.roles().mapToInt(Role::getLevel);
             return levels.max().orElse(0);

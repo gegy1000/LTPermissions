@@ -11,7 +11,6 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 
-import javax.annotation.Nullable;
 import java.util.UUID;
 
 public final class PlayerRoleStorage extends WorldSavedData {
@@ -29,22 +28,12 @@ public final class PlayerRoleStorage extends WorldSavedData {
         return server.getWorld(DimensionType.OVERWORLD).getSavedData().getOrCreate(() -> new PlayerRoleStorage(server), KEY);
     }
 
-    @Nullable
-    public PlayerRoles getOrNull(UUID player) {
-        return this.rolesByPlayer.get(player);
-    }
-
-    @Nullable
-    public PlayerRoles getOrNull(Entity player) {
-        return this.getOrNull(player.getUniqueID());
-    }
-
     public PlayerRoles getOrCreate(UUID player) {
         return this.rolesByPlayer.computeIfAbsent(player, p -> new PlayerRoles(this.server, p));
     }
 
     public PlayerRoles getOrCreate(Entity player) {
-        return this.getOrNull(player.getUniqueID());
+        return this.getOrCreate(player.getUniqueID());
     }
 
     @Override

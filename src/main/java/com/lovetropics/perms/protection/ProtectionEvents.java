@@ -113,7 +113,7 @@ public final class ProtectionEvents {
         if (player.hasPermissionLevel(4)) return true;
 
         PlayerRoleStorage storage = PlayerRoleStorage.forServer(((ServerPlayerEntity) player).server);
-        PlayerRoles roles = storage.getOrNull(player);
+        PlayerRoles roles = storage.getOrCreate(player);
         if (roles != null) {
             ProtectionBypassOverride bypass = roles.getHighest(RoleOverrideType.PROTECTION_BYPASS);
             return bypass != null && bypass.isBypass();

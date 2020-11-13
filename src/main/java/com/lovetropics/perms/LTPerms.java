@@ -118,7 +118,7 @@ public class LTPerms {
         ServerPlayerEntity player = event.getPlayer();
 
         PlayerRoleStorage storage = PlayerRoleStorage.forServer(player.server);
-        PlayerRoles roles = storage.getOrNull(player);
+        PlayerRoles roles = storage.getOrCreate(player);
         if (roles != null) {
             ChatStyleOverride chatStyle = roles.getHighest(RoleOverrideType.CHAT_STYLE);
             if (chatStyle != null) {
