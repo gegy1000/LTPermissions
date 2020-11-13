@@ -3,6 +3,7 @@ package com.lovetropics.perms.override.command;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.lovetropics.perms.PermissionResult;
 import com.lovetropics.perms.override.RoleOverride;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;

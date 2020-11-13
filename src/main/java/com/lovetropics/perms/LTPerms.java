@@ -7,7 +7,7 @@ import com.lovetropics.perms.override.RoleOverrideType;
 import com.lovetropics.perms.override.command.CommandPermEvaluator;
 import com.lovetropics.perms.override.command.CommandRequirementHooks;
 import com.lovetropics.perms.override.command.MatchableCommand;
-import com.lovetropics.perms.override.command.PermissionResult;
+import com.lovetropics.perms.protection.ProtectCommand;
 import com.lovetropics.perms.storage.PlayerRoleStorage;
 import com.lovetropics.perms.storage.PlayerRoles;
 import com.mojang.brigadier.Command;
@@ -60,6 +60,7 @@ public class LTPerms {
 
         RoleCommand.register(dispatcher);
         FlyCommand.register(dispatcher);
+        ProtectCommand.register(dispatcher);
 
         CommandAliasConfiguration aliasConfig = CommandAliasConfiguration.get();
         for (Map.Entry<String, String[]> entry : aliasConfig.getAliases().entrySet()) {

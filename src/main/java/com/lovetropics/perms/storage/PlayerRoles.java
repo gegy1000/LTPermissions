@@ -5,7 +5,7 @@ import com.lovetropics.perms.Role;
 import com.lovetropics.perms.RoleConfiguration;
 import com.lovetropics.perms.override.RoleOverride;
 import com.lovetropics.perms.override.RoleOverrideType;
-import com.lovetropics.perms.override.command.PermissionResult;
+import com.lovetropics.perms.PermissionResult;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.StringNBT;
 import net.minecraft.server.MinecraftServer;

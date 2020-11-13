@@ -1,5 +1,6 @@
 package com.lovetropics.perms.override.command;
 
+import com.lovetropics.perms.PermissionResult;
 import com.lovetropics.perms.override.RoleOverrideType;
 import com.lovetropics.perms.storage.PlayerRoleStorage;
 import com.lovetropics.perms.storage.PlayerRoles;

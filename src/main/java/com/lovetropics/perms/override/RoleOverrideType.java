@@ -22,6 +22,11 @@ public final class RoleOverrideType<T extends RoleOverride> {
             .parse(element -> new ChatStyleOverride(element.getAsString()))
             .register();
 
+    public static final RoleOverrideType<ProtectionBypassOverride> PROTECTION_BYPASS = RoleOverrideType.<ProtectionBypassOverride>builder()
+            .key("protection_bypass")
+            .parse(element -> new ProtectionBypassOverride(element.getAsBoolean()))
+            .register();
+
     private final String key;
     private final Function<JsonElement, T> parse;
 
