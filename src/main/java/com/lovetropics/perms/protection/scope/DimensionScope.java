@@ -1,30 +1,31 @@
 package com.lovetropics.perms.protection.scope;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.World;
 
 public final class DimensionScope implements ProtectionScope {
-    private final DimensionType dimension;
+    private final RegistryKey<World> dimension;
 
-    public DimensionScope(DimensionType dimension) {
+    public DimensionScope(RegistryKey<World> dimension) {
         this.dimension = dimension;
     }
 
     @Override
-    public boolean contains(DimensionType dimension) {
+    public boolean contains(RegistryKey<World> dimension) {
         return this.dimension == dimension;
     }
 
     @Override
-    public boolean contains(DimensionType dimension, BlockPos pos) {
+    public boolean contains(RegistryKey<World> dimension, BlockPos pos) {
         return this.contains(dimension);
     }
 
     @Override
     public CompoundNBT write(CompoundNBT root) {
         root.putString("type", "dimension");
-        root.putString("dimension", this.dimension.getRegistryName().toString());
+        root.putString("dimension", this.dimension.getLocation().toString());
         return root;
     }
 }

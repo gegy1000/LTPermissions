@@ -1,8 +1,9 @@
 package com.lovetropics.perms.protection.scope;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.World;
 
 public final class GlobalScope implements ProtectionScope {
     public static final GlobalScope INSTANCE = new GlobalScope();
@@ -11,12 +12,12 @@ public final class GlobalScope implements ProtectionScope {
     }
 
     @Override
-    public boolean contains(DimensionType dimension) {
+    public boolean contains(RegistryKey<World> dimension) {
         return true;
     }
 
     @Override
-    public boolean contains(DimensionType dimension, BlockPos pos) {
+    public boolean contains(RegistryKey<World> dimension, BlockPos pos) {
         return true;
     }
 

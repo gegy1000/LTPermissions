@@ -1,20 +1,22 @@
 package com.lovetropics.perms.protection.scope;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.World;
 
 public interface ProtectionScope {
     static ProtectionScope global() {
         return GlobalScope.INSTANCE;
     }
 
-    static ProtectionScope dimension(DimensionType dimension) {
+    static ProtectionScope dimension(RegistryKey<World> dimension) {
         return new DimensionScope(dimension);
     }
 
-    static ProtectionScope box(DimensionType dimension, BlockPos a, BlockPos b) {
+    static ProtectionScope box(RegistryKey<World> dimension, BlockPos a, BlockPos b) {
         BlockPos min = new BlockPos(
                 Math.min(a.getX(), b.getX()),
                 Math.min(a.getY(), b.getY()),
@@ -34,11 +36,11 @@ public interface ProtectionScope {
         switch (type) {
             case "global": return global();
             case "dimension": {
-                DimensionType dimension = DimensionType.byName(new ResourceLocation(root.getString("dimension")));
+                RegistryKey<World> dimension = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(root.getString("dimension")));
                 return dimension(dimension);
             }
             case "box": {
-                DimensionType dimension = DimensionType.byName(new ResourceLocation(root.getString("dimension")));
+                RegistryKey<World> dimension = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(root.getString("dimension")));
                 BlockPos min = new BlockPos(root.getInt("min_x"), root.getInt("min_y"), root.getInt("min_z"));
                 BlockPos max = new BlockPos(root.getInt("max_x"), root.getInt("max_y"), root.getInt("max_z"));
                 return box(dimension, min, max);
@@ -47,9 +49,9 @@ public interface ProtectionScope {
         return global();
     }
 
-    boolean contains(DimensionType dimension);
+    boolean contains(RegistryKey<World> dimension);
 
-    boolean contains(DimensionType dimension, BlockPos pos);
+    boolean contains(RegistryKey<World> dimension, BlockPos pos);
 
     CompoundNBT write(CompoundNBT root);
 }

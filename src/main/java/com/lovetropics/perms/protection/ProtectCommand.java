@@ -17,7 +17,7 @@ import net.minecraft.command.arguments.BlockPosArgument;
 import net.minecraft.command.arguments.DimensionArgument;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.server.ServerWorld;
 
 import static net.minecraft.command.Commands.argument;
 import static net.minecraft.command.Commands.literal;
@@ -75,12 +75,12 @@ public final class ProtectCommand {
     private static int addBox(CommandContext<CommandSource> context) throws CommandSyntaxException {
         String key = StringArgumentType.getString(context, "key");
         int level = IntegerArgumentType.getInteger(context, "level");
-        DimensionType dimension = DimensionArgument.getDimensionArgument(context, "dimension");
+        ServerWorld dimension = DimensionArgument.getDimensionArgument(context, "dimension");
         BlockPos min = BlockPosArgument.getBlockPos(context, "min");
         BlockPos max = BlockPosArgument.getBlockPos(context, "max");
 
         ProtectionManager protection = ProtectionManager.get(context.getSource().getServer());
-        if (protection.add(new ProtectionRegion(key, ProtectionScope.box(dimension, min, max), level))) {
+        if (protection.add(new ProtectionRegion(key, ProtectionScope.box(dimension.getDimensionKey(), min, max), level))) {
             context.getSource().sendFeedback(new StringTextComponent("Added region in " + dimension + " " + key + "@" + level), true);
         } else {
             throw REGION_ALREADY_EXISTS.create(key);
@@ -92,10 +92,10 @@ public final class ProtectCommand {
     private static int addDimension(CommandContext<CommandSource> context) throws CommandSyntaxException {
         String key = StringArgumentType.getString(context, "key");
         int level = IntegerArgumentType.getInteger(context, "level");
-        DimensionType dimension = DimensionArgument.getDimensionArgument(context, "dimension");
+        ServerWorld dimension = DimensionArgument.getDimensionArgument(context, "dimension");
 
         ProtectionManager protection = ProtectionManager.get(context.getSource().getServer());
-        if (protection.add(new ProtectionRegion(key, ProtectionScope.dimension(dimension), level))) {
+        if (protection.add(new ProtectionRegion(key, ProtectionScope.dimension(dimension.getDimensionKey()), level))) {
             context.getSource().sendFeedback(new StringTextComponent("Added region in " + dimension + " " + key + "@" + level), true);
         } else {
             throw REGION_ALREADY_EXISTS.create(key);

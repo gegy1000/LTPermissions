@@ -23,8 +23,9 @@ public final class ProtectionEvents {
     public static void onBreakBlock(BlockEvent.BreakEvent event) {
         IWorld world = event.getWorld();
         if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
-            ProtectionManager regions = getRegions((ServerWorld) world);
-            PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.BREAK);
+            ServerWorld serverWorld = (ServerWorld) world;
+            ProtectionManager regions = getRegions(serverWorld);
+            PermissionResult result = regions.test(serverWorld, event.getPos(), ProtectionRule.BREAK);
             if (result == PermissionResult.DENY) {
                 event.setCanceled(true);
             }
@@ -35,8 +36,9 @@ public final class ProtectionEvents {
     public static void onTrampleFarmland(BlockEvent.FarmlandTrampleEvent event) {
         IWorld world = event.getWorld();
         if (world instanceof ServerWorld && !doesBypassProtection(event.getEntity())) {
-            ProtectionManager regions = getRegions((ServerWorld) world);
-            PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.BREAK);
+            ServerWorld serverWorld = (ServerWorld) world;
+            ProtectionManager regions = getRegions(serverWorld);
+            PermissionResult result = regions.test(serverWorld, event.getPos(), ProtectionRule.BREAK);
             if (result == PermissionResult.DENY) {
                 event.setCanceled(true);
             }
@@ -47,8 +49,9 @@ public final class ProtectionEvents {
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         IWorld world = event.getWorld();
         if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
-            ProtectionManager regions = getRegions((ServerWorld) world);
-            PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT);
+            ServerWorld serverWorld = (ServerWorld) world;
+            ProtectionManager regions = getRegions(serverWorld);
+            PermissionResult result = regions.test(serverWorld, event.getPos(), ProtectionRule.INTERACT);
             if (result == PermissionResult.DENY) {
                 event.setCanceled(true);
             }
@@ -59,8 +62,9 @@ public final class ProtectionEvents {
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         IWorld world = event.getWorld();
         if (world instanceof ServerWorld && !doesBypassProtection(event.getPlayer())) {
-            ProtectionManager regions = getRegions((ServerWorld) world);
-            PermissionResult result = regions.test(event.getWorld(), event.getPos(), ProtectionRule.INTERACT);
+            ServerWorld serverWorld = (ServerWorld) world;
+            ProtectionManager regions = getRegions(serverWorld);
+            PermissionResult result = regions.test(serverWorld, event.getPos(), ProtectionRule.INTERACT);
             if (result == PermissionResult.DENY) {
                 event.setCanceled(true);
             }

@@ -7,7 +7,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 
@@ -25,7 +24,7 @@ public final class PlayerRoleStorage extends WorldSavedData {
     }
 
     public static PlayerRoleStorage forServer(MinecraftServer server) {
-        return server.getWorld(DimensionType.OVERWORLD).getSavedData().getOrCreate(() -> new PlayerRoleStorage(server), KEY);
+        return server.func_241755_D_().getSavedData().getOrCreate(() -> new PlayerRoleStorage(server), KEY);
     }
 
     public PlayerRoles getOrCreate(UUID player) {

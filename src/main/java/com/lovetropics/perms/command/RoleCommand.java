@@ -106,7 +106,7 @@ public final class RoleCommand {
             }
         }
 
-        ITextComponent rolesComponent = TextComponentUtils.makeList(roles, role -> new StringTextComponent(TextFormatting.GRAY + role.getName()));
+        ITextComponent rolesComponent = TextComponentUtils.func_240649_b_(roles, role -> new StringTextComponent(TextFormatting.GRAY + role.getName()));
         source.sendFeedback(new TranslationTextComponent("Found %s roles on players: %s", roles.size(), rolesComponent), false);
 
         return Command.SINGLE_SUCCESS;

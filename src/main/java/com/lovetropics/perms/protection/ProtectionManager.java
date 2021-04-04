@@ -5,9 +5,10 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 
@@ -21,20 +22,24 @@ public final class ProtectionManager extends WorldSavedData {
     private static final String KEY = "protection";
 
     private final RegionMap regions = new RegionMap();
-    private final Map<DimensionType, RegionMap> regionsByDimension = new Reference2ObjectOpenHashMap<>();
+    private final Map<RegistryKey<World>, RegionMap> regionsByDimension = new Reference2ObjectOpenHashMap<>();
 
-    private ProtectionManager() {
+    private final MinecraftServer server;
+
+    private ProtectionManager(MinecraftServer server) {
         super(KEY);
+        this.server = server;
     }
 
     public static ProtectionManager get(MinecraftServer server) {
-        return server.getWorld(DimensionType.OVERWORLD).getSavedData().getOrCreate(ProtectionManager::new, KEY);
+        return server.func_241755_D_().getSavedData().getOrCreate(() -> new ProtectionManager(server), KEY);
     }
 
     public boolean add(ProtectionRegion region) {
         boolean added = this.regions.add(region);
 
-        for (DimensionType dimension : DimensionType.getAll()) {
+        for (ServerWorld world : this.server.getWorlds()) {
+            RegistryKey<World> dimension = world.getDimensionKey();
             if (region.scope.contains(dimension)) {
                 this.regionsByDimension(dimension).add(region);
             }
@@ -46,7 +51,8 @@ public final class ProtectionManager extends WorldSavedData {
     public boolean remove(String key) {
         boolean removed = this.regions.remove(key) != null;
 
-        for (DimensionType dimension : DimensionType.getAll()) {
+        for (ServerWorld world : this.server.getWorlds()) {
+            RegistryKey<World> dimension = world.getDimensionKey();
             RegionMap regions = this.regionsByDimension.get(dimension);
             if (regions != null) {
                 regions.remove(key);
@@ -61,7 +67,7 @@ public final class ProtectionManager extends WorldSavedData {
         return this.regions.byKey(key);
     }
 
-    private RegionMap regionsByDimension(DimensionType dimension) {
+    private RegionMap regionsByDimension(RegistryKey<World> dimension) {
         RegionMap regionsByDimension = this.regionsByDimension.get(dimension);
         if (regionsByDimension == null) {
             this.regionsByDimension.put(dimension, regionsByDimension = new RegionMap());
@@ -69,15 +75,15 @@ public final class ProtectionManager extends WorldSavedData {
         return regionsByDimension;
     }
 
-    public Iterable<ProtectionRegion> sample(DimensionType dimension) {
+    public Iterable<ProtectionRegion> sample(RegistryKey<World> dimension) {
         return this.regionsByDimension(dimension);
     }
 
-    public Iterable<ProtectionRegion> sample(IWorld world, BlockPos pos) {
-        return this.sample(world.getDimension().getType(), pos);
+    public Iterable<ProtectionRegion> sample(World world, BlockPos pos) {
+        return this.sample(world.getDimensionKey(), pos);
     }
 
-    public Iterable<ProtectionRegion> sample(DimensionType dimension, BlockPos pos) {
+    public Iterable<ProtectionRegion> sample(RegistryKey<World> dimension, BlockPos pos) {
         List<ProtectionRegion> regions = new ArrayList<>();
         for (ProtectionRegion region : this.regionsByDimension(dimension)) {
             if (region.scope.contains(dimension, pos)) {
@@ -88,7 +94,7 @@ public final class ProtectionManager extends WorldSavedData {
         return regions;
     }
 
-    public PermissionResult test(DimensionType dimension, ProtectionRule rule) {
+    public PermissionResult test(RegistryKey<World> dimension, ProtectionRule rule) {
         for (ProtectionRegion region : this.regionsByDimension(dimension)) {
             PermissionResult result = region.rules.test(rule);
             if (result != PermissionResult.PASS) {
@@ -98,11 +104,11 @@ public final class ProtectionManager extends WorldSavedData {
         return PermissionResult.PASS;
     }
 
-    public PermissionResult test(IWorld world, BlockPos pos, ProtectionRule rule) {
-        return this.test(world.getDimension().getType(), pos, rule);
+    public PermissionResult test(World world, BlockPos pos, ProtectionRule rule) {
+        return this.test(world.getDimensionKey(), pos, rule);
     }
 
-    public PermissionResult test(DimensionType dimension, BlockPos pos, ProtectionRule rule) {
+    public PermissionResult test(RegistryKey<World> dimension, BlockPos pos, ProtectionRule rule) {
         for (ProtectionRegion region : this.regionsByDimension(dimension)) {
             if (region.scope.contains(dimension, pos)) {
                 PermissionResult result = region.rules.test(rule);
