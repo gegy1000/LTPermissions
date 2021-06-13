@@ -11,7 +11,8 @@ public enum ProtectionRule {
     PLACE("place"),
     INTERACT("interact"),
     INTERACT_ENTITIES("interact_entities"),
-    ATTACK("attack");
+    ATTACK("attack"),
+    HUNGER("hunger");
 
     private static final Map<String, ProtectionRule> BY_KEY = new Object2ObjectOpenHashMap<>();
 

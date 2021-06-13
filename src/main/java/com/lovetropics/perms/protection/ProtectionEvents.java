@@ -9,8 +9,10 @@ import com.lovetropics.perms.storage.PlayerRoles;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.FoodStats;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
@@ -19,6 +21,20 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = LTPerms.ID)
 public final class ProtectionEvents {
+    @SubscribeEvent
+    public static void onTickPlayer(TickEvent.PlayerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START && event.player instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) event.player;
+            FoodStats food = player.getFoodStats();
+            if (food.needFood()) {
+                ProtectionManager regions = getRegions(player.getServerWorld());
+                if (regions.test(player.world, player.getPosition(), ProtectionRule.HUNGER) == PermissionResult.DENY) {
+                    food.setFoodLevel(20);
+                }
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onBreakBlock(BlockEvent.BreakEvent event) {
         IWorld world = event.getWorld();
