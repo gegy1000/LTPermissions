@@ -2,20 +2,26 @@ package com.lovetropics.perms;
 
 import com.lovetropics.perms.command.FlyCommand;
 import com.lovetropics.perms.command.RoleCommand;
-import com.lovetropics.perms.override.ChatStyleOverride;
+import com.lovetropics.perms.config.RolesConfig;
+import com.lovetropics.perms.override.ChatFormatOverride;
+import com.lovetropics.perms.override.NameStyleOverride;
 import com.lovetropics.perms.override.RoleOverrideType;
-import com.lovetropics.perms.override.command.CommandPermEvaluator;
-import com.lovetropics.perms.override.command.CommandRequirementHooks;
-import com.lovetropics.perms.override.command.MatchableCommand;
+import com.lovetropics.perms.override.command.CommandOverride;
 import com.lovetropics.perms.protection.ProtectCommand;
-import com.lovetropics.perms.storage.PlayerRoleStorage;
-import com.lovetropics.perms.storage.PlayerRoles;
+import com.lovetropics.perms.role.RoleLookup;
+import com.lovetropics.perms.role.RoleReader;
+import com.lovetropics.perms.store.PlayerRoleManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.serialization.Codec;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
@@ -23,27 +29,57 @@ import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Map;
 
-@Mod(LTPerms.ID)
-public class LTPerms {
+@Mod(LTPermissions.ID)
+public class LTPermissions {
     public static final String ID = "ltperms";
-
     public static final Logger LOGGER = LogManager.getLogger(ID);
 
-    public LTPerms() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+    public static final RoleOverrideType<CommandOverride> COMMANDS = RoleOverrideType.register("commands", CommandOverride.CODEC)
+            .withChangeListener(player -> {
+                MinecraftServer server = player.getServer();
+                if (server != null) {
+                    server.getCommandManager().send(player);
+                }
+            });
 
+    public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
+    public static final RoleOverrideType<NameStyleOverride> NAME_FORMAT = RoleOverrideType.register("name_style", NameStyleOverride.CODEC);
+    public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
+    public static final RoleOverrideType<Boolean> BYPASS_PROTECTION = RoleOverrideType.register("bypass_protection", Codec.BOOL);
+
+    private static final RoleLookup LOOKUP = new RoleLookup() {
+        @Override
+        @Nonnull
+        public RoleReader byEntity(Entity entity) {
+            if (entity instanceof ServerPlayerEntity) {
+                RoleReader roles = PlayerRoleManager.get().getRolesForOnline(((ServerPlayerEntity) entity));
+                return roles != null ? roles : RoleReader.EMPTY;
+            }
+            return RoleReader.EMPTY;
+        }
+
+        @Override
+        @Nonnull
+        public RoleReader bySource(CommandSource source) {
+            Entity entity = source.getEntity();
+            return entity != null ? this.byEntity(entity) : RoleReader.EMPTY;
+        }
+    };
+
+    public LTPermissions() {
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         MinecraftForge.EVENT_BUS.addListener(this::registerCommands);
-        MinecraftForge.EVENT_BUS.addListener(this::serverStarted);
-        MinecraftForge.EVENT_BUS.addListener(this::onChat);
+        MinecraftForge.EVENT_BUS.addListener(this::onServerChat);
 
         // Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
@@ -51,7 +87,14 @@ public class LTPerms {
     }
 
     private void setup(FMLCommonSetupEvent event) {
-        RoleConfiguration.setup();
+        List<String> errors = RolesConfig.setup();
+        if (!errors.isEmpty()) {
+            LOGGER.warn("Failed to load roles config! ({} errors)", errors.size());
+            for (String error : errors) {
+                LOGGER.warn(" - {}", error);
+            }
+        }
+
         CommandAliasConfiguration.setup();
     }
 
@@ -92,38 +135,17 @@ public class LTPerms {
         }
     }
 
-    private void serverStarted(FMLServerStartedEvent event) {
-        CommandDispatcher<CommandSource> dispatcher = event.getServer().getCommandManager().getDispatcher();
+    private void onServerChat(ServerChatEvent event) {
+        ServerPlayerEntity player = event.getPlayer();
 
-        try {
-            CommandRequirementHooks<CommandSource> hooks = CommandRequirementHooks.tryCreate((nodes, predicate) -> {
-                MatchableCommand command = MatchableCommand.compile(nodes);
-
-                return source -> {
-                    PermissionResult result = CommandPermEvaluator.canUseCommand(source, command);
-                    if (result == PermissionResult.ALLOW) return true;
-                    if (result == PermissionResult.DENY) return false;
-
-                    return predicate.test(source);
-                };
-            });
-
-            hooks.hookAll(dispatcher);
-        } catch (ReflectiveOperationException e) {
-            LOGGER.error("Failed to hook command requirements", e);
+        RoleReader roles = LTPermissions.lookup().byPlayer(player);
+        if (roles.overrides().test(MUTE)) {
+            player.sendStatusMessage(new StringTextComponent("You are muted!").mergeStyle(TextFormatting.RED), true);
+            event.setCanceled(true);
         }
     }
 
-    private void onChat(ServerChatEvent event) {
-        ServerPlayerEntity player = event.getPlayer();
-
-        PlayerRoleStorage storage = PlayerRoleStorage.forServer(player.server);
-        PlayerRoles roles = storage.getOrCreate(player);
-        if (roles != null) {
-            ChatStyleOverride chatStyle = roles.getHighest(RoleOverrideType.CHAT_STYLE);
-            if (chatStyle != null) {
-                event.setComponent(chatStyle.make(player.getDisplayName(), event.getMessage()));
-            }
-        }
+    public static RoleLookup lookup() {
+        return LOOKUP;
     }
 }

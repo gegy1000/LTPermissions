@@ -19,7 +19,7 @@ public final class ProtectionRules {
 
     public CompoundNBT write(CompoundNBT root) {
         for (Map.Entry<ProtectionRule, PermissionResult> entry : this.rules.entrySet()) {
-            root.putString(entry.getKey().getKey(), entry.getValue().getName());
+            root.putString(entry.getKey().getKey(), entry.getValue().getString());
         }
         return root;
     }

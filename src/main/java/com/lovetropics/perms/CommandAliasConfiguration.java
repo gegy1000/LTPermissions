@@ -39,16 +39,16 @@ public final class CommandAliasConfiguration {
             JsonObject root = JSON.parse(reader).getAsJsonObject();
             instance = parse(root);
         } catch (IOException e) {
-            LTPerms.LOGGER.warn("Failed to load command_aliases.json configuration", e);
+            LTPermissions.LOGGER.warn("Failed to load command_aliases.json configuration", e);
         }
     }
 
     private static boolean setupDefaultConfig(Path path) {
-        try (InputStream input = LTPerms.class.getResourceAsStream("/data/ltperms/default_command_aliases.json")) {
+        try (InputStream input = LTPermissions.class.getResourceAsStream("/data/ltperms/default_command_aliases.json")) {
             Files.copy(input, path);
             return true;
         } catch (IOException e) {
-            LTPerms.LOGGER.warn("Failed to load default command_aliases.json configuration", e);
+            LTPermissions.LOGGER.warn("Failed to load default command_aliases.json configuration", e);
             return false;
         }
     }

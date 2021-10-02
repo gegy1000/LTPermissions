@@ -1,11 +1,8 @@
 package com.lovetropics.perms.protection;
 
-import com.lovetropics.perms.LTPerms;
+import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.PermissionResult;
-import com.lovetropics.perms.override.ProtectionBypassOverride;
-import com.lovetropics.perms.override.RoleOverrideType;
-import com.lovetropics.perms.storage.PlayerRoleStorage;
-import com.lovetropics.perms.storage.PlayerRoles;
+import com.lovetropics.perms.role.RoleReader;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -19,7 +16,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = LTPerms.ID)
+@Mod.EventBusSubscriber(modid = LTPermissions.ID)
 public final class ProtectionEvents {
     @SubscribeEvent
     public static void onTickPlayer(TickEvent.PlayerTickEvent event) {
@@ -132,13 +129,7 @@ public final class ProtectionEvents {
         if (!(player instanceof ServerPlayerEntity)) return false;
         if (player.hasPermissionLevel(4)) return true;
 
-        PlayerRoleStorage storage = PlayerRoleStorage.forServer(((ServerPlayerEntity) player).server);
-        PlayerRoles roles = storage.getOrCreate(player);
-        if (roles != null) {
-            ProtectionBypassOverride bypass = roles.getHighest(RoleOverrideType.PROTECTION_BYPASS);
-            return bypass != null && bypass.isBypass();
-        }
-
-        return false;
+        RoleReader roles = LTPermissions.lookup().byEntity(player);
+        return roles.overrides().test(LTPermissions.BYPASS_PROTECTION);
     }
 }

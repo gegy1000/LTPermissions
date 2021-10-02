@@ -1,84 +1,55 @@
 package com.lovetropics.perms.override;
 
-import com.google.common.base.Preconditions;
-import com.google.gson.JsonElement;
-import com.lovetropics.perms.override.command.CommandPermOverride;
+import com.lovetropics.lib.codec.CodecRegistry;
+import com.mojang.serialization.Codec;
+import net.minecraft.entity.player.ServerPlayerEntity;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
-public final class RoleOverrideType<T extends RoleOverride> {
-    private static final Map<String, RoleOverrideType<?>> REGISTRY = new HashMap<>();
+public final class RoleOverrideType<T> {
+    public static final CodecRegistry<String, RoleOverrideType<?>> REGISTRY = CodecRegistry.stringKeys();
 
-    public static final RoleOverrideType<CommandPermOverride> COMMANDS = RoleOverrideType.<CommandPermOverride>builder()
-            .key("commands")
-            .parse(element -> CommandPermOverride.parse(element.getAsJsonObject()))
-            .register();
+    private final String id;
+    private final Codec<T> codec;
+    private RoleChangeListener changeListener;
 
-    public static final RoleOverrideType<ChatStyleOverride> CHAT_STYLE = RoleOverrideType.<ChatStyleOverride>builder()
-            .key("chat_style")
-            .parse(element -> new ChatStyleOverride(element.getAsString()))
-            .register();
-
-    public static final RoleOverrideType<ProtectionBypassOverride> PROTECTION_BYPASS = RoleOverrideType.<ProtectionBypassOverride>builder()
-            .key("protection_bypass")
-            .parse(element -> new ProtectionBypassOverride(element.getAsBoolean()))
-            .register();
-
-    private final String key;
-    private final Function<JsonElement, T> parse;
-
-    private RoleOverrideType(String key, Function<JsonElement, T> parse) {
-        this.key = key;
-        this.parse = parse;
+    private RoleOverrideType(String id, Codec<T> codec) {
+        this.id = id;
+        this.codec = codec;
     }
 
-    public static <T extends RoleOverride> Builder<T> builder() {
-        return new Builder<>();
+    public static <T> RoleOverrideType<T> register(String id, Codec<T> codec) {
+        RoleOverrideType<T> type = new RoleOverrideType<>(id, codec);
+        REGISTRY.register(id, type);
+        return type;
     }
 
-    public String getKey() {
-        return this.key;
+    public RoleOverrideType<T> withChangeListener(RoleChangeListener listener) {
+        this.changeListener = listener;
+        return this;
     }
 
-    public T parse(JsonElement element) {
-        return this.parse.apply(element);
+    public String getId() {
+        return this.id;
+    }
+
+    public Codec<T> getCodec() {
+        return this.codec;
+    }
+
+    public void notifyChange(ServerPlayerEntity player) {
+        if (this.changeListener != null) {
+            this.changeListener.onRoleChange(player);
+        }
     }
 
     @Nullable
-    public static RoleOverrideType<?> byKey(String key) {
-        return REGISTRY.get(key);
+    public static RoleOverrideType<?> byId(String id) {
+        return REGISTRY.get(id);
     }
 
-    public static class Builder<T extends RoleOverride> {
-        private String key;
-        private Function<JsonElement, T> parse;
-
-        private Builder() {
-        }
-
-        public Builder<T> key(String key) {
-            this.key = key;
-            return this;
-        }
-
-        public Builder<T> parse(Function<JsonElement, T> deserialize) {
-            this.parse = deserialize;
-            return this;
-        }
-
-        public RoleOverrideType<T> register() {
-            Preconditions.checkNotNull(this.key, "key not set");
-            Preconditions.checkNotNull(this.parse, "parser not set");
-
-            Preconditions.checkState(!REGISTRY.containsKey(this.key), "override with key already exists");
-
-            RoleOverrideType<T> overrideType = new RoleOverrideType<>(this.key, this.parse);
-            REGISTRY.put(this.key, overrideType);
-
-            return overrideType;
-        }
+    @Override
+    public String toString() {
+        return "RoleOverrideType(" + this.id + ")";
     }
 }
