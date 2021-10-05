@@ -1,20 +1,31 @@
 package com.lovetropics.perms.protection;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.lovetropics.lib.codec.CodecRegistry;
+import com.mojang.serialization.Codec;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.Map;
+import java.util.Set;
 
-public enum ProtectionRule {
-    BREAK("break"),
-    PLACE("place"),
-    INTERACT("interact"),
-    INTERACT_ENTITIES("interact_entities"),
-    ATTACK("attack"),
-    HUNGER("hunger");
+public final class ProtectionRule {
+    public static final CodecRegistry<String, ProtectionRule> REGISTRY = CodecRegistry.stringKeys();
 
-    private static final Map<String, ProtectionRule> BY_KEY = new Object2ObjectOpenHashMap<>();
+    public static final Codec<ProtectionRule> CODEC = REGISTRY;
+
+    public static final ProtectionRule BREAK = register("break");
+    public static final ProtectionRule PLACE = register("place");
+
+    public static final ProtectionRule INTERACT_BLOCKS = register("interact_blocks");
+    public static final ProtectionRule INTERACT_ENTITIES = register("interact_entities");
+    public static final ProtectionRule INTERACT_ITEMS = register("interact_items");
+    public static final ProtectionRule INTERACT = register("interact");
+
+    public static final ProtectionRule ATTACK = register("attack");
+    public static final ProtectionRule PVP = register("pvp");
+
+    public static final ProtectionRule PORTALS = register("portals");
+    public static final ProtectionRule HUNGER = register("hunger");
+    public static final ProtectionRule FALL_DAMAGE = register("fall_damage");
+    public static final ProtectionRule DAMAGE = register("damage");
 
     private final String key;
 
@@ -22,22 +33,32 @@ public enum ProtectionRule {
         this.key = key;
     }
 
-    @Nullable
-    public static ProtectionRule byKey(String key) {
-        return BY_KEY.get(key);
-    }
-
-    public String getKey() {
+    public String key() {
         return this.key;
     }
 
-    public static Collection<String> keys() {
-        return BY_KEY.keySet();
+    @Override
+    public String toString() {
+        return this.key;
     }
 
-    static {
-        for (ProtectionRule rule : values()) {
-            BY_KEY.put(rule.key, rule);
-        }
+    @Override
+    public int hashCode() {
+        return this.key.hashCode();
+    }
+
+    @Nullable
+    public static ProtectionRule byKey(String key) {
+        return REGISTRY.get(key);
+    }
+
+    public static Set<String> keySet() {
+        return REGISTRY.keySet();
+    }
+
+    public static ProtectionRule register(String key) {
+        ProtectionRule rule = new ProtectionRule(key);
+        REGISTRY.register(key, rule);
+        return rule;
     }
 }

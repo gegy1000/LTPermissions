@@ -6,14 +6,10 @@ import com.lovetropics.perms.role.RoleReader;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.serialization.Codec;
 import net.minecraft.command.CommandSource;
-import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.event.TagsUpdatedEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.LogicalSidedProvider;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
 public final class CommandOverride {
@@ -30,15 +26,8 @@ public final class CommandOverride {
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
-    public static void onServerStarted(FMLServerStartedEvent event) {
-        hookCommands(event.getServer().getCommandManager().getDispatcher());
-    }
-
-    @SubscribeEvent
-    public static void onDataPacksReload(TagsUpdatedEvent.CustomTagTypes event) {
-        // hack to listen to data pack reload so that we can re-hook commands
-        MinecraftServer server = LogicalSidedProvider.INSTANCE.get(LogicalSide.SERVER);
-        hookCommands(server.getCommandManager().getDispatcher());
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        hookCommands(event.getDispatcher());
     }
 
     private static void hookCommands(CommandDispatcher<CommandSource> dispatcher) {

@@ -61,7 +61,7 @@ public interface RoleOverrideReader {
 
         for (T override : overrides) {
             PermissionResult result = function.apply(override);
-            if (result.isDefinitive()) {
+            if (result.isTerminator()) {
                 return result;
             }
         }

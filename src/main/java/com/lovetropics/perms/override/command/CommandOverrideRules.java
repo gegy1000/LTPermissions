@@ -43,7 +43,7 @@ public final class CommandOverrideRules {
     public PermissionResult test(MatchableCommand command) {
         for (Rule rule : this.rules) {
             PermissionResult result = rule.test(command);
-            if (result.isDefinitive()) {
+            if (result.isTerminator()) {
                 return result;
             }
         }

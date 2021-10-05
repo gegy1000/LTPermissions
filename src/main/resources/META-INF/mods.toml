@@ -24,3 +24,10 @@ description='''
     versionRange="[1.16.5]"
     ordering="NONE"
     side="BOTH"
+
+[[dependencies.ltperms]]
+    modId="worldedit"
+    mandatory=true
+    versionRange="[7.2,)"
+    ordering="NONE"
+    side="SERVER"

@@ -15,3 +15,5 @@ build/
 
 # Minecraft
 run/
+
+libs/*.jar

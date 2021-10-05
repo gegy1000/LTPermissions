@@ -7,8 +7,10 @@ import com.lovetropics.perms.override.ChatFormatOverride;
 import com.lovetropics.perms.override.NameStyleOverride;
 import com.lovetropics.perms.override.RoleOverrideType;
 import com.lovetropics.perms.override.command.CommandOverride;
-import com.lovetropics.perms.protection.ProtectCommand;
+import com.lovetropics.perms.protection.authority.shape.AuthorityShape;
+import com.lovetropics.perms.protection.command.ProtectCommand;
 import com.lovetropics.perms.role.RoleLookup;
+import com.lovetropics.perms.role.RoleProvider;
 import com.lovetropics.perms.role.RoleReader;
 import com.lovetropics.perms.store.PlayerRoleManager;
 import com.mojang.brigadier.Command;
@@ -55,7 +57,6 @@ public class LTPermissions {
     public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
     public static final RoleOverrideType<NameStyleOverride> NAME_FORMAT = RoleOverrideType.register("name_style", NameStyleOverride.CODEC);
     public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
-    public static final RoleOverrideType<Boolean> BYPASS_PROTECTION = RoleOverrideType.register("bypass_protection", Codec.BOOL);
 
     private static final RoleLookup LOOKUP = new RoleLookup() {
         @Override
@@ -96,6 +97,8 @@ public class LTPermissions {
         }
 
         CommandAliasConfiguration.setup();
+
+        AuthorityShape.register();
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
@@ -143,6 +146,10 @@ public class LTPermissions {
             player.sendStatusMessage(new StringTextComponent("You are muted!").mergeStyle(TextFormatting.RED), true);
             event.setCanceled(true);
         }
+    }
+
+    public static RoleProvider roles() {
+        return RolesConfig.get();
     }
 
     public static RoleLookup lookup() {
