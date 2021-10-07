@@ -38,20 +38,36 @@ public final class ProtectionExclusions implements EventFilter {
         this.players = new ObjectOpenHashSet<>(players);
     }
 
-    public boolean addRole(Role role) {
-        return this.roles.add(role.id());
+    public ProtectionExclusions addRole(Role role) {
+        if (this.roles.contains(role.id())) return this;
+
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        result.roles.add(role.id());
+        return result;
     }
 
-    public boolean removeRole(Role role) {
-        return this.roles.remove(role.id());
+    public ProtectionExclusions removeRole(Role role) {
+        if (!this.roles.contains(role.id())) return this;
+
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        result.roles.remove(role.id());
+        return result;
     }
 
-    public boolean addPlayer(GameProfile profile) {
-        return this.players.add(profile.getId());
+    public ProtectionExclusions addPlayer(GameProfile profile) {
+        if (this.players.contains(profile.getId())) return this;
+
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        result.players.add(profile.getId());
+        return result;
     }
 
-    public boolean removePlayer(GameProfile profile) {
-        return this.players.remove(profile.getId());
+    public ProtectionExclusions removePlayer(GameProfile profile) {
+        if (!this.players.contains(profile.getId())) return this;
+
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        result.players.remove(profile.getId());
+        return result;
     }
 
     public boolean isExcluded(PlayerEntity player) {
@@ -69,10 +85,6 @@ public final class ProtectionExclusions implements EventFilter {
         }
 
         return false;
-    }
-
-    public ProtectionExclusions copy() {
-        return new ProtectionExclusions(this.roles, this.players);
     }
 
     @Override

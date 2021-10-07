@@ -29,7 +29,7 @@ public final class ProtectionRuleMap {
         this.map = new Reference2ObjectOpenHashMap<>(map.map);
     }
 
-    private void put(ProtectionRule rule, PermissionResult result) {
+    private void set(ProtectionRule rule, PermissionResult result) {
         if (result != PermissionResult.PASS) {
             this.map.put(rule, result);
         } else {
@@ -43,7 +43,7 @@ public final class ProtectionRuleMap {
         }
 
         ProtectionRuleMap map = this.copy();
-        map.put(rule, result);
+        map.set(rule, result);
         return map;
     }
 

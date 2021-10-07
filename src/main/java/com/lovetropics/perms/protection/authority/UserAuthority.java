@@ -48,11 +48,17 @@ public final class UserAuthority implements Authority {
 
     @Override
     public UserAuthority withRule(ProtectionRule rule, PermissionResult result) {
-        return new UserAuthority(this.key, this.level, this.shapes, this.rules.with(rule, result), this.exclusions.copy());
+        return new UserAuthority(this.key, this.level, this.shapes, this.rules.with(rule, result), this.exclusions);
+    }
+
+    @Override
+    public UserAuthority withExclusions(ProtectionExclusions exclusions) {
+        if (this.exclusions == exclusions) return this;
+        return new UserAuthority(this.key, this.level, this.shapes, this.rules, exclusions);
     }
 
     public UserAuthority withLevel(int level) {
-        return new UserAuthority(this.key, level, this.shapes, this.rules, this.exclusions.copy());
+        return new UserAuthority(this.key, level, this.shapes, this.rules, this.exclusions);
     }
 
     public UserAuthority addShape(String key, AuthorityShape shape) {
@@ -65,7 +71,7 @@ public final class UserAuthority implements Authority {
 
     private UserAuthority withShape(AuthorityShapes shape) {
         if (this.shapes == shape) return this;
-        return new UserAuthority(this.key, this.level, shape, this.rules, this.exclusions.copy());
+        return new UserAuthority(this.key, this.level, shape, this.rules, this.exclusions);
     }
 
     @Override
@@ -88,12 +94,13 @@ public final class UserAuthority implements Authority {
         return this.filterWithExclusions;
     }
 
-    public AuthorityShapes shape() {
-        return this.shapes;
-    }
-
+    @Override
     public ProtectionExclusions exclusions() {
         return this.exclusions;
+    }
+
+    public AuthorityShapes shape() {
+        return this.shapes;
     }
 
     @Override

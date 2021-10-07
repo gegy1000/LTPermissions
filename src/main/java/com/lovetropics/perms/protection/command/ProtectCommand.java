@@ -11,6 +11,9 @@ import com.lovetropics.perms.protection.command.argument.AuthorityArgument;
 import com.lovetropics.perms.protection.command.argument.AuthorityShapeArgument;
 import com.lovetropics.perms.protection.command.argument.PermissionResultArgument;
 import com.lovetropics.perms.protection.command.argument.ProtectionRuleArgument;
+import com.lovetropics.perms.protection.command.argument.RoleArgument;
+import com.lovetropics.perms.role.Role;
+import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.LiteralMessage;
@@ -30,10 +33,14 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.session.SessionManager;
 import net.minecraft.command.CommandSource;
+import net.minecraft.command.arguments.GameProfileArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+
+import java.util.Collection;
+import java.util.function.UnaryOperator;
 
 import static net.minecraft.command.Commands.argument;
 import static net.minecraft.command.Commands.literal;
@@ -94,6 +101,32 @@ public final class ProtectCommand {
                         .then(PermissionResultArgument.argument("result")
                         .executes(ProtectCommand::setRule)
                     ))))
+                )
+                .then(literal("exclusion")
+                    .then(literal("add")
+                        .then(literal("players")
+                            .then(AuthorityArgument.argumentAll("authority")
+                            .then(argument("players", GameProfileArgument.gameProfile())
+                            .executes(ProtectCommand::addPlayerExclusion)
+                        )))
+                        .then(literal("role")
+                            .then(AuthorityArgument.argumentAll("authority")
+                            .then(RoleArgument.argument("role")
+                            .executes(ProtectCommand::addRoleExclusion)
+                        )))
+                    )
+                    .then(literal("remove")
+                        .then(literal("players")
+                            .then(AuthorityArgument.argumentAll("authority")
+                            .then(argument("players", GameProfileArgument.gameProfile())
+                            .executes(ProtectCommand::removePlayerExclusion)
+                        )))
+                        .then(literal("role")
+                            .then(AuthorityArgument.argumentAll("authority")
+                            .then(RoleArgument.argument("role")
+                            .executes(ProtectCommand::removeRoleExclusion)
+                        )))
+                    )
                 )
         );
         // @formatter:on
@@ -203,6 +236,52 @@ public final class ProtectCommand {
         ITextComponent message = new StringTextComponent("Set rule ")
                 .appendSibling(new StringTextComponent(rule.key() + "=").appendSibling(result.getName()).mergeStyle(TextFormatting.AQUA))
                 .appendString(" for '")
+                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
+                .appendString("'")
+                .mergeStyle(TextFormatting.GREEN);
+        context.getSource().sendFeedback(message, true);
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int addPlayerExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        Collection<GameProfile> players = GameProfileArgument.getGameProfiles(context, "players");
+        return modifyExclusions(context, authority -> {
+            for (GameProfile player : players) {
+                authority = authority.addExclusion(player);
+            }
+            return authority;
+        });
+    }
+
+    private static int addRoleExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        Role role = RoleArgument.get(context, "role");
+        return modifyExclusions(context, authority -> authority.addExclusion(role));
+    }
+
+    private static int removePlayerExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        Collection<GameProfile> players = GameProfileArgument.getGameProfiles(context, "players");
+        return modifyExclusions(context, authority -> {
+            for (GameProfile player : players) {
+                authority = authority.removeExclusion(player);
+            }
+            return authority;
+        });
+    }
+
+    private static int removeRoleExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        Role role = RoleArgument.get(context, "role");
+        return modifyExclusions(context, authority -> authority.removeExclusion(role));
+    }
+
+    private static int modifyExclusions(CommandContext<CommandSource> context, UnaryOperator<Authority> operator) throws CommandSyntaxException {
+        Authority authority = AuthorityArgument.getAll(context, "authority");
+        Authority newAuthority = operator.apply(authority);
+
+        ProtectionManager protection = protection(context);
+        protection.replaceAuthority(authority, newAuthority);
+
+        ITextComponent message = new StringTextComponent("Updated exclusions for '")
                 .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
                 .appendString("'")
                 .mergeStyle(TextFormatting.GREEN);

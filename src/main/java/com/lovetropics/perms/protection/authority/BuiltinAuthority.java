@@ -1,10 +1,10 @@
 package com.lovetropics.perms.protection.authority;
 
 import com.lovetropics.perms.PermissionResult;
+import com.lovetropics.perms.protection.EventFilter;
 import com.lovetropics.perms.protection.ProtectionExclusions;
 import com.lovetropics.perms.protection.ProtectionRule;
 import com.lovetropics.perms.protection.ProtectionRuleMap;
-import com.lovetropics.perms.protection.EventFilter;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 
@@ -45,7 +45,13 @@ public final class BuiltinAuthority implements Authority {
 
     @Override
     public BuiltinAuthority withRule(ProtectionRule rule, PermissionResult result) {
-        return new BuiltinAuthority(this.key, this.level, this.filter, this.rules.with(rule, result), this.exclusions.copy());
+        return new BuiltinAuthority(this.key, this.level, this.filter, this.rules.with(rule, result), this.exclusions);
+    }
+
+    @Override
+    public BuiltinAuthority withExclusions(ProtectionExclusions exclusions) {
+        if (this.exclusions == exclusions) return this;
+        return new BuiltinAuthority(this.key, this.level, this.filter, this.rules, exclusions);
     }
 
     @Override
@@ -66,6 +72,11 @@ public final class BuiltinAuthority implements Authority {
     @Override
     public EventFilter eventFilter() {
         return this.filterWithExclusions;
+    }
+
+    @Override
+    public ProtectionExclusions exclusions() {
+        return this.exclusions;
     }
 
     @Override
