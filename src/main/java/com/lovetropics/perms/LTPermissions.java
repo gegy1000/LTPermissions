@@ -96,7 +96,7 @@ public class LTPermissions {
             }
         }
 
-        CommandAliasConfiguration.setup();
+        CommandAliasConfiguration.load();
 
         AuthorityShape.register();
     }
@@ -108,7 +108,7 @@ public class LTPermissions {
         FlyCommand.register(dispatcher);
         ProtectCommand.register(dispatcher);
 
-        CommandAliasConfiguration aliasConfig = CommandAliasConfiguration.get();
+        CommandAliasConfiguration aliasConfig = CommandAliasConfiguration.load();
         for (Map.Entry<String, String[]> entry : aliasConfig.getAliases().entrySet()) {
             String[] literals = entry.getKey().split(" ");
 
