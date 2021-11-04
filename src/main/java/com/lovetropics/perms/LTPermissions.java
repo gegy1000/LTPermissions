@@ -122,7 +122,7 @@ public class LTPermissions {
 
             String[] commands = entry.getValue();
             nodes[nodes.length - 1].executes(context -> {
-                CommandSource source = context.getSource().withPermissionLevel(4);
+                CommandSource source = context.getSource().withPermissionLevel(4).withFeedbackDisabled();
                 int result = Command.SINGLE_SUCCESS;
                 for (String command : commands) {
                     result = dispatcher.execute(command, source);
