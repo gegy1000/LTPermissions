@@ -6,6 +6,8 @@ import com.lovetropics.perms.role.RoleReader;
 import com.mojang.serialization.Codec;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.scoreboard.ScorePlayerTeam;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.util.text.Color;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
@@ -87,7 +89,7 @@ public final class NameStyleOverride {
         PlayerEntity player = event.getPlayer();
         if (player instanceof ServerPlayerEntity) {
             ITextComponent displayName = event.getDisplayname();
-            if (displayName.getStyle().getColor() == null) {
+            if (displayName.getStyle().getColor() == null && !hasTeamColor((ServerPlayerEntity) player)) {
                 RoleReader roles = LTPermissions.lookup().byPlayer(player);
 
                 NameStyleOverride nameStyle = roles.overrides().select(LTPermissions.NAME_STYLE);
@@ -96,5 +98,15 @@ public final class NameStyleOverride {
                 }
             }
         }
+    }
+
+    private static boolean hasTeamColor(ServerPlayerEntity player) {
+        Team team = player.getTeam();
+        if (team instanceof ScorePlayerTeam) {
+            ScorePlayerTeam scoreTeam = (ScorePlayerTeam) team;
+            TextFormatting color = scoreTeam.getColor();
+            return color != TextFormatting.RESET;
+        }
+        return false;
     }
 }
