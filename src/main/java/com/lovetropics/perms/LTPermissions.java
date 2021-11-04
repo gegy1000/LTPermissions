@@ -57,6 +57,7 @@ public class LTPermissions {
 
     public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
     public static final RoleOverrideType<NameStyleOverride> NAME_STYLE = RoleOverrideType.register("name_style", NameStyleOverride.CODEC)
+            .withInitializeListener(PlayerEntity::refreshDisplayName)
             .withChangeListener(PlayerEntity::refreshDisplayName);
     public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
 

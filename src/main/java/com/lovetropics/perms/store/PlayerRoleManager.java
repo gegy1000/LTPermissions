@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.FolderName;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
@@ -45,6 +46,22 @@ public final class PlayerRoleManager {
         if (instance != null) {
             PlayerRoleManager.instance = null;
             instance.close(event.getServer());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        PlayerRoleManager instance = PlayerRoleManager.instance;
+        if (instance != null && event.getPlayer() instanceof ServerPlayerEntity) {
+            instance.onPlayerJoin((ServerPlayerEntity) event.getPlayer());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        PlayerRoleManager instance = PlayerRoleManager.instance;
+        if (instance != null && event.getPlayer() instanceof ServerPlayerEntity) {
+            instance.onPlayerLeave((ServerPlayerEntity) event.getPlayer());
         }
     }
 

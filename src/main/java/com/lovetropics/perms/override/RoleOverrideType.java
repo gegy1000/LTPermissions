@@ -11,7 +11,8 @@ public final class RoleOverrideType<T> {
 
     private final String id;
     private final Codec<T> codec;
-    private RoleChangeListener changeListener;
+    private RoleListener initializeListener;
+    private RoleListener changeListener;
 
     private RoleOverrideType(String id, Codec<T> codec) {
         this.id = id;
@@ -24,7 +25,12 @@ public final class RoleOverrideType<T> {
         return type;
     }
 
-    public RoleOverrideType<T> withChangeListener(RoleChangeListener listener) {
+    public RoleOverrideType<T> withInitializeListener(RoleListener listener) {
+        this.initializeListener = listener;
+        return this;
+    }
+
+    public RoleOverrideType<T> withChangeListener(RoleListener listener) {
         this.changeListener = listener;
         return this;
     }
@@ -37,9 +43,15 @@ public final class RoleOverrideType<T> {
         return this.codec;
     }
 
+    public void notifyInitialize(ServerPlayerEntity player) {
+        if (this.initializeListener != null) {
+            this.initializeListener.accept(player);
+        }
+    }
+
     public void notifyChange(ServerPlayerEntity player) {
         if (this.changeListener != null) {
-            this.changeListener.onRoleChange(player);
+            this.changeListener.accept(player);
         }
     }
 

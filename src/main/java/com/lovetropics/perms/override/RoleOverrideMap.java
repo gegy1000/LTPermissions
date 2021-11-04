@@ -28,6 +28,12 @@ public final class RoleOverrideMap implements RoleOverrideReader {
         this.overrides = new Reference2ObjectOpenHashMap<>(overrides);
     }
 
+    public void notifyInitialize(ServerPlayerEntity player) {
+        for (RoleOverrideType<?> override : this.overrides.keySet()) {
+            override.notifyInitialize(player);
+        }
+    }
+
     public void notifyChange(ServerPlayerEntity player) {
         for (RoleOverrideType<?> override : this.overrides.keySet()) {
             override.notifyChange(player);

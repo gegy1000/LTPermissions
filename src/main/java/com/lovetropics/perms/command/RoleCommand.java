@@ -109,7 +109,6 @@ public final class RoleCommand {
 
     private static int listRoles(CommandSource source, GameProfile player) {
         PlayerRoleManager roleManager = PlayerRoleManager.get();
-        MinecraftServer server = source.getServer();
 
         List<Role> roles = roleManager.peekRoles(player.getId())
                 .stream().collect(Collectors.toList());

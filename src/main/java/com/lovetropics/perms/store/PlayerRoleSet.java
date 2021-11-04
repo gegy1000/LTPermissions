@@ -31,7 +31,14 @@ public final class PlayerRoleSet implements RoleReader {
         this.everyoneRole = everyoneRole;
         this.player = player;
 
+        this.rebuildOverridesAndInitialize();
+    }
+
+    public void rebuildOverridesAndInitialize() {
         this.rebuildOverrides();
+        if (this.player != null) {
+            this.overrides.notifyInitialize(this.player);
+        }
     }
 
     public void rebuildOverridesAndNotify() {
