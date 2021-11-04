@@ -20,6 +20,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.StringTextComponent;
@@ -55,7 +56,8 @@ public class LTPermissions {
             });
 
     public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
-    public static final RoleOverrideType<NameStyleOverride> NAME_FORMAT = RoleOverrideType.register("name_style", NameStyleOverride.CODEC);
+    public static final RoleOverrideType<NameStyleOverride> NAME_STYLE = RoleOverrideType.register("name_style", NameStyleOverride.CODEC)
+            .withChangeListener(PlayerEntity::refreshDisplayName);
     public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
 
     private static final RoleLookup LOOKUP = new RoleLookup() {

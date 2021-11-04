@@ -90,7 +90,7 @@ public final class NameStyleOverride {
             if (displayName.getStyle().getColor() == null) {
                 RoleReader roles = LTPermissions.lookup().byPlayer(player);
 
-                NameStyleOverride nameStyle = roles.overrides().select(LTPermissions.NAME_FORMAT);
+                NameStyleOverride nameStyle = roles.overrides().select(LTPermissions.NAME_STYLE);
                 if (nameStyle != null) {
                     event.setDisplayname(nameStyle.apply(displayName.deepCopy()));
                 }
