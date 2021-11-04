@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ProtectionExclusions implements EventFilter {
+    public static final ProtectionExclusions EMPTY = new ProtectionExclusions();
+
     private static final Codec<UUID> UUID_CODEC = Codec.STRING.xmap(UUID::fromString, UUID::toString);
 
     public static final Codec<ProtectionExclusions> CODEC = RecordCodecBuilder.create(instance -> {
@@ -28,7 +30,7 @@ public final class ProtectionExclusions implements EventFilter {
     private final Set<String> roles;
     private final Set<UUID> players;
 
-    public ProtectionExclusions() {
+    private ProtectionExclusions() {
         this.roles = new ObjectOpenHashSet<>();
         this.players = new ObjectOpenHashSet<>();
     }
@@ -95,5 +97,9 @@ public final class ProtectionExclusions implements EventFilter {
         } else {
             return true;
         }
+    }
+
+    public boolean isEmpty() {
+        return this.players.isEmpty() && this.roles.isEmpty();
     }
 }

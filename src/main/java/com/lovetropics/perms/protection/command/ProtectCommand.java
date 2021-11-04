@@ -8,6 +8,7 @@ import com.lovetropics.perms.protection.authority.UserAuthority;
 import com.lovetropics.perms.protection.authority.shape.AuthorityShape;
 import com.lovetropics.perms.protection.authority.shape.WorldEditShapes;
 import com.lovetropics.perms.protection.command.argument.AuthorityArgument;
+import com.lovetropics.perms.protection.command.argument.AuthorityBehaviorArgument;
 import com.lovetropics.perms.protection.command.argument.AuthorityShapeArgument;
 import com.lovetropics.perms.protection.command.argument.PermissionResultArgument;
 import com.lovetropics.perms.protection.command.argument.ProtectionRuleArgument;
@@ -35,6 +36,7 @@ import com.sk89q.worldedit.session.SessionManager;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.arguments.GameProfileArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -127,6 +129,18 @@ public final class ProtectCommand {
                             .executes(ProtectCommand::removeRoleExclusion)
                         )))
                     )
+                )
+                .then(literal("behavior")
+                    .then(literal("add")
+                        .then(AuthorityArgument.argumentAll("authority")
+                        .then(AuthorityBehaviorArgument.argument("behavior")
+                        .executes(ProtectCommand::addBehavior)
+                    )))
+                    .then(literal("remove")
+                        .then(AuthorityArgument.argumentAll("authority")
+                        .then(AuthorityBehaviorArgument.argument("behavior")
+                        .executes(ProtectCommand::removeBehavior)
+                    )))
                 )
         );
         // @formatter:on
@@ -321,6 +335,42 @@ public final class ProtectCommand {
         } catch (IncompleteRegionException e) {
             throw INCOMPLETE_SELECTION.create();
         }
+    }
+
+    private static int addBehavior(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        Authority authority = AuthorityArgument.getAll(context, "authority");
+        ResourceLocation behaviorId = AuthorityBehaviorArgument.get(context, "behavior").getFirst();
+
+        ProtectionManager protection = protection(context);
+        protection.replaceAuthority(authority, authority.addBehavior(behaviorId));
+
+        ITextComponent message = new StringTextComponent("Added behavior '")
+                .appendSibling(new StringTextComponent(behaviorId.toString()).mergeStyle(TextFormatting.AQUA))
+                .appendString("' to '")
+                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
+                .appendString("'")
+                .mergeStyle(TextFormatting.GREEN);
+        context.getSource().sendFeedback(message, true);
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int removeBehavior(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        Authority authority = AuthorityArgument.getAll(context, "authority");
+        ResourceLocation behaviorId = AuthorityBehaviorArgument.get(context, "behavior").getFirst();
+
+        ProtectionManager protection = protection(context);
+        protection.replaceAuthority(authority, authority.removeBehavior(behaviorId));
+
+        ITextComponent message = new StringTextComponent("Removed behavior '")
+                .appendSibling(new StringTextComponent(behaviorId.toString()).mergeStyle(TextFormatting.AQUA))
+                .appendString("' from '")
+                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
+                .appendString("'")
+                .mergeStyle(TextFormatting.GOLD);
+        context.getSource().sendFeedback(message, true);
+
+        return Command.SINGLE_SUCCESS;
     }
 
     private static ProtectionManager protection(CommandContext<CommandSource> context) {

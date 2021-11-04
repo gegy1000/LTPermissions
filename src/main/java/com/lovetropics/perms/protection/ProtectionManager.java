@@ -5,9 +5,13 @@ import com.lovetropics.perms.PermissionResult;
 import com.lovetropics.perms.protection.authority.Authority;
 import com.lovetropics.perms.protection.authority.BuiltinAuthority;
 import com.lovetropics.perms.protection.authority.UserAuthority;
+import com.lovetropics.perms.protection.authority.behavior.AuthorityBehaviorMap;
+import com.lovetropics.perms.protection.authority.behavior.config.AuthorityBehaviorConfigs;
+import com.lovetropics.perms.protection.authority.map.AuthorityMap;
 import com.lovetropics.perms.protection.authority.map.IndexedAuthorityMap;
 import com.lovetropics.perms.protection.authority.map.SortedAuthorityHashMap;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundNBT;
@@ -16,16 +20,21 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RegistryKey;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -34,12 +43,14 @@ public final class ProtectionManager extends WorldSavedData {
     private static final String KEY = "protection";
 
     private final SortedAuthorityHashMap<UserAuthority> userAuthorities = new SortedAuthorityHashMap<>();
-    private final Map<RegistryKey<World>, BuiltinAuthority> builtinDimensions = new Reference2ObjectOpenHashMap<>();
     private final IndexedAuthorityMap<Authority> allAuthorities = new IndexedAuthorityMap<>();
+
+    private BuiltinAuthority builtinUniverse = BuiltinAuthority.universe();
+    private final Map<RegistryKey<World>, BuiltinAuthority> builtinDimensions = new Reference2ObjectOpenHashMap<>();
 
     private ProtectionManager() {
         super(KEY);
-        this.allAuthorities.add(BuiltinAuthority.universe());
+        this.allAuthorities.add(this.builtinUniverse);
     }
 
     public static ProtectionManager get(MinecraftServer server) {
@@ -66,6 +77,11 @@ public final class ProtectionManager extends WorldSavedData {
         return this.test(source, rule).isDenied();
     }
 
+    @Nullable
+    public AuthorityMap<Authority> selectWithBehavior(RegistryKey<World> dimension) {
+        return this.allAuthorities.selectWithBehavior(dimension);
+    }
+
     @SubscribeEvent
     public static void onWorldLoad(WorldEvent.Load event) {
         IWorld world = event.getWorld();
@@ -86,26 +102,57 @@ public final class ProtectionManager extends WorldSavedData {
         }
     }
 
-    private void onWorldLoad(ServerWorld world) {
-        BuiltinAuthority dimension = BuiltinAuthority.dimension(world.getDimensionKey());
-        this.builtinDimensions.put(world.getDimensionKey(), dimension);
-        this.allAuthorities.add(dimension);
+    @SubscribeEvent
+    public static void onWorldTick(TickEvent.WorldTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.world instanceof ServerWorld) {
+            if (AuthorityBehaviorConfigs.hasReloaded()) {
+                ProtectionManager protection = get(event.world.getServer());
+                protection.onReload();
+            }
+        }
+    }
 
-        this.allAuthorities.addDimension(world.getDimensionKey());
+    private void onWorldLoad(ServerWorld world) {
+        if (!this.builtinDimensions.containsKey(world.getDimensionKey())) {
+            BuiltinAuthority dimension = BuiltinAuthority.dimension(world.getDimensionKey());
+            this.addBuiltinDimension(world.getDimensionKey(), dimension);
+        }
+
+        this.allAuthorities.addDimensionIndex(world.getDimensionKey());
+
+        this.onAuthoritiesChanged();
     }
 
     private void onWorldUnload(ServerWorld world) {
-        BuiltinAuthority dimension = this.builtinDimensions.remove(world.getDimensionKey());
-        if (dimension != null) {
+        BuiltinAuthority dimension = this.builtinDimensions.get(world.getDimensionKey());
+        if (dimension != null && dimension.isEmpty()) {
+            this.builtinDimensions.remove(world.getDimensionKey());
             this.allAuthorities.remove(dimension);
         }
 
-        this.allAuthorities.removeDimension(world.getDimensionKey());
+        this.allAuthorities.removeDimensionIndex(world.getDimensionKey());
+
+        this.onAuthoritiesChanged();
+    }
+
+    private void onReload() {
+        List<Authority> authoritiesWithBehavior = new ArrayList<>();
+        for (Authority authority : this.allAuthorities) {
+            if (authority.hasBehavior()) {
+                authoritiesWithBehavior.add(authority);
+            }
+        }
+
+        for (Authority authority : authoritiesWithBehavior) {
+            AuthorityBehaviorMap behavior = authority.behavior().rebuild();
+            this.replaceAuthority(authority, authority.withBehavior(behavior));
+        }
     }
 
     public boolean addAuthority(UserAuthority authority) {
         if (this.userAuthorities.add(authority)) {
             this.allAuthorities.add(authority);
+            this.onAuthoritiesChanged();
             return true;
         } else {
             return false;
@@ -115,6 +162,7 @@ public final class ProtectionManager extends WorldSavedData {
     public boolean removeAuthority(UserAuthority authority) {
         if (this.userAuthorities.remove(authority)) {
             this.allAuthorities.remove(authority);
+            this.onAuthoritiesChanged();
             return true;
         } else {
             return false;
@@ -128,7 +176,13 @@ public final class ProtectionManager extends WorldSavedData {
             this.userAuthorities.replace(userFrom, userTo);
         }
 
-        this.allAuthorities.replace(from, to);
+        if (this.allAuthorities.replace(from, to)) {
+            this.onAuthoritiesChanged();
+        }
+    }
+
+    private void onAuthoritiesChanged() {
+        ProtectionPlayerTracker.INSTANCE.onAuthoritiesChanged();
     }
 
     @Nullable
@@ -160,6 +214,33 @@ public final class ProtectionManager extends WorldSavedData {
 
         root.put("authorities", authorityList);
 
+        root.put("builtin", this.writeBuiltin(new CompoundNBT()));
+
+        return root;
+    }
+
+    private CompoundNBT writeBuiltin(CompoundNBT root) {
+        CompoundNBT dimensionsTag = new CompoundNBT();
+
+        for (Map.Entry<RegistryKey<World>, BuiltinAuthority> entry : this.builtinDimensions.entrySet()) {
+            RegistryKey<World> dimension = entry.getKey();
+            BuiltinAuthority authority = entry.getValue();
+            if (authority.isEmpty()) continue;
+
+            Codec<BuiltinAuthority> codec = BuiltinAuthority.dimensionCodec(dimension);
+            codec.encodeStart(NBTDynamicOps.INSTANCE, authority)
+                    .result().ifPresent(nbt -> {
+                        dimensionsTag.put(dimension.getLocation().toString(), nbt);
+                    });
+        }
+
+        root.put("dimensions", dimensionsTag);
+
+        BuiltinAuthority.universeCodec().encodeStart(NBTDynamicOps.INSTANCE, this.builtinUniverse)
+                .result().ifPresent(nbt -> {
+                    root.put("universe", nbt);
+                });
+
         return root;
     }
 
@@ -173,6 +254,44 @@ public final class ProtectionManager extends WorldSavedData {
                     .result()
                     .ifPresent(this::addAuthority);
         }
+
+        this.readBuiltin(root.getCompound("builtin"));
+
+        this.onAuthoritiesChanged();
+    }
+
+    private void readBuiltin(CompoundNBT root) {
+        CompoundNBT dimensionsTag = root.getCompound("dimensions");
+        for (String dimensionKey : dimensionsTag.keySet()) {
+            RegistryKey<World> dimension = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(dimensionKey));
+
+            Codec<BuiltinAuthority> codec = BuiltinAuthority.dimensionCodec(dimension);
+            codec.decode(NBTDynamicOps.INSTANCE, dimensionsTag.getCompound(dimensionKey))
+                    .map(Pair::getFirst)
+                    .result()
+                    .ifPresent(authority -> this.addBuiltinDimension(dimension, authority));
+        }
+
+        INBT universeTag = root.get("universe");
+        BuiltinAuthority.universeCodec().decode(NBTDynamicOps.INSTANCE, universeTag)
+                .map(Pair::getFirst)
+                .result()
+                .ifPresent(this::addBuiltinUniverse);
+    }
+
+    private void addBuiltinDimension(RegistryKey<World> dimension, BuiltinAuthority authority) {
+        BuiltinAuthority lastAuthority = this.builtinDimensions.put(dimension, authority);
+        if (lastAuthority == null) {
+            this.allAuthorities.add(authority);
+        } else {
+            this.allAuthorities.replace(lastAuthority, authority);
+        }
+    }
+
+    private void addBuiltinUniverse(BuiltinAuthority authority) {
+        BuiltinAuthority lastAuthority = this.builtinUniverse;
+        this.builtinUniverse = authority;
+        this.allAuthorities.replace(lastAuthority, authority);
     }
 
     @Override

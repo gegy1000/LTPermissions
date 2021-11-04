@@ -1,10 +1,10 @@
 package com.lovetropics.perms.protection.authority.map;
 
+import com.lovetropics.perms.protection.EventFilter;
 import com.lovetropics.perms.protection.EventSource;
 import com.lovetropics.perms.protection.ProtectionRule;
 import com.lovetropics.perms.protection.ProtectionRuleMap;
 import com.lovetropics.perms.protection.authority.Authority;
-import com.lovetropics.perms.protection.EventFilter;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMaps;
@@ -24,7 +24,7 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
     private final AuthorityMap<A> main = new SortedAuthorityHashMap<>();
     private final Reference2ObjectMap<RegistryKey<World>, DimensionMap<A>> byDimension = new Reference2ObjectOpenHashMap<>();
 
-    public void addDimension(RegistryKey<World> dimension) {
+    public void addDimensionIndex(RegistryKey<World> dimension) {
         EventSource source = EventSource.allOf(dimension);
 
         DimensionMap<A> dimensionMap = new DimensionMap<>(dimension);
@@ -37,7 +37,7 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
         this.byDimension.put(dimension, dimensionMap);
     }
 
-    public void removeDimension(RegistryKey<World> dimension) {
+    public void removeDimensionIndex(RegistryKey<World> dimension) {
         this.byDimension.remove(dimension);
     }
 
@@ -50,6 +50,15 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
             }
         }
         return Collections.emptyList();
+    }
+
+    @Nullable
+    public AuthorityMap<A> selectWithBehavior(RegistryKey<World> dimension) {
+        DimensionMap<A> dimensionMap = this.byDimension.get(dimension);
+        if (dimensionMap != null) {
+            return dimensionMap.allWithBehavior;
+        }
+        return null;
     }
 
     @Override
@@ -162,6 +171,7 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
 
     static final class DimensionMap<A extends Authority> {
         final EventSource eventSource;
+        final AuthorityMap<A> allWithBehavior = new SortedAuthorityHashMap<>();
         final Map<ProtectionRule, AuthorityMap<A>> byRule = new Reference2ObjectOpenHashMap<>();
 
         DimensionMap(RegistryKey<World> dimension) {
@@ -169,6 +179,10 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
         }
 
         void add(A authority) {
+            if (authority.hasBehavior()) {
+                this.allWithBehavior.add(authority);
+            }
+
             ProtectionRuleMap rules = authority.rules();
             for (ProtectionRule rule : rules.keySet()) {
                 this.getMapForRule(rule).add(authority);
@@ -176,6 +190,14 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
         }
 
         void replace(A from, A to) {
+            if (from.hasBehavior() && !to.hasBehavior()) {
+                this.allWithBehavior.remove(from);
+            } else if (to.hasBehavior() && !from.hasBehavior()) {
+                this.allWithBehavior.add(to);
+            } else {
+                this.allWithBehavior.replace(from, to);
+            }
+
             Set<ProtectionRule> fromRules = from.rules().keySet();
             Set<ProtectionRule> toRules = to.rules().keySet();
 
@@ -196,6 +218,7 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
         }
 
         void remove(String key) {
+            this.allWithBehavior.remove(key);
             for (AuthorityMap<A> map : this.byRule.values()) {
                 map.remove(key);
             }

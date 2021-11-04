@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 public final class ProtectionRuleMap {
+    public static final ProtectionRuleMap EMPTY = new ProtectionRuleMap();
+
     public static final Codec<ProtectionRuleMap> CODEC = Codec.unboundedMap(ProtectionRule.CODEC, PermissionResult.CODEC).xmap(
             map -> {
                 ProtectionRuleMap rules = new ProtectionRuleMap();
@@ -21,7 +23,7 @@ public final class ProtectionRuleMap {
 
     private final Map<ProtectionRule, PermissionResult> map;
 
-    public ProtectionRuleMap() {
+    private ProtectionRuleMap() {
         this.map = new Reference2ObjectOpenHashMap<>();
     }
 
