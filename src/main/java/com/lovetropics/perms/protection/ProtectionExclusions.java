@@ -78,6 +78,10 @@ public final class ProtectionExclusions implements EventFilter {
         }
 
         if (player instanceof ServerPlayerEntity) {
+            if (player.hasPermissionLevel(4)) {
+                return true;
+            }
+
             for (String excludeRoleId : this.roles) {
                 Role excludeRole = LTPermissions.roles().get(excludeRoleId);
                 if (excludeRole != null && LTPermissions.lookup().byPlayer(player).has(excludeRole)) {
