@@ -13,6 +13,7 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -82,6 +83,16 @@ public final class NameStyleOverride {
             style = style.setColor(this.color);
         }
         return style;
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        // TODO: temporary patch to make sure name style updates! in cases like teams changing we aren't refreshing.
+        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayerEntity) {
+            if (event.player.ticksExisted % (20 * 10) == 0) {
+                event.player.refreshDisplayName();
+            }
+        }
     }
 
     @SubscribeEvent
