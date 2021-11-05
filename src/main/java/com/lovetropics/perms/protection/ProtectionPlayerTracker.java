@@ -98,7 +98,6 @@ public final class ProtectionPlayerTracker {
         }
 
         EventSource source = EventSource.forEntity(player);
-
         for (Authority authority : authorities) {
             if (authority.eventFilter().accepts(source)) {
                 tracker.inside.add(authority);

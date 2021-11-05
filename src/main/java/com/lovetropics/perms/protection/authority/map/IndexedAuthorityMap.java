@@ -22,41 +22,50 @@ import java.util.stream.Stream;
 
 public final class IndexedAuthorityMap<A extends Authority> implements AuthorityMap<A> {
     private final AuthorityMap<A> main = new SortedAuthorityHashMap<>();
-    private final Reference2ObjectMap<RegistryKey<World>, DimensionMap<A>> byDimension = new Reference2ObjectOpenHashMap<>();
+    private final Index<A> globalIndex = new Index<>();
+    private final Reference2ObjectMap<RegistryKey<World>, Index<A>> dimensionIndex = new Reference2ObjectOpenHashMap<>();
 
     public void addDimensionIndex(RegistryKey<World> dimension) {
         EventSource source = EventSource.allOf(dimension);
-
-        DimensionMap<A> dimensionMap = new DimensionMap<>(dimension);
+        Index<A> index = new Index<>();
         for (A authority : this.main) {
             if (authority.eventFilter().accepts(source)) {
-                dimensionMap.add(authority);
+                index.add(authority);
             }
         }
 
-        this.byDimension.put(dimension, dimensionMap);
+        this.dimensionIndex.put(dimension, index);
     }
 
     public void removeDimensionIndex(RegistryKey<World> dimension) {
-        this.byDimension.remove(dimension);
+        this.dimensionIndex.remove(dimension);
     }
 
-    public Iterable<A> select(RegistryKey<World> dimension, ProtectionRule rule) {
-        DimensionMap<A> dimensionMap = this.byDimension.get(dimension);
-        if (dimensionMap != null) {
-            AuthorityMap<A> map = dimensionMap.byRule.get(rule);
+    public Iterable<A> selectByDimension(EventSource source, ProtectionRule rule) {
+        RegistryKey<World> dimension = source.getDimension();
+        if (dimension == null) {
+            AuthorityMap<A> map = this.globalIndex.byRule.get(rule);
             if (map != null) {
                 return map;
             }
         }
+
+        Index<A> dimensionIndex = this.dimensionIndex.get(dimension);
+        if (dimensionIndex != null) {
+            AuthorityMap<A> map = dimensionIndex.byRule.get(rule);
+            if (map != null) {
+                return map;
+            }
+        }
+
         return Collections.emptyList();
     }
 
     @Nullable
     public AuthorityMap<A> selectWithBehavior(RegistryKey<World> dimension) {
-        DimensionMap<A> dimensionMap = this.byDimension.get(dimension);
-        if (dimensionMap != null) {
-            return dimensionMap.allWithBehavior;
+        Index<A> dimensionIndex = this.dimensionIndex.get(dimension);
+        if (dimensionIndex != null) {
+            return dimensionIndex.allWithBehavior;
         }
         return null;
     }
@@ -64,12 +73,14 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
     @Override
     public void clear() {
         this.main.clear();
-        this.byDimension.clear();
+        this.globalIndex.clear();
+        this.dimensionIndex.clear();
     }
 
     @Override
     public boolean add(A authority) {
         if (this.main.add(authority)) {
+            this.globalIndex.add(authority);
             this.addToDimension(authority);
             return true;
         }
@@ -80,6 +91,7 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
     @Override
     public boolean replace(A from, A to) {
         if (this.main.replace(from, to)) {
+            this.globalIndex.replace(from, to);
             this.replaceInDimension(from, to);
             return true;
         }
@@ -92,6 +104,7 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
     public A remove(String key) {
         A authority = this.main.remove(key);
         if (authority != null) {
+            this.globalIndex.remove(key);
             this.removeFromDimension(key);
             return authority;
         }
@@ -137,11 +150,11 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
 
     private void addToDimension(A authority) {
         EventFilter filter = authority.eventFilter();
-        for (Map.Entry<RegistryKey<World>, DimensionMap<A>> entry : Reference2ObjectMaps.fastIterable(this.byDimension)) {
+        for (Map.Entry<RegistryKey<World>, Index<A>> entry : Reference2ObjectMaps.fastIterable(this.dimensionIndex)) {
             RegistryKey<World> dimension = entry.getKey();
             if (filter.accepts(EventSource.allOf(dimension))) {
-                DimensionMap<A> dimensionMap = entry.getValue();
-                dimensionMap.add(authority);
+                Index<A> dimensionIndex = entry.getValue();
+                dimensionIndex.add(authority);
             }
         }
     }
@@ -150,32 +163,36 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
         EventFilter fromFilter = from.eventFilter();
         EventFilter toFilter = to.eventFilter();
 
-        for (DimensionMap<A> dimensionMap : this.byDimension.values()) {
-            boolean fromIncluded = fromFilter.accepts(dimensionMap.eventSource);
-            boolean toIncluded = toFilter.accepts(dimensionMap.eventSource);
+        for (Map.Entry<RegistryKey<World>, Index<A>> entry : this.dimensionIndex.entrySet()) {
+            RegistryKey<World> dimension = entry.getKey();
+            EventSource source = EventSource.allOf(dimension);
+            Index<A> dimensionIndex = entry.getValue();
+
+            boolean fromIncluded = fromFilter.accepts(source);
+            boolean toIncluded = toFilter.accepts(source);
             if (fromIncluded && toIncluded) {
-                dimensionMap.replace(from, to);
+                dimensionIndex.replace(from, to);
             } else if (fromIncluded) {
-                dimensionMap.remove(from.key());
+                dimensionIndex.remove(from.key());
             } else if (toIncluded) {
-                dimensionMap.add(to);
+                dimensionIndex.add(to);
             }
         }
     }
 
     private void removeFromDimension(String key) {
-        for (DimensionMap<A> authorities : this.byDimension.values()) {
+        for (Index<A> authorities : this.dimensionIndex.values()) {
             authorities.remove(key);
         }
     }
 
-    static final class DimensionMap<A extends Authority> {
-        final EventSource eventSource;
+    static final class Index<A extends Authority> {
         final AuthorityMap<A> allWithBehavior = new SortedAuthorityHashMap<>();
         final Map<ProtectionRule, AuthorityMap<A>> byRule = new Reference2ObjectOpenHashMap<>();
 
-        DimensionMap(RegistryKey<World> dimension) {
-            this.eventSource = EventSource.allOf(dimension);
+        void clear() {
+            this.byRule.clear();
+            this.allWithBehavior.clear();
         }
 
         void add(A authority) {

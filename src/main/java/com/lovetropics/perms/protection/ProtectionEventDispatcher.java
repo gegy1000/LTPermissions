@@ -28,10 +28,9 @@ public final class ProtectionEventDispatcher {
             FoodStats food = player.getFoodStats();
             if (food.needFood()) {
                 ProtectionManager protect = protect(player.getServerWorld());
-                try (EventSource source = EventSource.forEntity(player)) {
-                    if (protect.denies(source, ProtectionRule.HUNGER)) {
-                        food.setFoodLevel(20);
-                    }
+                EventSource source = EventSource.forEntity(player);
+                if (protect.denies(source, ProtectionRule.HUNGER)) {
+                    food.setFoodLevel(20);
                 }
             }
         }
@@ -43,10 +42,9 @@ public final class ProtectionEventDispatcher {
         if (world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) world;
             ProtectionManager protect = protect(serverWorld);
-            try (EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos())) {
-                if (protect.denies(source, ProtectionRule.BREAK)) {
-                    event.setCanceled(true);
-                }
+            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+            if (protect.denies(source, ProtectionRule.BREAK)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -57,10 +55,9 @@ public final class ProtectionEventDispatcher {
         if (world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) world;
             ProtectionManager protect = protect(serverWorld);
-            try (EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos())) {
-                if (protect.denies(source, ProtectionRule.BREAK)) {
-                    event.setCanceled(true);
-                }
+            EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
+            if (protect.denies(source, ProtectionRule.BREAK)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -71,10 +68,9 @@ public final class ProtectionEventDispatcher {
         if (world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) world;
             ProtectionManager protect = protect(serverWorld);
-            try (EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos())) {
-                if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_BLOCKS)) {
-                    event.setCanceled(true);
-                }
+            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+            if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_BLOCKS)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -85,18 +81,17 @@ public final class ProtectionEventDispatcher {
         if (world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) world;
             ProtectionManager protect = protect(serverWorld);
-            try (EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos())) {
-                if (protect.denies(source, ProtectionRule.INTERACT)) {
-                    event.setCanceled(true);
-                    return;
-                }
+            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+            if (protect.denies(source, ProtectionRule.INTERACT)) {
+                event.setCanceled(true);
+                return;
+            }
 
-                if (protect.denies(source, ProtectionRule.INTERACT_BLOCKS)) {
-                    event.setUseBlock(Event.Result.DENY);
-                }
-                if (protect.denies(source, ProtectionRule.INTERACT_ITEMS) || (isBlockItem(event) && protect.denies(source, ProtectionRule.PLACE))) {
-                    event.setUseItem(Event.Result.DENY);
-                }
+            if (protect.denies(source, ProtectionRule.INTERACT_BLOCKS)) {
+                event.setUseBlock(Event.Result.DENY);
+            }
+            if (protect.denies(source, ProtectionRule.INTERACT_ITEMS) || (isBlockItem(event) && protect.denies(source, ProtectionRule.PLACE))) {
+                event.setUseItem(Event.Result.DENY);
             }
         }
     }
@@ -110,10 +105,9 @@ public final class ProtectionEventDispatcher {
         IWorld world = event.getWorld();
         if (world instanceof ServerWorld) {
             ProtectionManager protect = protect((ServerWorld) world);
-            try (EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos())) {
-                if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ITEMS)) {
-                    event.setCanceled(true);
-                }
+            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+            if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ITEMS)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -123,10 +117,9 @@ public final class ProtectionEventDispatcher {
         IWorld world = event.getWorld();
         if (world instanceof ServerWorld) {
             ProtectionManager protect = protect((ServerWorld) world);
-            try (EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos())) {
-                if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ENTITIES)) {
-                    event.setCanceled(true);
-                }
+            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+            if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ENTITIES)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -137,12 +130,11 @@ public final class ProtectionEventDispatcher {
         Entity target = event.getTarget();
         if (player instanceof ServerPlayerEntity && target.world instanceof ServerWorld) {
             ProtectionManager protect = protect((ServerWorld) target.world);
-            try (EventSource source = EventSource.forEntityAt(event.getPlayer(), target.getPosition())) {
-                if (protect.denies(source, ProtectionRule.ATTACK)) {
-                    event.setCanceled(true);
-                } else if (target instanceof PlayerEntity && protect.denies(source, ProtectionRule.PVP)) {
-                    event.setCanceled(true);
-                }
+            EventSource source = EventSource.forEntityAt(event.getPlayer(), target.getPosition());
+            if (protect.denies(source, ProtectionRule.ATTACK)) {
+                event.setCanceled(true);
+            } else if (target instanceof PlayerEntity && protect.denies(source, ProtectionRule.PVP)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -153,15 +145,14 @@ public final class ProtectionEventDispatcher {
         if (entity.world instanceof ServerWorld) {
             ProtectionManager protect = protect((ServerWorld) entity.world);
 
-            try (EventSource source = EventSource.forEntity(entity)) {
-                if (protect.denies(source, ProtectionRule.DAMAGE)) {
-                    event.setCanceled(true);
-                    return;
-                }
+            EventSource source = EventSource.forEntity(entity);
+            if (protect.denies(source, ProtectionRule.DAMAGE)) {
+                event.setCanceled(true);
+                return;
+            }
 
-                if (event.getSource() == DamageSource.FALL && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
-                    event.setCanceled(true);
-                }
+            if (event.getSource() == DamageSource.FALL && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -172,10 +163,9 @@ public final class ProtectionEventDispatcher {
         if (world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) world;
             ProtectionManager protect = protect(serverWorld);
-            try (EventSource source = EventSource.at(serverWorld, event.getPos())) {
-                if (protect.denies(source, ProtectionRule.PORTALS)) {
-                    event.setCanceled(true);
-                }
+            EventSource source = EventSource.at(serverWorld, event.getPos());
+            if (protect.denies(source, ProtectionRule.PORTALS)) {
+                event.setCanceled(true);
             }
         }
     }

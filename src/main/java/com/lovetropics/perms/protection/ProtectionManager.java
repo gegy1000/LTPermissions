@@ -13,6 +13,8 @@ import com.lovetropics.perms.protection.authority.map.SortedAuthorityHashMap;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
@@ -46,7 +48,7 @@ public final class ProtectionManager extends WorldSavedData {
     private final IndexedAuthorityMap<Authority> allAuthorities = new IndexedAuthorityMap<>();
 
     private BuiltinAuthority builtinUniverse = BuiltinAuthority.universe();
-    private final Map<RegistryKey<World>, BuiltinAuthority> builtinDimensions = new Reference2ObjectOpenHashMap<>();
+    private final Reference2ObjectMap<RegistryKey<World>, BuiltinAuthority> builtinDimensions = new Reference2ObjectOpenHashMap<>();
 
     private ProtectionManager() {
         super(KEY);
@@ -58,7 +60,7 @@ public final class ProtectionManager extends WorldSavedData {
     }
 
     public PermissionResult test(EventSource source, ProtectionRule rule) {
-        Iterable<Authority> authorities = this.allAuthorities.select(source.getDimension(), rule);
+        Iterable<Authority> authorities = this.allAuthorities.selectByDimension(source, rule);
         for (Authority authority : authorities) {
             if (!authority.eventFilter().accepts(source)) {
                 continue;
@@ -170,14 +172,35 @@ public final class ProtectionManager extends WorldSavedData {
     }
 
     public void replaceAuthority(Authority from, Authority to) {
-        if (from instanceof UserAuthority && to instanceof UserAuthority) {
-            UserAuthority userFrom = (UserAuthority) from;
-            UserAuthority userTo = (UserAuthority) to;
-            this.userAuthorities.replace(userFrom, userTo);
+        if (this.allAuthorities.replace(from, to)) {
+            if (from instanceof UserAuthority && to instanceof UserAuthority) {
+                this.replaceUserAuthority((UserAuthority) from, (UserAuthority) to);
+            }
+
+            if (from instanceof BuiltinAuthority && to instanceof BuiltinAuthority) {
+                this.replaceBuiltinAuthority((BuiltinAuthority) from, (BuiltinAuthority) to);
+            }
+
+            this.onAuthoritiesChanged();
+        }
+    }
+
+    private void replaceUserAuthority(UserAuthority from, UserAuthority to) {
+        this.userAuthorities.replace(from, to);
+    }
+
+    private void replaceBuiltinAuthority(BuiltinAuthority from, BuiltinAuthority to) {
+        if (from == this.builtinUniverse) {
+            this.builtinUniverse = to;
+            return;
         }
 
-        if (this.allAuthorities.replace(from, to)) {
-            this.onAuthoritiesChanged();
+        for (Reference2ObjectMap.Entry<RegistryKey<World>, BuiltinAuthority> entry : Reference2ObjectMaps.fastIterable(this.builtinDimensions)) {
+            BuiltinAuthority authority = entry.getValue();
+            if (authority == from) {
+                entry.setValue(to);
+                return;
+            }
         }
     }
 
