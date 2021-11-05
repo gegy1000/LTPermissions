@@ -50,7 +50,7 @@ public final class PlayerRoleManager {
     }
 
     @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void onPlayerLoggedIn(PlayerEvent.LoadFromFile event) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
         if (instance != null && event.getPlayer() instanceof ServerPlayerEntity) {
             instance.onPlayerJoin((ServerPlayerEntity) event.getPlayer());
@@ -80,9 +80,11 @@ public final class PlayerRoleManager {
     }
 
     public void onPlayerJoin(ServerPlayerEntity player) {
-        RolesConfig config = RolesConfig.get();
-        PlayerRoleSet roles = this.loadPlayerRoles(player, config);
-        this.database.tryLoadInto(player.getUniqueID(), roles);
+        if (!this.onlinePlayerRoles.containsKey(player.getUniqueID())) {
+            RolesConfig config = RolesConfig.get();
+            PlayerRoleSet roles = this.loadPlayerRoles(player, config);
+            this.database.tryLoadInto(player.getUniqueID(), roles);
+        }
     }
 
     public void onPlayerLeave(ServerPlayerEntity player) {
