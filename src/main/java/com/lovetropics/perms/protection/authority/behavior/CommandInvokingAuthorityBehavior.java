@@ -9,10 +9,12 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior {
     private final String[] enter;
     private final String[] exit;
+    private final boolean commandFeedback;
 
-    public CommandInvokingAuthorityBehavior(String[] enter, String[] exit) {
+    public CommandInvokingAuthorityBehavior(String[] enter, String[] exit, boolean commandFeedback) {
         this.enter = enter;
         this.exit = exit;
+        this.commandFeedback = commandFeedback;
     }
 
     @Override
@@ -42,6 +44,10 @@ public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior
     }
 
     private CommandSource getSource(ServerPlayerEntity player) {
-        return player.getCommandSource().withPermissionLevel(4);
+        CommandSource source = player.getCommandSource().withPermissionLevel(4);
+        if (!this.commandFeedback) {
+            source = source.withFeedbackDisabled();
+        }
+        return source;
     }
 }
