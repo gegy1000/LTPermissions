@@ -23,27 +23,31 @@ public final class ProtectionExclusions implements EventFilter {
     public static final Codec<ProtectionExclusions> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(
                 Codec.STRING.listOf().fieldOf("roles").forGetter(exclusions -> new ArrayList<>(exclusions.roles)),
-                UUID_CODEC.listOf().fieldOf("players").forGetter(exclusions -> new ArrayList<>(exclusions.players))
+                UUID_CODEC.listOf().fieldOf("players").forGetter(exclusions -> new ArrayList<>(exclusions.players)),
+                Codec.BOOL.optionalFieldOf("operators", true).forGetter(exclusions -> exclusions.operators)
         ).apply(instance, ProtectionExclusions::new);
     });
 
     private final Set<String> roles;
     private final Set<UUID> players;
+    private final boolean operators;
 
     private ProtectionExclusions() {
         this.roles = new ObjectOpenHashSet<>();
         this.players = new ObjectOpenHashSet<>();
+        this.operators = true;
     }
 
-    private ProtectionExclusions(Collection<String> roles, Collection<UUID> players) {
+    private ProtectionExclusions(Collection<String> roles, Collection<UUID> players, boolean operators) {
         this.roles = new ObjectOpenHashSet<>(roles);
         this.players = new ObjectOpenHashSet<>(players);
+        this.operators = operators;
     }
 
     public ProtectionExclusions addRole(Role role) {
         if (this.roles.contains(role.id())) return this;
 
-        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players, this.operators);
         result.roles.add(role.id());
         return result;
     }
@@ -51,7 +55,7 @@ public final class ProtectionExclusions implements EventFilter {
     public ProtectionExclusions removeRole(Role role) {
         if (!this.roles.contains(role.id())) return this;
 
-        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players, this.operators);
         result.roles.remove(role.id());
         return result;
     }
@@ -59,7 +63,7 @@ public final class ProtectionExclusions implements EventFilter {
     public ProtectionExclusions addPlayer(GameProfile profile) {
         if (this.players.contains(profile.getId())) return this;
 
-        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players, this.operators);
         result.players.add(profile.getId());
         return result;
     }
@@ -67,9 +71,15 @@ public final class ProtectionExclusions implements EventFilter {
     public ProtectionExclusions removePlayer(GameProfile profile) {
         if (!this.players.contains(profile.getId())) return this;
 
-        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players);
+        ProtectionExclusions result = new ProtectionExclusions(this.roles, this.players, this.operators);
         result.players.remove(profile.getId());
         return result;
+    }
+
+    public ProtectionExclusions withOperators(boolean operators) {
+        if (this.operators == operators) return this;
+
+        return new ProtectionExclusions(this.roles, this.players, operators);
     }
 
     public boolean isExcluded(PlayerEntity player) {
@@ -78,7 +88,7 @@ public final class ProtectionExclusions implements EventFilter {
         }
 
         if (player instanceof ServerPlayerEntity) {
-            if (player.hasPermissionLevel(4)) {
+            if (this.operators && player.hasPermissionLevel(4)) {
                 return true;
             }
 
@@ -104,6 +114,6 @@ public final class ProtectionExclusions implements EventFilter {
     }
 
     public boolean isEmpty() {
-        return this.players.isEmpty() && this.roles.isEmpty();
+        return this.players.isEmpty() && this.roles.isEmpty() && !this.operators;
     }
 }

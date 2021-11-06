@@ -16,7 +16,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 
-version = "0.1.12"
+version = "0.1.13"
 group = "com.lovetropics"
 archivesBaseName = "ltperms"
 

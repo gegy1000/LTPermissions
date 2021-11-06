@@ -49,6 +49,10 @@ public interface Authority extends Comparable<Authority> {
         return this.withExclusions(this.exclusions().removeRole(role));
     }
 
+    default Authority excludeOperators(boolean operators) {
+        return this.withExclusions(this.exclusions().withOperators(operators));
+    }
+
     default Authority addBehavior(ResourceLocation id) {
         return this.withBehavior(this.behavior().addBehavior(id));
     }

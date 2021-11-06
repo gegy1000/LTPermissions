@@ -116,6 +116,10 @@ public final class ProtectCommand {
                             .then(RoleArgument.argument("role")
                             .executes(ProtectCommand::addRoleExclusion)
                         )))
+                        .then(literal("operators")
+                            .then(AuthorityArgument.argumentAll("authority")
+                            .executes(context -> ProtectCommand.updateOperatorExclusion(context, true))
+                        ))
                     )
                     .then(literal("remove")
                         .then(literal("players")
@@ -128,6 +132,10 @@ public final class ProtectCommand {
                             .then(RoleArgument.argument("role")
                             .executes(ProtectCommand::removeRoleExclusion)
                         )))
+                        .then(literal("operators")
+                            .then(AuthorityArgument.argumentAll("authority")
+                            .executes(context -> ProtectCommand.updateOperatorExclusion(context, false))
+                        ))
                     )
                 )
                 .then(literal("behavior")
@@ -286,6 +294,10 @@ public final class ProtectCommand {
     private static int removeRoleExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
         Role role = RoleArgument.get(context, "role");
         return modifyExclusions(context, authority -> authority.removeExclusion(role));
+    }
+
+    private static int updateOperatorExclusion(CommandContext<CommandSource> context, boolean operators) throws CommandSyntaxException {
+        return modifyExclusions(context, authority -> authority.excludeOperators(operators));
     }
 
     private static int modifyExclusions(CommandContext<CommandSource> context, UnaryOperator<Authority> operator) throws CommandSyntaxException {
