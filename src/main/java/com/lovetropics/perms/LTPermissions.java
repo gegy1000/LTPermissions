@@ -28,13 +28,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.FMLNetworkConstants;
-import org.apache.commons.lang3.tuple.Pair;
+import net.minecraftforge.network.NetworkConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -86,8 +85,8 @@ public class LTPermissions {
         MinecraftForge.EVENT_BUS.addListener(this::onServerChat);
 
         // Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
-        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
-                () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class,
+                () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
     private void setup(FMLCommonSetupEvent event) {
@@ -112,7 +111,7 @@ public class LTPermissions {
         ProtectCommand.register(dispatcher);
 
         CommandAliasConfiguration aliasConfig = CommandAliasConfiguration.load();
-        for (Map.Entry<String, String[]> entry : aliasConfig.getAliases().entrySet()) {
+        for (Map.Entry<String, String[]> entry : aliasConfig.aliases().entrySet()) {
             String[] literals = entry.getKey().split(" ");
 
             LiteralArgumentBuilder<CommandSourceStack>[] nodes = new LiteralArgumentBuilder[literals.length];

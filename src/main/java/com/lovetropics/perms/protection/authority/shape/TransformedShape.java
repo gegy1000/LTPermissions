@@ -26,7 +26,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public final class TransformedShape implements AuthorityShape {
-    private static final Codec<Transform> TRANSFORM_CODEC = new Codec<Transform>() {
+    private static final Codec<Transform> TRANSFORM_CODEC = new Codec<>() {
         @Override
         public <T> DataResult<Pair<Transform, T>> decode(DynamicOps<T> ops, T input) {
             DataResult<Pair<AffineTransform, T>> result = AFFINE_TRANSFORM_CODEC.decode(ops, input);
@@ -69,12 +69,10 @@ public final class TransformedShape implements AuthorityShape {
                     transform -> Lists.newArrayList(TransformListGetter.apply(transform))
             );
 
-    public static final Codec<TransformedShape> CODEC = RecordCodecBuilder.create(instance -> {
-        return instance.group(
-                AuthorityShape.CODEC.fieldOf("shape").forGetter(c -> c.shape),
-                TRANSFORM_CODEC.fieldOf("transform").forGetter(c -> c.transform)
-        ).apply(instance, TransformedShape::new);
-    });
+    public static final Codec<TransformedShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+            AuthorityShape.CODEC.fieldOf("shape").forGetter(c -> c.shape),
+            TRANSFORM_CODEC.fieldOf("transform").forGetter(c -> c.transform)
+    ).apply(i, TransformedShape::new));
 
     private final AuthorityShape shape;
     private final Transform transform;

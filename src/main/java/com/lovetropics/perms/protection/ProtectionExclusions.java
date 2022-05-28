@@ -20,13 +20,11 @@ public final class ProtectionExclusions implements EventFilter {
 
     private static final Codec<UUID> UUID_CODEC = Codec.STRING.xmap(UUID::fromString, UUID::toString);
 
-    public static final Codec<ProtectionExclusions> CODEC = RecordCodecBuilder.create(instance -> {
-        return instance.group(
-                Codec.STRING.listOf().fieldOf("roles").forGetter(exclusions -> new ArrayList<>(exclusions.roles)),
-                UUID_CODEC.listOf().fieldOf("players").forGetter(exclusions -> new ArrayList<>(exclusions.players)),
-                Codec.BOOL.optionalFieldOf("operators", true).forGetter(exclusions -> exclusions.operators)
-        ).apply(instance, ProtectionExclusions::new);
-    });
+    public static final Codec<ProtectionExclusions> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.STRING.listOf().fieldOf("roles").forGetter(exclusions -> new ArrayList<>(exclusions.roles)),
+            UUID_CODEC.listOf().fieldOf("players").forGetter(exclusions -> new ArrayList<>(exclusions.players)),
+            Codec.BOOL.optionalFieldOf("operators", true).forGetter(exclusions -> exclusions.operators)
+    ).apply(i, ProtectionExclusions::new));
 
     private final Set<String> roles;
     private final Set<UUID> players;

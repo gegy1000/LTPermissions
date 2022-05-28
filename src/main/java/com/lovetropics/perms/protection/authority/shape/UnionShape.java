@@ -17,15 +17,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public final class UnionShape implements AuthorityShape {
+public record UnionShape(AuthorityShape... shapes) implements AuthorityShape {
     public static final Codec<UnionShape> CODEC = MoreCodecs.arrayOrUnit(AuthorityShape.CODEC, AuthorityShape[]::new)
             .xmap(UnionShape::new, shape -> shape.shapes);
-
-    private final AuthorityShape[] shapes;
-
-    public UnionShape(AuthorityShape... shapes) {
-        this.shapes = shapes;
-    }
 
     @Override
     public boolean accepts(EventSource source) {

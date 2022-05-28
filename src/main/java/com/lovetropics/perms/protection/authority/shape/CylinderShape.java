@@ -10,25 +10,23 @@ import com.sk89q.worldedit.math.Vector2;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.regions.CylinderRegion;
 import com.sk89q.worldedit.regions.Region;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
 
 public final class CylinderShape implements AuthorityShape {
-    public static final Codec<CylinderShape> CODEC = RecordCodecBuilder.create(instance -> {
-        return instance.group(
-                Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
-                Codec.INT.fieldOf("center_x").forGetter(c -> c.centerX),
-                Codec.INT.fieldOf("center_z").forGetter(c -> c.centerZ),
-                Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
-                Codec.INT.fieldOf("max_y").forGetter(c -> c.maxY),
-                Codec.INT.fieldOf("radius_x").forGetter(c -> c.radiusX),
-                Codec.INT.fieldOf("radius_z").forGetter(c -> c.radiusZ)
-        ).apply(instance, CylinderShape::new);
-    });
+    public static final Codec<CylinderShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+            Codec.INT.fieldOf("center_x").forGetter(c -> c.centerX),
+            Codec.INT.fieldOf("center_z").forGetter(c -> c.centerZ),
+            Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
+            Codec.INT.fieldOf("max_y").forGetter(c -> c.maxY),
+            Codec.INT.fieldOf("radius_x").forGetter(c -> c.radiusX),
+            Codec.INT.fieldOf("radius_z").forGetter(c -> c.radiusZ)
+    ).apply(i, CylinderShape::new));
 
     private final ResourceKey<Level> dimension;
     private final int centerX;

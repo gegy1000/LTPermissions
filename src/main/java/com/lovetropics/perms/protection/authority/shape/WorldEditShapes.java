@@ -26,15 +26,13 @@ public final class WorldEditShapes {
         if (region != null) {
             if (region instanceof CuboidRegion) {
                 return new CuboidRegionSelector(region.getWorld(), region.getMinimumPoint(), region.getMaximumPoint());
-            } else if (region instanceof CylinderRegion) {
-                CylinderRegion cylinder = (CylinderRegion) region;
+            } else if (region instanceof CylinderRegion cylinder) {
                 return new CylinderRegionSelector(
                         region.getWorld(),
                         cylinder.getCenter().toVector2().toBlockPoint(), cylinder.getRadius(),
                         cylinder.getMinimumY(), cylinder.getMaximumY()
                 );
-            } else if (region instanceof Polygonal2DRegion) {
-                Polygonal2DRegion polygon = (Polygonal2DRegion) region;
+            } else if (region instanceof Polygonal2DRegion polygon) {
                 return new Polygonal2DRegionSelector(
                         polygon.getWorld(), polygon.getPoints(),
                         polygon.getMinimumY(), polygon.getMaximumY()

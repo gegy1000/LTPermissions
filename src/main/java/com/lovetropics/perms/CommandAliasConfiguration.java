@@ -16,18 +16,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public final class CommandAliasConfiguration {
+public record CommandAliasConfiguration(Map<String, String[]> aliases) {
     private static final CommandAliasConfiguration EMPTY = new CommandAliasConfiguration(ImmutableMap.of());
-    private static final JsonParser JSON = new JsonParser();
 
     public static final Codec<CommandAliasConfiguration> CODEC = Codec.unboundedMap(Codec.STRING, MoreCodecs.arrayOrUnit(Codec.STRING, String[]::new))
-            .xmap(CommandAliasConfiguration::new, CommandAliasConfiguration::getAliases);
-
-    private final Map<String, String[]> aliases;
-
-    private CommandAliasConfiguration(Map<String, String[]> aliases) {
-        this.aliases = aliases;
-    }
+            .xmap(CommandAliasConfiguration::new, CommandAliasConfiguration::aliases);
 
     public static CommandAliasConfiguration load() {
         Path path = Paths.get("config/command_aliases.json");
@@ -38,7 +31,7 @@ public final class CommandAliasConfiguration {
         }
 
         try (BufferedReader reader = Files.newBufferedReader(path)) {
-            JsonObject root = JSON.parse(reader).getAsJsonObject();
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
             DataResult<CommandAliasConfiguration> result = CODEC.parse(JsonOps.INSTANCE, root);
             result.error().ifPresent(error -> {
                 LTPermissions.LOGGER.warn("Malformed command aliases configuration: {}", error);
@@ -59,9 +52,5 @@ public final class CommandAliasConfiguration {
             LTPermissions.LOGGER.warn("Failed to load default command_aliases.json configuration", e);
             return false;
         }
-    }
-
-    public Map<String, String[]> getAliases() {
-        return this.aliases;
     }
 }

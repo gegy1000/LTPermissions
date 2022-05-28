@@ -11,16 +11,14 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 public final class UserAuthority implements Authority {
-    public static final Codec<UserAuthority> CODEC = RecordCodecBuilder.create(instance -> {
-        return instance.group(
-                Codec.STRING.fieldOf("key").forGetter(a -> a.key),
-                Codec.INT.fieldOf("level").forGetter(a -> a.level),
-                AuthorityShapes.CODEC.fieldOf("shapes").forGetter(a -> a.shapes),
-                ProtectionRuleMap.CODEC.fieldOf("rules").forGetter(a -> a.rules),
-                ProtectionExclusions.CODEC.fieldOf("exclusions").forGetter(a -> a.exclusions),
-                AuthorityBehaviorMap.CODEC.fieldOf("behavior").forGetter(a -> a.behavior)
-        ).apply(instance, UserAuthority::new);
-    });
+    public static final Codec<UserAuthority> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.STRING.fieldOf("key").forGetter(a -> a.key),
+            Codec.INT.fieldOf("level").forGetter(a -> a.level),
+            AuthorityShapes.CODEC.fieldOf("shapes").forGetter(a -> a.shapes),
+            ProtectionRuleMap.CODEC.fieldOf("rules").forGetter(a -> a.rules),
+            ProtectionExclusions.CODEC.fieldOf("exclusions").forGetter(a -> a.exclusions),
+            AuthorityBehaviorMap.CODEC.fieldOf("behavior").forGetter(a -> a.behavior)
+    ).apply(i, UserAuthority::new));
 
     private final String key;
     private final int level;

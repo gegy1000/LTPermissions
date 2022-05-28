@@ -28,7 +28,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -51,12 +50,11 @@ public final class ProtectionManager extends SavedData {
     private final Reference2ObjectMap<ResourceKey<Level>, BuiltinAuthority> builtinDimensions = new Reference2ObjectOpenHashMap<>();
 
     private ProtectionManager() {
-        super(KEY);
         this.allAuthorities.add(this.builtinUniverse);
     }
 
     public static ProtectionManager get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(ProtectionManager::new, KEY);
+        return server.overworld().getDataStorage().computeIfAbsent(ProtectionManager::read, ProtectionManager::new, KEY);
     }
 
     public PermissionResult test(EventSource source, ProtectionRule rule) {
@@ -267,20 +265,23 @@ public final class ProtectionManager extends SavedData {
         return root;
     }
 
-    @Override
-    public void load(CompoundTag root) {
-        ListTag authoritiesList = root.getList("authorities", Constants.NBT.TAG_COMPOUND);
+    public static ProtectionManager read(CompoundTag root) {
+        final ProtectionManager manager = new ProtectionManager();
+
+        ListTag authoritiesList = root.getList("authorities", Tag.TAG_COMPOUND);
 
         for (Tag authorityTag : authoritiesList) {
             UserAuthority.CODEC.decode(NbtOps.INSTANCE, authorityTag)
                     .map(Pair::getFirst)
                     .result()
-                    .ifPresent(this::addAuthority);
+                    .ifPresent(manager::addAuthority);
         }
 
-        this.readBuiltin(root.getCompound("builtin"));
+        manager.readBuiltin(root.getCompound("builtin"));
 
-        this.onAuthoritiesChanged();
+        manager.onAuthoritiesChanged();
+
+        return manager;
     }
 
     private void readBuiltin(CompoundTag root) {

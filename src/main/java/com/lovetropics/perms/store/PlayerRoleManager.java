@@ -5,14 +5,14 @@ import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.role.RoleReader;
 import com.lovetropics.perms.store.db.PlayerRoleDatabase;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
@@ -36,12 +36,12 @@ public final class PlayerRoleManager {
     }
 
     @SubscribeEvent
-    public static void onServerStarting(FMLServerStartingEvent event) {
+    public static void onServerStarting(ServerStartingEvent event) {
         instance = PlayerRoleManager.open(event.getServer());
     }
 
     @SubscribeEvent
-    public static void onServerStopped(FMLServerStoppedEvent event) {
+    public static void onServerStopped(ServerStoppedEvent event) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
         if (instance != null) {
             PlayerRoleManager.instance = null;

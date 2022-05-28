@@ -5,14 +5,8 @@ import com.mojang.serialization.Codec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
-public final class DimensionShape implements AuthorityShape {
+public record DimensionShape(ResourceKey<Level> dimension) implements AuthorityShape {
     public static final Codec<DimensionShape> CODEC = Level.RESOURCE_KEY_CODEC.xmap(DimensionShape::new, shape -> shape.dimension);
-
-    private final ResourceKey<Level> dimension;
-
-    public DimensionShape(ResourceKey<Level> dimension) {
-        this.dimension = dimension;
-    }
 
     @Override
     public boolean accepts(EventSource source) {

@@ -15,21 +15,11 @@ import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
 
-public final class BoxShape implements AuthorityShape {
-    public static final Codec<BoxShape> CODEC = RecordCodecBuilder.create(instance -> {
-        return instance.group(
-                Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
-                BlockBox.CODEC.fieldOf("box").forGetter(c -> c.box)
-        ).apply(instance, BoxShape::new);
-    });
-
-    private final ResourceKey<Level> dimension;
-    private final BlockBox box;
-
-    public BoxShape(ResourceKey<Level> dimension, BlockBox box) {
-        this.dimension = dimension;
-        this.box = box;
-    }
+public record BoxShape(ResourceKey<Level> dimension, BlockBox box) implements AuthorityShape {
+    public static final Codec<BoxShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+            BlockBox.CODEC.fieldOf("box").forGetter(c -> c.box)
+    ).apply(i, BoxShape::new));
 
     @Override
     public boolean accepts(EventSource source) {
@@ -56,8 +46,8 @@ public final class BoxShape implements AuthorityShape {
         ServerLevel world = server.getLevel(this.dimension);
         return new CuboidRegion(
                 ForgeAdapter.adapt(world),
-                ForgeAdapter.adapt(this.box.min),
-                ForgeAdapter.adapt(this.box.max)
+                ForgeAdapter.adapt(this.box.min()),
+                ForgeAdapter.adapt(this.box.max())
         );
     }
 }

@@ -1,10 +1,12 @@
 buildscript {
   repositories {
     maven { url = 'https://maven.minecraftforge.net' }
+    maven { url = 'https://maven.parchmentmc.org' }
     mavenCentral()
   }
   dependencies {
     classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+    classpath "org.parchmentmc:librarian:1.+"
   }
 }
 
@@ -13,21 +15,21 @@ plugins {
 }
 
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.parchmentmc.librarian.forgegradle'
 apply plugin: 'eclipse'
 
-version = "0.1.14"
+version = "0.2.0"
 group = "com.lovetropics"
 archivesBaseName = "ltperms"
 
-sourceCompatibility = targetCompatibility = '1.8'
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-  mappings channel: 'official', version: '1.16.5'
+  mappings channel: 'parchment', version: "${parchment_version}-${minecraft_version}"
   runs {
     client {
       workingDirectory project.file('run')
-      property 'forge.logging.markers', 'REGISTRIES'
-      property 'forge.logging.console.level', 'debug'
+      property 'forge.logging.console.level', 'info'
       mods {
         ltperms {
           sources sourceSets.main
@@ -36,8 +38,7 @@ minecraft {
     }
     server {
       workingDirectory project.file('run')
-      property 'forge.logging.markers', 'REGISTRIES'
-      property 'forge.logging.console.level', 'debug'
+      property 'forge.logging.console.level', 'info'
       mods {
         ltperms {
           sources sourceSets.main
@@ -50,8 +51,6 @@ minecraft {
 
 configurations {
   shade
-  shadelib
-  implementation.extendsFrom shadelib
 }
 
 repositories {
@@ -62,20 +61,20 @@ repositories {
 }
 
 dependencies {
-  minecraft 'net.minecraftforge:forge:1.16.5-36.1.2'
+  minecraft "net.minecraftforge:forge:$minecraft_version-$forge_version"
 
-  def ltlib = "com.lovetropics.lib:LTLib:1.1.0-release+3"
+  def ltlib = "com.lovetropics.lib:LTLib:1.2.0-release+3"
   implementation fg.deobf(ltlib)
   shade ltlib
 
-  implementation "com.sk89q.worldedit:worldedit-core:7.2.6-SNAPSHOT"
-  implementation fg.deobf("com.sk89q.worldedit:worldedit-forge-mc1.16.3:7.2.6-SNAPSHOT")
+  implementation "com.sk89q.worldedit:worldedit-core:7.2.11-SNAPSHOT"
+  implementation fg.deobf("com.sk89q.worldedit:worldedit-forge-mc1.18.2:7.2.11-SNAPSHOT")
 
-  implementation fg.deobf('com.github.hexomod:WorldEdit-CUI-FE3:1.16.5-3.0.9')
+//  implementation fg.deobf('com.github.hexomod:WorldEdit-CUI-FE3:1.16.5-3.0.9')
 }
 
 shadowJar {
-  configurations = [project.configurations.shade, project.configurations.shadelib]
+  configurations = [project.configurations.shade]
   relocate 'com.lovetropics.lib', 'com.lovetropics.perms.repack.ltlib'
   classifier = ''
 }

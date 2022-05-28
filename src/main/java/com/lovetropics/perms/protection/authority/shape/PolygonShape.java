@@ -18,14 +18,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public final class PolygonShape implements AuthorityShape {
-    public static final Codec<PolygonShape> CODEC = RecordCodecBuilder.create(instance -> {
-        return instance.group(
-                Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
-                BlockPos.CODEC.listOf().fieldOf("points").forGetter(c -> c.points),
-                Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
-                Codec.INT.fieldOf("max_y").forGetter(c -> c.maxY)
-        ).apply(instance, PolygonShape::new);
-    });
+    public static final Codec<PolygonShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+            BlockPos.CODEC.listOf().fieldOf("points").forGetter(c -> c.points),
+            Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
+            Codec.INT.fieldOf("max_y").forGetter(c -> c.maxY)
+    ).apply(i, PolygonShape::new));
 
     private final ResourceKey<Level> dimension;
     private final List<BlockPos> points;
