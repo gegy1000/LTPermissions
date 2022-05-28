@@ -1,11 +1,10 @@
 buildscript {
   repositories {
-    maven { url = "http://files.minecraftforge.net/maven" }
-    jcenter()
+    maven { url = 'https://maven.minecraftforge.net' }
     mavenCentral()
   }
   dependencies {
-    classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
+    classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
   }
 }
 
@@ -56,7 +55,7 @@ configurations {
 }
 
 repositories {
-  maven { url "http://maven.tterrag.com/" }
+  maven { url "https://maven.tterrag.com/" }
   maven { url "https://maven.enginehub.org/repo/" }
 
   flatDir { dirs 'libs/' }

@@ -11,16 +11,16 @@ import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.regions.CylinderRegion;
 import com.sk89q.worldedit.regions.Region;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 
 public final class CylinderShape implements AuthorityShape {
     public static final Codec<CylinderShape> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(
-                World.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+                Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
                 Codec.INT.fieldOf("center_x").forGetter(c -> c.centerX),
                 Codec.INT.fieldOf("center_z").forGetter(c -> c.centerZ),
                 Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
@@ -30,7 +30,7 @@ public final class CylinderShape implements AuthorityShape {
         ).apply(instance, CylinderShape::new);
     });
 
-    private final RegistryKey<World> dimension;
+    private final ResourceKey<Level> dimension;
     private final int centerX;
     private final int centerZ;
     private final int minY;
@@ -40,7 +40,7 @@ public final class CylinderShape implements AuthorityShape {
 
     private final BlockBox bounds;
 
-    public CylinderShape(RegistryKey<World> dimension, int centerX, int centerZ, int minY, int maxY, int radiusX, int radiusZ) {
+    public CylinderShape(ResourceKey<Level> dimension, int centerX, int centerZ, int minY, int maxY, int radiusX, int radiusZ) {
         this.dimension = dimension;
         this.centerX = centerX;
         this.centerZ = centerZ;
@@ -57,7 +57,7 @@ public final class CylinderShape implements AuthorityShape {
 
     @Override
     public boolean accepts(EventSource source) {
-        RegistryKey<World> dimension = source.getDimension();
+        ResourceKey<Level> dimension = source.getDimension();
         if (!this.acceptsDimension(dimension)) return false;
 
         BlockPos pos = source.getPos();
@@ -72,7 +72,7 @@ public final class CylinderShape implements AuthorityShape {
         }
     }
 
-    private boolean acceptsDimension(RegistryKey<World> dimension) {
+    private boolean acceptsDimension(ResourceKey<Level> dimension) {
         return dimension == null || dimension == this.dimension;
     }
 
@@ -82,7 +82,7 @@ public final class CylinderShape implements AuthorityShape {
     }
 
     public static CylinderShape fromRegion(CylinderRegion region) {
-        RegistryKey<World> dimension = WorldEditShapes.asDimension(region.getWorld());
+        ResourceKey<Level> dimension = WorldEditShapes.asDimension(region.getWorld());
         Vector3 center = region.getCenter();
         Vector2 radius = region.getRadius();
         int minY = region.getMinimumY();
@@ -90,15 +90,15 @@ public final class CylinderShape implements AuthorityShape {
 
         return new CylinderShape(
                 dimension,
-                MathHelper.floor(center.getX()), MathHelper.floor(center.getZ()),
+                Mth.floor(center.getX()), Mth.floor(center.getZ()),
                 minY, maxY,
-                MathHelper.floor(radius.getX()), MathHelper.floor(radius.getZ())
+                Mth.floor(radius.getX()), Mth.floor(radius.getZ())
         );
     }
 
     @Override
     public Region tryIntoRegion(MinecraftServer server) {
-        ServerWorld world = server.getLevel(this.dimension);
+        ServerLevel world = server.getLevel(this.dimension);
         return new CylinderRegion(
                 ForgeAdapter.adapt(world),
                 BlockVector3.at(this.centerX, 0, this.centerZ),

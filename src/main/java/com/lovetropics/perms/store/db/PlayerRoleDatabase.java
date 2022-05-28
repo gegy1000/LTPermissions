@@ -2,8 +2,8 @@ package com.lovetropics.perms.store.db;
 
 import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.store.PlayerRoleSet;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraftforge.common.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,11 +60,11 @@ public final class PlayerRoleDatabase implements Closeable {
     }
 
     private static ByteBuffer serializeRoles(PlayerRoleSet roles) throws IOException {
-        CompoundNBT nbt = new CompoundNBT();
+        CompoundTag nbt = new CompoundTag();
         nbt.put("roles", roles.serialize());
 
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            CompressedStreamTools.writeCompressed(nbt, output);
+            NbtIo.writeCompressed(nbt, output);
             return ByteBuffer.wrap(output.toByteArray());
         }
     }
@@ -73,7 +73,7 @@ public final class PlayerRoleDatabase implements Closeable {
         RolesConfig config = RolesConfig.get();
 
         try (ByteArrayInputStream input = new ByteArrayInputStream(bytes.array())) {
-            CompoundNBT nbt = CompressedStreamTools.readCompressed(input);
+            CompoundTag nbt = NbtIo.readCompressed(input);
             roles.deserialize(config, nbt.getList("roles", Constants.NBT.TAG_STRING));
             roles.rebuildOverridesAndInitialize();
         }

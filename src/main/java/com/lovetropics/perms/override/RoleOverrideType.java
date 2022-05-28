@@ -2,7 +2,7 @@ package com.lovetropics.perms.override;
 
 import com.lovetropics.lib.codec.CodecRegistry;
 import com.mojang.serialization.Codec;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
 
@@ -43,13 +43,13 @@ public final class RoleOverrideType<T> {
         return this.codec;
     }
 
-    public void notifyInitialize(ServerPlayerEntity player) {
+    public void notifyInitialize(ServerPlayer player) {
         if (this.initializeListener != null) {
             this.initializeListener.accept(player);
         }
     }
 
-    public void notifyChange(ServerPlayerEntity player) {
+    public void notifyChange(ServerPlayer player) {
         if (this.changeListener != null) {
             this.changeListener.accept(player);
         }

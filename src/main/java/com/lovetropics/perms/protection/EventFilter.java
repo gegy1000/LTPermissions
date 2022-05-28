@@ -1,16 +1,16 @@
 package com.lovetropics.perms.protection;
 
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 public interface EventFilter {
     static EventFilter universe() {
         return source -> true;
     }
 
-    static EventFilter dimension(RegistryKey<World> dimension) {
+    static EventFilter dimension(ResourceKey<Level> dimension) {
         return source -> {
-            RegistryKey<World> sourceDimension = source.getDimension();
+            ResourceKey<Level> sourceDimension = source.getDimension();
             return sourceDimension == null || sourceDimension == dimension;
         };
     }

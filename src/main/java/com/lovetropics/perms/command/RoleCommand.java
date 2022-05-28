@@ -14,17 +14,17 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.command.arguments.GameProfileArgument;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentUtils;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.ComponentUtils;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TranslatableComponent;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -34,30 +34,30 @@ import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static net.minecraft.command.Commands.argument;
-import static net.minecraft.command.Commands.literal;
+import staticnet.minecraft.commands.Commandss.literal;
 
 public final class RoleCommand {
     public static final DynamicCommandExceptionType ROLE_NOT_FOUND = new DynamicCommandExceptionType(arg -> {
-        return new TranslationTextComponent("Role with name '%s' was not found!", arg);
+        return new TranslatableComponent("Role with name '%s' was not found!", arg);
     });
 
     public static final SimpleCommandExceptionType ROLE_POWER_TOO_LOW = new SimpleCommandExceptionType(
-            new StringTextComponent("You do not have sufficient power to manage this role")
+            new TextComponent("You do not have sufficient power to manage this role")
     );
 
     public static final SimpleCommandExceptionType TOO_MANY_SELECTED = new SimpleCommandExceptionType(
-            new StringTextComponent("Too many players selected!")
+            new TextComponent("Too many players selected!")
     );
 
     // @formatter:off
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(literal("role")
                 .requires(s -> s.hasPermission(4))
                 .then(literal("assign")
                     .then(argument("targets", GameProfileArgument.gameProfile())
                     .then(argument("role", StringArgumentType.word()).suggests(roleSuggestions())
                     .executes(ctx -> {
-                        CommandSource source = ctx.getSource();
+                        CommandSourceStack source = ctx.getSource();
                         Collection<GameProfile> targets = GameProfileArgument.getGameProfiles(ctx, "targets");
                         String roleName = StringArgumentType.getString(ctx, "role");
                         return updateRoles(source, targets, roleName, PlayerRoleSet::add, "'%s' assigned to %s players");
@@ -67,7 +67,7 @@ public final class RoleCommand {
                     .then(argument("targets", GameProfileArgument.gameProfile())
                     .then(argument("role", StringArgumentType.word()).suggests(roleSuggestions())
                     .executes(ctx -> {
-                        CommandSource source = ctx.getSource();
+                        CommandSourceStack source = ctx.getSource();
                         Collection<GameProfile> targets = GameProfileArgument.getGameProfiles(ctx, "targets");
                         String roleName = StringArgumentType.getString(ctx, "role");
                         return updateRoles(source, targets, roleName, PlayerRoleSet::remove, "'%s' removed from %s players");
@@ -75,7 +75,7 @@ public final class RoleCommand {
                 )))
                 .then(literal("list")
                     .then(argument("target", GameProfileArgument.gameProfile()).executes(ctx -> {
-                        CommandSource source = ctx.getSource();
+                        CommandSourceStack source = ctx.getSource();
                         Collection<GameProfile> gameProfiles = GameProfileArgument.getGameProfiles(ctx, "target");
                         if (gameProfiles.size() != 1) {
                             throw TOO_MANY_SELECTED.create();
@@ -88,7 +88,7 @@ public final class RoleCommand {
     }
     // @formatter:on
 
-    private static int updateRoles(CommandSource source, Collection<GameProfile> players, String roleName, BiPredicate<PlayerRoleSet, Role> apply, String success) throws CommandSyntaxException {
+    private static int updateRoles(CommandSourceStack source, Collection<GameProfile> players, String roleName, BiPredicate<PlayerRoleSet, Role> apply, String success) throws CommandSyntaxException {
         Role role = getRole(roleName);
         requireHasPower(source, role);
 
@@ -102,23 +102,23 @@ public final class RoleCommand {
             }
         }
 
-        source.sendSuccess(new TranslationTextComponent(success, roleName, count), true);
+        source.sendSuccess(new TranslatableComponent(success, roleName, count), true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int listRoles(CommandSource source, GameProfile player) {
+    private static int listRoles(CommandSourceStack source, GameProfile player) {
         PlayerRoleManager roleManager = PlayerRoleManager.get();
 
         List<Role> roles = roleManager.peekRoles(player.getId())
                 .stream().collect(Collectors.toList());
-        ITextComponent rolesComponent = TextComponentUtils.formatList(roles, role -> new StringTextComponent(role.id()).setStyle(Style.EMPTY.withColor(TextFormatting.GRAY)));
-        source.sendSuccess(new TranslationTextComponent("Found %s roles on player: %s", roles.size(), rolesComponent), false);
+        Component rolesComponent = ComponentUtils.formatList(roles, role -> new TextComponent(role.id()).setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
+        source.sendSuccess(new TranslatableComponent("Found %s roles on player: %s", roles.size(), rolesComponent), false);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int reloadRoles(CommandSource source) {
+    private static int reloadRoles(CommandSourceStack source) {
         MinecraftServer server = source.getServer();
 
         server.execute(() -> {
@@ -128,9 +128,9 @@ public final class RoleCommand {
             roleManager.onRoleReload(server, RolesConfig.get());
 
             if (errors.isEmpty()) {
-                source.sendSuccess(new StringTextComponent("Role configuration successfully reloaded"), false);
+                source.sendSuccess(new TextComponent("Role configuration successfully reloaded"), false);
             } else {
-                IFormattableTextComponent errorFeedback = new StringTextComponent("Failed to reload roles configuration!");
+                MutableComponent errorFeedback = new TextComponent("Failed to reload roles configuration!");
                 for (String error : errors) {
                     errorFeedback = errorFeedback.append("\n - " + error);
                 }
@@ -141,7 +141,7 @@ public final class RoleCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void requireHasPower(CommandSource source, Role role) throws CommandSyntaxException {
+    private static void requireHasPower(CommandSourceStack source, Role role) throws CommandSyntaxException {
         if (hasAdminPower(source)) {
             return;
         }
@@ -158,15 +158,15 @@ public final class RoleCommand {
         return role;
     }
 
-    private static SuggestionProvider<CommandSource> roleSuggestions() {
+    private static SuggestionProvider<CommandSourceStack> roleSuggestions() {
         return (ctx, builder) -> {
-            CommandSource source = ctx.getSource();
+            CommandSourceStack source = ctx.getSource();
 
             boolean admin = hasAdminPower(source);
             Role highestRole = getHighestRole(source);
             Comparator<Role> comparator = Comparator.<Role>nullsLast(Comparator.<Role>naturalOrder());
 
-            return ISuggestionProvider.suggest(
+            return SharedSuggestionProvider.suggest(
                     RolesConfig.get().stream()
                             .filter(role -> admin || comparator.compare(role, highestRole) < 0)
                             .map(Role::id),
@@ -176,13 +176,13 @@ public final class RoleCommand {
     }
 
     @Nullable
-    private static Role getHighestRole(CommandSource source) {
+    private static Role getHighestRole(CommandSourceStack source) {
         return LTPermissions.lookup().bySource(source).stream()
                 .min(Comparator.naturalOrder())
                 .orElse(null);
     }
 
-    private static boolean hasAdminPower(CommandSource source) {
+    private static boolean hasAdminPower(CommandSourceStack source) {
         return source.getEntity() == null || CommandOverride.doesBypassPermissions(source);
     }
 }

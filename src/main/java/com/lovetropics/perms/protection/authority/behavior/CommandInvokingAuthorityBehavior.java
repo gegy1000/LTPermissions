@@ -2,9 +2,9 @@ package com.lovetropics.perms.protection.authority.behavior;
 
 import com.lovetropics.perms.LTPermissions;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
 
 public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior {
     private final String[] enter;
@@ -18,21 +18,21 @@ public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior
     }
 
     @Override
-    public void onPlayerEnter(ServerPlayerEntity player) {
+    public void onPlayerEnter(ServerPlayer player) {
         this.invokeCommands(player, this.enter);
     }
 
     @Override
-    public void onPlayerExit(ServerPlayerEntity player) {
+    public void onPlayerExit(ServerPlayer player) {
         this.invokeCommands(player, this.exit);
     }
 
-    private void invokeCommands(ServerPlayerEntity player, String[] commands) {
+    private void invokeCommands(ServerPlayer player, String[] commands) {
         if (commands.length == 0) {
             return;
         }
 
-        CommandSource source = this.getSource(player);
+        CommandSourceStack source = this.getSource(player);
         Commands commandManager = player.server.getCommands();
         for (String command : commands) {
             try {
@@ -43,8 +43,8 @@ public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior
         }
     }
 
-    private CommandSource getSource(ServerPlayerEntity player) {
-        CommandSource source = player.createCommandSourceStack().withPermission(4);
+    private CommandSourceStack getSource(ServerPlayer player) {
+        CommandSourceStack source = player.createCommandSourceStack().withPermission(4);
         if (!this.commandFeedback) {
             source = source.withSuppressedOutput();
         }

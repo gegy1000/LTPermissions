@@ -1,30 +1,30 @@
 package com.lovetropics.perms;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.ChatFormatting;
 
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-public enum PermissionResult implements IStringSerializable {
-    PASS("pass", TextFormatting.AQUA),
-    ALLOW("allow", TextFormatting.GREEN),
-    DENY("deny", TextFormatting.RED);
+public enum PermissionResult implements StringRepresentable {
+    PASS("pass", ChatFormatting.AQUA),
+    ALLOW("allow", ChatFormatting.GREEN),
+    DENY("deny", ChatFormatting.RED);
 
-    public static final Codec<PermissionResult> CODEC = IStringSerializable.fromEnum(PermissionResult::values, PermissionResult::byKey);
+    public static final Codec<PermissionResult> CODEC = StringRepresentable.fromEnum(PermissionResult::values, PermissionResult::byKey);
 
     private static final String[] KEYS = { "pass", "allow", "deny" };
 
     private final String key;
-    private final ITextComponent name;
+    private final Component name;
 
-    PermissionResult(String key, TextFormatting color) {
+    PermissionResult(String key, ChatFormatting color) {
         this.key = key;
-        this.name = new StringTextComponent(key).withStyle(color);
+        this.name = new TextComponent(key).withStyle(color);
     }
 
     public boolean isTerminator() {
@@ -56,7 +56,7 @@ public enum PermissionResult implements IStringSerializable {
         return this.key;
     }
 
-    public ITextComponent getName() {
+    public Component getName() {
         return this.name;
     }
 

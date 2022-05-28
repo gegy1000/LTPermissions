@@ -7,8 +7,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -29,23 +29,23 @@ public final class ProtectionPlayerTracker {
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        PlayerEntity player = event.getPlayer();
+        Player player = event.getPlayer();
         INSTANCE.trackers.remove(player.getUUID());
     }
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        PlayerEntity player = event.player;
-        if (event.phase == TickEvent.Phase.END && player instanceof ServerPlayerEntity) {
-            INSTANCE.tickPlayer((ServerPlayerEntity) player);
+        Player player = event.player;
+        if (event.phase == TickEvent.Phase.END && player instanceof ServerPlayer) {
+            INSTANCE.tickPlayer((ServerPlayer) player);
         }
     }
 
     @SubscribeEvent
     public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        PlayerEntity player = event.getPlayer();
-        if (player instanceof ServerPlayerEntity) {
-            INSTANCE.onPlayerChangeDimension((ServerPlayerEntity) player);
+        Player player = event.getPlayer();
+        if (player instanceof ServerPlayer) {
+            INSTANCE.onPlayerChangeDimension((ServerPlayer) player);
         }
     }
 
@@ -53,11 +53,11 @@ public final class ProtectionPlayerTracker {
         this.queuedReinitialize.addAll(this.trackers.keySet());
     }
 
-    private void onPlayerChangeDimension(ServerPlayerEntity player) {
+    private void onPlayerChangeDimension(ServerPlayer player) {
         this.queuedReinitialize.add(player.getUUID());
     }
 
-    private void tickPlayer(ServerPlayerEntity player) {
+    private void tickPlayer(ServerPlayer player) {
         UUID uuid = player.getUUID();
         Tracker tracker = this.getOrInitializeTracker(player, uuid);
 
@@ -68,7 +68,7 @@ public final class ProtectionPlayerTracker {
         }
     }
 
-    private Tracker getOrInitializeTracker(ServerPlayerEntity player, UUID uuid) {
+    private Tracker getOrInitializeTracker(ServerPlayer player, UUID uuid) {
         Object2ObjectMap<UUID, Tracker> trackers = this.trackers;
         Tracker tracker = trackers.get(uuid);
 
@@ -86,7 +86,7 @@ public final class ProtectionPlayerTracker {
         return tracker;
     }
 
-    private Tracker initializeTracker(ServerPlayerEntity player) {
+    private Tracker initializeTracker(ServerPlayer player) {
         ProtectionManager protection = ProtectionManager.get(player.server);
 
         Tracker tracker = new Tracker();
@@ -110,7 +110,7 @@ public final class ProtectionPlayerTracker {
     }
 
     // TODO: consolidate with movement logic?
-    private void onTrackerReinitialized(ServerPlayerEntity player, Tracker lastTracker, Tracker newTracker) {
+    private void onTrackerReinitialized(ServerPlayer player, Tracker lastTracker, Tracker newTracker) {
         for (Authority authority : newTracker.inside) {
             if (!lastTracker.inside.contains(authority)) {
                 this.onPlayerEnter(player, authority);
@@ -124,7 +124,7 @@ public final class ProtectionPlayerTracker {
         }
     }
 
-    private void onPlayerMoved(ServerPlayerEntity player, Tracker tracker) {
+    private void onPlayerMoved(ServerPlayer player, Tracker tracker) {
         EventSource source = EventSource.forEntity(player);
 
         // TODO: how can we optimise this further?
@@ -150,11 +150,11 @@ public final class ProtectionPlayerTracker {
         }
     }
 
-    private void onPlayerEnter(ServerPlayerEntity player, Authority authority) {
+    private void onPlayerEnter(ServerPlayer player, Authority authority) {
         authority.behavior().getBehavior().onPlayerEnter(player);
     }
 
-    private void onPlayerExit(ServerPlayerEntity player, Authority authority) {
+    private void onPlayerExit(ServerPlayer player, Authority authority) {
         authority.behavior().getBehavior().onPlayerExit(player);
     }
 

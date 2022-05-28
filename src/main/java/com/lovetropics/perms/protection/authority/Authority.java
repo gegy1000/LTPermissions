@@ -8,7 +8,7 @@ import com.lovetropics.perms.protection.ProtectionRuleMap;
 import com.lovetropics.perms.protection.authority.behavior.AuthorityBehaviorMap;
 import com.lovetropics.perms.role.Role;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 public interface Authority extends Comparable<Authority> {
     String key();

@@ -7,28 +7,28 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.TranslatableComponent;
 
 public final class AuthorityShapeArgument {
     private static final DynamicCommandExceptionType SHAPE_NOT_FOUND = new DynamicCommandExceptionType(arg ->
-            new TranslationTextComponent("Shape with key '%s' was not found!", arg)
+            new TranslatableComponent("Shape with key '%s' was not found!", arg)
     );
 
-    public static RequiredArgumentBuilder<CommandSource, String> argument(String authorityName, String shapeName) {
+    public static RequiredArgumentBuilder<CommandSourceStack, String> argument(String authorityName, String shapeName) {
         return Commands.argument(shapeName, StringArgumentType.string())
                 .suggests((context, builder) -> {
                     UserAuthority authority = AuthorityArgument.getUser(context, authorityName);
-                    return ISuggestionProvider.suggest(
+                    return SharedSuggestionProvider.suggest(
                             authority.shape().keySet().stream(),
                             builder
                     );
                 });
     }
 
-    public static Pair<UserAuthority, String> get(CommandContext<CommandSource> context, String authorityName, String shapeName) throws CommandSyntaxException {
+    public static Pair<UserAuthority, String> get(CommandContext<CommandSourceStack> context, String authorityName, String shapeName) throws CommandSyntaxException {
         String key = StringArgumentType.getString(context, shapeName);
         UserAuthority authority = AuthorityArgument.getUser(context, authorityName);
 

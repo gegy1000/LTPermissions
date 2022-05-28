@@ -1,8 +1,8 @@
 package com.lovetropics.perms.role;
 
-import net.minecraft.command.CommandSource;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nonnull;
 
@@ -16,13 +16,13 @@ public interface RoleLookup {
 
         @Override
         @Nonnull
-        public RoleReader bySource(CommandSource source) {
+        public RoleReader bySource(CommandSourceStack source) {
             return RoleReader.EMPTY;
         }
     };
 
     @Nonnull
-    default RoleReader byPlayer(PlayerEntity player) {
+    default RoleReader byPlayer(Player player) {
         return this.byEntity(player);
     }
 
@@ -30,5 +30,5 @@ public interface RoleLookup {
     RoleReader byEntity(Entity entity);
 
     @Nonnull
-    RoleReader bySource(CommandSource source);
+    RoleReader bySource(CommandSourceStack source);
 }

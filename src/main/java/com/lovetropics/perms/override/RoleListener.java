@@ -1,7 +1,7 @@
 package com.lovetropics.perms.override;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 public interface RoleListener {
-    void accept(ServerPlayerEntity player);
+    void accept(ServerPlayer player);
 }

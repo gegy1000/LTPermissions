@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.lovetropics.perms.protection.authority.behavior.config.AuthorityBehaviorConfig;
 import com.lovetropics.perms.protection.authority.behavior.config.AuthorityBehaviorConfigs;
 import com.mojang.serialization.Codec;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;

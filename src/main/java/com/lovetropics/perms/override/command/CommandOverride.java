@@ -5,7 +5,7 @@ import com.lovetropics.perms.PermissionResult;
 import com.lovetropics.perms.role.RoleReader;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.serialization.Codec;
-import net.minecraft.command.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -30,9 +30,9 @@ public final class CommandOverride {
         hookCommands(event.getDispatcher());
     }
 
-    private static void hookCommands(CommandDispatcher<CommandSource> dispatcher) {
+    private static void hookCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         try {
-            CommandRequirementHooks<CommandSource> hooks = CommandRequirementHooks.tryCreate((nodes, parent) -> {
+            CommandRequirementHooks<CommandSourceStack> hooks = CommandRequirementHooks.tryCreate((nodes, parent) -> {
                 MatchableCommand command = MatchableCommand.compile(nodes);
 
                 return source -> {
@@ -50,14 +50,14 @@ public final class CommandOverride {
         }
     }
 
-    private static PermissionResult canUseCommand(CommandSource source, MatchableCommand command) {
+    private static PermissionResult canUseCommand(CommandSourceStack source, MatchableCommand command) {
         if (doesBypassPermissions(source)) return PermissionResult.PASS;
 
         RoleReader roles = LTPermissions.lookup().bySource(source);
         return roles.overrides().test(LTPermissions.COMMANDS, m -> m.test(command));
     }
 
-    public static boolean doesBypassPermissions(CommandSource source) {
+    public static boolean doesBypassPermissions(CommandSourceStack source) {
         return source.hasPermission(4);
     }
 

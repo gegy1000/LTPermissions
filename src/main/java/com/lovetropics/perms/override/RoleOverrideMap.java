@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.lovetropics.lib.codec.MoreCodecs;
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -28,13 +28,13 @@ public final class RoleOverrideMap implements RoleOverrideReader {
         this.overrides = new Reference2ObjectOpenHashMap<>(overrides);
     }
 
-    public void notifyInitialize(ServerPlayerEntity player) {
+    public void notifyInitialize(ServerPlayer player) {
         for (RoleOverrideType<?> override : this.overrides.keySet()) {
             override.notifyInitialize(player);
         }
     }
 
-    public void notifyChange(ServerPlayerEntity player) {
+    public void notifyChange(ServerPlayer player) {
         for (RoleOverrideType<?> override : this.overrides.keySet()) {
             override.notifyChange(player);
         }

@@ -8,8 +8,8 @@ import com.lovetropics.perms.protection.ProtectionRuleMap;
 import com.lovetropics.perms.protection.authority.behavior.AuthorityBehaviorMap;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 public final class BuiltinAuthority implements Authority {
     public static final int UNIVERSE_LEVEL = Integer.MIN_VALUE;
@@ -47,16 +47,16 @@ public final class BuiltinAuthority implements Authority {
         return codec(BuiltinAuthority::universe);
     }
 
-    public static BuiltinAuthority dimension(RegistryKey<World> dimension) {
+    public static BuiltinAuthority dimension(ResourceKey<Level> dimension) {
         return dimension(dimension, ProtectionRuleMap.EMPTY, ProtectionExclusions.EMPTY, AuthorityBehaviorMap.EMPTY);
     }
 
-    public static BuiltinAuthority dimension(RegistryKey<World> dimension, ProtectionRuleMap rules, ProtectionExclusions exclusions, AuthorityBehaviorMap behavior) {
+    public static BuiltinAuthority dimension(ResourceKey<Level> dimension, ProtectionRuleMap rules, ProtectionExclusions exclusions, AuthorityBehaviorMap behavior) {
         String key = dimension.location().getPath();
         return new BuiltinAuthority(key, DIMENSION_LEVEL, EventFilter.dimension(dimension), rules, exclusions, behavior);
     }
 
-    public static Codec<BuiltinAuthority> dimensionCodec(RegistryKey<World> dimension) {
+    public static Codec<BuiltinAuthority> dimensionCodec(ResourceKey<Level> dimension) {
         return codec((rules, exclusions, behaviors) -> dimension(dimension, rules, exclusions, behaviors));
     }
 

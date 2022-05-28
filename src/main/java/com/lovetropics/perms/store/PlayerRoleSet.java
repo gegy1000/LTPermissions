@@ -8,9 +8,9 @@ import com.lovetropics.perms.role.RoleProvider;
 import com.lovetropics.perms.role.RoleReader;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.StringNBT;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
@@ -20,14 +20,14 @@ public final class PlayerRoleSet implements RoleReader {
     private final Role everyoneRole;
 
     @Nullable
-    private final ServerPlayerEntity player;
+    private final ServerPlayer player;
 
     private final ObjectSortedSet<Role> roles = new ObjectAVLTreeSet<>();
     private final RoleOverrideMap overrides = new RoleOverrideMap();
 
     private boolean dirty;
 
-    public PlayerRoleSet(Role everyoneRole, @Nullable ServerPlayerEntity player) {
+    public PlayerRoleSet(Role everyoneRole, @Nullable ServerPlayer player) {
         this.everyoneRole = everyoneRole;
         this.player = player;
 
@@ -96,15 +96,15 @@ public final class PlayerRoleSet implements RoleReader {
         return this.overrides;
     }
 
-    public ListNBT serialize() {
-        ListNBT list = new ListNBT();
+    public ListTag serialize() {
+        ListTag list = new ListTag();
         for (Role role : this.roles) {
-            list.add(StringNBT.valueOf(role.id()));
+            list.add(StringTag.valueOf(role.id()));
         }
         return list;
     }
 
-    public void deserialize(RoleProvider roleProvider, ListNBT list) {
+    public void deserialize(RoleProvider roleProvider, ListTag list) {
         this.roles.clear();
 
         for (int i = 0; i < list.size(); i++) {
@@ -135,7 +135,7 @@ public final class PlayerRoleSet implements RoleReader {
     }
 
     public void reloadFrom(RoleProvider roleProvider, PlayerRoleSet roles) {
-        ListNBT nbt = roles.serialize();
+        ListTag nbt = roles.serialize();
         this.deserialize(roleProvider, nbt);
 
         this.dirty |= roles.dirty;

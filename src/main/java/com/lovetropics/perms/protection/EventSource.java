@@ -1,9 +1,9 @@
 package com.lovetropics.perms.protection;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.function.UnaryOperator;
@@ -11,11 +11,11 @@ import java.util.function.UnaryOperator;
 public final class EventSource {
     private static final EventSource GLOBAL = new EventSource(null, null, null);
 
-    private final RegistryKey<World> dimension;
+    private final ResourceKey<Level> dimension;
     private final BlockPos pos;
     private final Entity entity;
 
-    private EventSource(RegistryKey<World> dimension, BlockPos pos, Entity entity) {
+    private EventSource(ResourceKey<Level> dimension, BlockPos pos, Entity entity) {
         this.dimension = dimension;
         this.pos = pos;
         this.entity = entity;
@@ -25,19 +25,19 @@ public final class EventSource {
         return GLOBAL;
     }
 
-    public static EventSource at(World world, BlockPos pos) {
+    public static EventSource at(Level world, BlockPos pos) {
         return new EventSource(world.dimension(), pos, null);
     }
 
-    public static EventSource at(RegistryKey<World> dimension, BlockPos pos) {
+    public static EventSource at(ResourceKey<Level> dimension, BlockPos pos) {
         return new EventSource(dimension, pos, null);
     }
 
-    public static EventSource allOf(World world) {
+    public static EventSource allOf(Level world) {
         return new EventSource(world.dimension(), null, null);
     }
 
-    public static EventSource allOf(RegistryKey<World> dimension) {
+    public static EventSource allOf(ResourceKey<Level> dimension) {
         return new EventSource(dimension, null, null);
     }
 
@@ -54,7 +54,7 @@ public final class EventSource {
     }
 
     @Nullable
-    public RegistryKey<World> getDimension() {
+    public ResourceKey<Level> getDimension() {
         return this.dimension;
     }
 

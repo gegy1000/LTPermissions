@@ -33,19 +33,19 @@ import com.sk89q.worldedit.forge.ForgePlayer;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.session.SessionManager;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.arguments.GameProfileArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.ChatFormatting;
 
 import java.util.Collection;
 import java.util.function.UnaryOperator;
 
 import static net.minecraft.command.Commands.argument;
-import static net.minecraft.command.Commands.literal;
+import staticnet.minecraft.commands.Commandss.literal;
 
 public final class ProtectCommand {
     private static final DynamicCommandExceptionType AUTHORITY_ALREADY_EXISTS = new DynamicCommandExceptionType(key -> {
@@ -60,7 +60,7 @@ public final class ProtectCommand {
             "This kind of region cannot be handled by the world protector!"
     ));
 
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // @formatter:off
         dispatcher.register(
             literal("protect")
@@ -154,7 +154,7 @@ public final class ProtectCommand {
         // @formatter:on
     }
 
-    private static int addAuthority(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int addAuthority(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         String key = StringArgumentType.getString(context, "authority");
         int level = IntegerArgumentType.getInteger(context, "level");
 
@@ -162,11 +162,11 @@ public final class ProtectCommand {
 
         UserAuthority authority = UserAuthority.create(key).withLevel(level);
         if (protection.addAuthority(authority)) {
-            ITextComponent message = new StringTextComponent("Added authority '")
-                    .append(new StringTextComponent(key).withStyle(TextFormatting.AQUA))
+            Component message = new TextComponent("Added authority '")
+                    .append(new TextComponent(key).withStyle(ChatFormatting.AQUA))
                     .append("' ")
-                    .append(new StringTextComponent("@" + level).withStyle(TextFormatting.AQUA))
-                    .withStyle(TextFormatting.GREEN);
+                    .append(new TextComponent("@" + level).withStyle(ChatFormatting.AQUA))
+                    .withStyle(ChatFormatting.GREEN);
             context.getSource().sendSuccess(message, true);
         } else {
             throw AUTHORITY_ALREADY_EXISTS.create(key);
@@ -175,22 +175,22 @@ public final class ProtectCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int removeAuthority(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int removeAuthority(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         UserAuthority authority = AuthorityArgument.getUser(context, "authority");
 
         ProtectionManager protection = protection(context);
         if (protection.removeAuthority(authority)) {
-            ITextComponent message = new StringTextComponent("Removed authority '")
-                    .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+            Component message = new TextComponent("Removed authority '")
+                    .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                     .append("'")
-                    .withStyle(TextFormatting.GOLD);
+                    .withStyle(ChatFormatting.GOLD);
             context.getSource().sendSuccess(message, true);
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int setShape(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int setShape(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         UserAuthority authority = AuthorityArgument.getUser(context, "authority");
         String shape = StringArgumentType.getString(context, "shape");
 
@@ -199,18 +199,18 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.addShape(shape, selection));
 
-        ITextComponent message = new StringTextComponent("Set shape on '")
-                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+        Component message = new TextComponent("Set shape on '")
+                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("' with key '")
-                .append(new StringTextComponent(shape).withStyle(TextFormatting.AQUA))
+                .append(new TextComponent(shape).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(TextFormatting.GREEN);
+                .withStyle(ChatFormatting.GREEN);
         context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int removeShape(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int removeShape(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Pair<UserAuthority, String> shape = AuthorityShapeArgument.get(context, "authority", "shape");
         UserAuthority authority = shape.getFirst();
         String shapeKey = shape.getSecond();
@@ -218,36 +218,36 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.removeShape(shapeKey));
 
-        ITextComponent message = new StringTextComponent("Removed shape from '")
-                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+        Component message = new TextComponent("Removed shape from '")
+                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("' with key '")
-                .append(new StringTextComponent(shapeKey).withStyle(TextFormatting.AQUA))
+                .append(new TextComponent(shapeKey).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(TextFormatting.GOLD);
+                .withStyle(ChatFormatting.GOLD);
         context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int selectShape(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int selectShape(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Pair<UserAuthority, String> shape = AuthorityShapeArgument.get(context, "authority", "shape");
         UserAuthority authority = shape.getFirst();
         String shapeKey = shape.getSecond();
 
         applySelectionFor(context.getSource(), authority.shape().get(shapeKey));
 
-        ITextComponent message = new StringTextComponent("Selected shape from '")
-                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+        Component message = new TextComponent("Selected shape from '")
+                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("' with key '")
-                .append(new StringTextComponent(shapeKey).withStyle(TextFormatting.AQUA))
+                .append(new TextComponent(shapeKey).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(TextFormatting.GREEN);
+                .withStyle(ChatFormatting.GREEN);
         context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int setRule(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int setRule(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Authority authority = AuthorityArgument.getAll(context, "authority");
         ProtectionRule rule = ProtectionRuleArgument.get(context, "rule");
         PermissionResult result = PermissionResultArgument.get(context, "result");
@@ -255,18 +255,18 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.withRule(rule, result));
 
-        ITextComponent message = new StringTextComponent("Set rule ")
-                .append(new StringTextComponent(rule.key() + "=").append(result.getName()).withStyle(TextFormatting.AQUA))
+        Component message = new TextComponent("Set rule ")
+                .append(new TextComponent(rule.key() + "=").append(result.getName()).withStyle(ChatFormatting.AQUA))
                 .append(" for '")
-                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(TextFormatting.GREEN);
+                .withStyle(ChatFormatting.GREEN);
         context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int addPlayerExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int addPlayerExclusion(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Collection<GameProfile> players = GameProfileArgument.getGameProfiles(context, "players");
         return modifyExclusions(context, authority -> {
             for (GameProfile player : players) {
@@ -276,12 +276,12 @@ public final class ProtectCommand {
         });
     }
 
-    private static int addRoleExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int addRoleExclusion(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Role role = RoleArgument.get(context, "role");
         return modifyExclusions(context, authority -> authority.addExclusion(role));
     }
 
-    private static int removePlayerExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int removePlayerExclusion(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Collection<GameProfile> players = GameProfileArgument.getGameProfiles(context, "players");
         return modifyExclusions(context, authority -> {
             for (GameProfile player : players) {
@@ -291,32 +291,32 @@ public final class ProtectCommand {
         });
     }
 
-    private static int removeRoleExclusion(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int removeRoleExclusion(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Role role = RoleArgument.get(context, "role");
         return modifyExclusions(context, authority -> authority.removeExclusion(role));
     }
 
-    private static int updateOperatorExclusion(CommandContext<CommandSource> context, boolean operators) throws CommandSyntaxException {
+    private static int updateOperatorExclusion(CommandContext<CommandSourceStack> context, boolean operators) throws CommandSyntaxException {
         return modifyExclusions(context, authority -> authority.excludeOperators(operators));
     }
 
-    private static int modifyExclusions(CommandContext<CommandSource> context, UnaryOperator<Authority> operator) throws CommandSyntaxException {
+    private static int modifyExclusions(CommandContext<CommandSourceStack> context, UnaryOperator<Authority> operator) throws CommandSyntaxException {
         Authority authority = AuthorityArgument.getAll(context, "authority");
         Authority newAuthority = operator.apply(authority);
 
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, newAuthority);
 
-        ITextComponent message = new StringTextComponent("Updated exclusions for '")
-                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+        Component message = new TextComponent("Updated exclusions for '")
+                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(TextFormatting.GREEN);
+                .withStyle(ChatFormatting.GREEN);
         context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void applySelectionFor(CommandSource source, AuthorityShape shape) throws CommandSyntaxException {
+    private static void applySelectionFor(CommandSourceStack source, AuthorityShape shape) throws CommandSyntaxException {
         SessionManager sessionManager = WorldEdit.getInstance().getSessionManager();
         ForgePlayer player = ForgeAdapter.adaptPlayer(source.getPlayerOrException());
         LocalSession session = sessionManager.get(player);
@@ -330,8 +330,8 @@ public final class ProtectCommand {
         session.dispatchCUISelection(player);
     }
 
-    private static AuthorityShape getSelectionFor(CommandSource source) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.getPlayerOrException();
+    private static AuthorityShape getSelectionFor(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
 
         SessionManager sessionManager = WorldEdit.getInstance().getSessionManager();
         LocalSession session = sessionManager.get(ForgeAdapter.adaptPlayer(player));
@@ -349,43 +349,43 @@ public final class ProtectCommand {
         }
     }
 
-    private static int addBehavior(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int addBehavior(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Authority authority = AuthorityArgument.getAll(context, "authority");
         ResourceLocation behaviorId = AuthorityBehaviorArgument.get(context, "behavior").getFirst();
 
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.addBehavior(behaviorId));
 
-        ITextComponent message = new StringTextComponent("Added behavior '")
-                .append(new StringTextComponent(behaviorId.toString()).withStyle(TextFormatting.AQUA))
+        Component message = new TextComponent("Added behavior '")
+                .append(new TextComponent(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
                 .append("' to '")
-                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(TextFormatting.GREEN);
+                .withStyle(ChatFormatting.GREEN);
         context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int removeBehavior(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int removeBehavior(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Authority authority = AuthorityArgument.getAll(context, "authority");
         ResourceLocation behaviorId = AuthorityBehaviorArgument.get(context, "behavior").getFirst();
 
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.removeBehavior(behaviorId));
 
-        ITextComponent message = new StringTextComponent("Removed behavior '")
-                .append(new StringTextComponent(behaviorId.toString()).withStyle(TextFormatting.AQUA))
+        Component message = new TextComponent("Removed behavior '")
+                .append(new TextComponent(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
                 .append("' from '")
-                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(TextFormatting.GOLD);
+                .withStyle(ChatFormatting.GOLD);
         context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static ProtectionManager protection(CommandContext<CommandSource> context) {
+    private static ProtectionManager protection(CommandContext<CommandSourceStack> context) {
         return ProtectionManager.get(context.getSource().getServer());
     }
 }

@@ -3,10 +3,10 @@ package com.lovetropics.perms.override;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.role.RoleReader;
 import com.mojang.serialization.Codec;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -37,7 +37,7 @@ public final class ChatFormatOverride {
 
     @SubscribeEvent
     public static void onPlayerChat(ServerChatEvent event) {
-        ServerPlayerEntity player = event.getPlayer();
+        ServerPlayer player = event.getPlayer();
         RoleReader roles = LTPermissions.lookup().byPlayer(player);
 
         ChatFormatOverride chatFormat = roles.overrides().select(LTPermissions.CHAT_FORMAT);
@@ -91,7 +91,7 @@ public final class ChatFormatOverride {
         return parser.getFormat();
     }
 
-    public ITextComponent make(ITextComponent name, String content) {
+    public Component make(Component name, String content) {
         Builder builder = this.builder;
         for (Object format : this.format) {
             if (format == NAME_MARKER) {
@@ -107,9 +107,9 @@ public final class ChatFormatOverride {
 
     static final class Builder {
         private final StringBuilder builder = new StringBuilder();
-        private IFormattableTextComponent result;
+        private MutableComponent result;
 
-        void pushText(ITextComponent text) {
+        void pushText(Component text) {
             this.flushStringBuilder();
             this.appendText(text.copy());
         }
@@ -121,13 +121,13 @@ public final class ChatFormatOverride {
         private void flushStringBuilder() {
             StringBuilder builder = this.builder;
             if (builder.length() > 0) {
-                IFormattableTextComponent text = new StringTextComponent(builder.toString());
+                MutableComponent text = new TextComponent(builder.toString());
                 builder.setLength(0);
                 this.appendText(text);
             }
         }
 
-        private void appendText(IFormattableTextComponent text) {
+        private void appendText(MutableComponent text) {
             if (this.result == null) {
                 this.result = text;
             } else {
@@ -135,10 +135,10 @@ public final class ChatFormatOverride {
             }
         }
 
-        IFormattableTextComponent get() {
+        MutableComponent get() {
             this.flushStringBuilder();
 
-            IFormattableTextComponent result = this.result;
+            MutableComponent result = this.result;
             this.result = null;
             this.builder.setLength(0);
             return result;

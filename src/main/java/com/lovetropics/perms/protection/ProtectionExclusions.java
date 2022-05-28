@@ -6,9 +6,9 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,12 +82,12 @@ public final class ProtectionExclusions implements EventFilter {
         return new ProtectionExclusions(this.roles, this.players, operators);
     }
 
-    public boolean isExcluded(PlayerEntity player) {
+    public boolean isExcluded(Player player) {
         if (this.players.contains(player.getUUID())) {
             return true;
         }
 
-        if (player instanceof ServerPlayerEntity) {
+        if (player instanceof ServerPlayer) {
             if (this.operators && player.hasPermissions(4)) {
                 return true;
             }
@@ -106,8 +106,8 @@ public final class ProtectionExclusions implements EventFilter {
     @Override
     public boolean accepts(EventSource source) {
         Entity entity = source.getEntity();
-        if (entity instanceof PlayerEntity) {
-            return !this.isExcluded((PlayerEntity) entity);
+        if (entity instanceof Player) {
+            return !this.isExcluded((Player) entity);
         } else {
             return true;
         }

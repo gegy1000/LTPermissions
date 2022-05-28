@@ -9,8 +9,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,9 +23,9 @@ import java.util.stream.Stream;
 public final class IndexedAuthorityMap<A extends Authority> implements AuthorityMap<A> {
     private final AuthorityMap<A> main = new SortedAuthorityHashMap<>();
     private final Index<A> globalIndex = new Index<>();
-    private final Reference2ObjectMap<RegistryKey<World>, Index<A>> dimensionIndex = new Reference2ObjectOpenHashMap<>();
+    private final Reference2ObjectMap<ResourceKey<Level>, Index<A>> dimensionIndex = new Reference2ObjectOpenHashMap<>();
 
-    public void addDimensionIndex(RegistryKey<World> dimension) {
+    public void addDimensionIndex(ResourceKey<Level> dimension) {
         EventSource source = EventSource.allOf(dimension);
         Index<A> index = new Index<>();
         for (A authority : this.main) {
@@ -37,12 +37,12 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
         this.dimensionIndex.put(dimension, index);
     }
 
-    public void removeDimensionIndex(RegistryKey<World> dimension) {
+    public void removeDimensionIndex(ResourceKey<Level> dimension) {
         this.dimensionIndex.remove(dimension);
     }
 
     public Iterable<A> selectByDimension(EventSource source, ProtectionRule rule) {
-        RegistryKey<World> dimension = source.getDimension();
+        ResourceKey<Level> dimension = source.getDimension();
         if (dimension == null) {
             AuthorityMap<A> map = this.globalIndex.byRule.get(rule);
             if (map != null) {
@@ -62,7 +62,7 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
     }
 
     @Nullable
-    public AuthorityMap<A> selectWithBehavior(RegistryKey<World> dimension) {
+    public AuthorityMap<A> selectWithBehavior(ResourceKey<Level> dimension) {
         Index<A> dimensionIndex = this.dimensionIndex.get(dimension);
         if (dimensionIndex != null) {
             return dimensionIndex.allWithBehavior;
@@ -150,8 +150,8 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
 
     private void addToDimension(A authority) {
         EventFilter filter = authority.eventFilter();
-        for (Map.Entry<RegistryKey<World>, Index<A>> entry : Reference2ObjectMaps.fastIterable(this.dimensionIndex)) {
-            RegistryKey<World> dimension = entry.getKey();
+        for (Map.Entry<ResourceKey<Level>, Index<A>> entry : Reference2ObjectMaps.fastIterable(this.dimensionIndex)) {
+            ResourceKey<Level> dimension = entry.getKey();
             if (filter.accepts(EventSource.allOf(dimension))) {
                 Index<A> dimensionIndex = entry.getValue();
                 dimensionIndex.add(authority);
@@ -163,8 +163,8 @@ public final class IndexedAuthorityMap<A extends Authority> implements Authority
         EventFilter fromFilter = from.eventFilter();
         EventFilter toFilter = to.eventFilter();
 
-        for (Map.Entry<RegistryKey<World>, Index<A>> entry : this.dimensionIndex.entrySet()) {
-            RegistryKey<World> dimension = entry.getKey();
+        for (Map.Entry<ResourceKey<Level>, Index<A>> entry : this.dimensionIndex.entrySet()) {
+            ResourceKey<Level> dimension = entry.getKey();
             EventSource source = EventSource.allOf(dimension);
             Index<A> dimensionIndex = entry.getValue();
 

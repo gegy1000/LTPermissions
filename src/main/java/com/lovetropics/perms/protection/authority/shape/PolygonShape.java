@@ -9,10 +9,10 @@ import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.regions.Polygonal2DRegion;
 import com.sk89q.worldedit.regions.Region;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,14 +20,14 @@ import java.util.stream.Collectors;
 public final class PolygonShape implements AuthorityShape {
     public static final Codec<PolygonShape> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(
-                World.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+                Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
                 BlockPos.CODEC.listOf().fieldOf("points").forGetter(c -> c.points),
                 Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
                 Codec.INT.fieldOf("max_y").forGetter(c -> c.maxY)
         ).apply(instance, PolygonShape::new);
     });
 
-    private final RegistryKey<World> dimension;
+    private final ResourceKey<Level> dimension;
     private final List<BlockPos> points;
     private final int minY;
     private final int maxY;
@@ -36,7 +36,7 @@ public final class PolygonShape implements AuthorityShape {
 
     private final List<BlockVector2> worldEditPoints;
 
-    public PolygonShape(RegistryKey<World> dimension, List<BlockPos> points, int minY, int maxY) {
+    public PolygonShape(ResourceKey<Level> dimension, List<BlockPos> points, int minY, int maxY) {
         this.dimension = dimension;
         this.points = points;
         this.minY = minY;
@@ -60,7 +60,7 @@ public final class PolygonShape implements AuthorityShape {
 
     @Override
     public boolean accepts(EventSource source) {
-        RegistryKey<World> dimension = source.getDimension();
+        ResourceKey<Level> dimension = source.getDimension();
         if (!this.acceptsDimension(dimension)) return false;
 
         BlockPos pos = source.getPos();
@@ -73,7 +73,7 @@ public final class PolygonShape implements AuthorityShape {
         }
     }
 
-    private boolean acceptsDimension(RegistryKey<World> dimension) {
+    private boolean acceptsDimension(ResourceKey<Level> dimension) {
         return dimension == null || dimension == this.dimension;
     }
 
@@ -87,7 +87,7 @@ public final class PolygonShape implements AuthorityShape {
     }
 
     public static PolygonShape fromRegion(Region region, List<BlockVector2> points) {
-        RegistryKey<World> dimension = WorldEditShapes.asDimension(region.getWorld());
+        ResourceKey<Level> dimension = WorldEditShapes.asDimension(region.getWorld());
         List<BlockPos> blockPoints = points.stream()
                 .map(pos -> new BlockPos(pos.getX(), 0, pos.getZ()))
                 .collect(Collectors.toList());
@@ -100,7 +100,7 @@ public final class PolygonShape implements AuthorityShape {
 
     @Override
     public Region tryIntoRegion(MinecraftServer server) {
-        ServerWorld world = server.getLevel(this.dimension);
+        ServerLevel world = server.getLevel(this.dimension);
         return new Polygonal2DRegion(ForgeAdapter.adapt(world), this.worldEditPoints, this.minY, this.maxY);
     }
 }

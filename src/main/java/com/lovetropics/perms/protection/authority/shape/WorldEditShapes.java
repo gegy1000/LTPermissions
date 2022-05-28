@@ -13,8 +13,8 @@ import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.regions.selector.CylinderRegionSelector;
 import com.sk89q.worldedit.regions.selector.Polygonal2DRegionSelector;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -69,7 +69,7 @@ public final class WorldEditShapes {
         return null;
     }
 
-    public static RegistryKey<World> asDimension(com.sk89q.worldedit.world.World world) {
+    public static ResourceKey<Level> asDimension(com.sk89q.worldedit.world.World world) {
         ForgeWorld forgeWorld = (ForgeWorld) world;
         return forgeWorld.getWorld().dimension();
     }

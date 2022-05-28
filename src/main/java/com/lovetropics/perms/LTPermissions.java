@@ -17,14 +17,14 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.serialization.Codec;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.ChatFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
@@ -57,16 +57,16 @@ public class LTPermissions {
 
     public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
     public static final RoleOverrideType<NameStyleOverride> NAME_STYLE = RoleOverrideType.register("name_style", NameStyleOverride.CODEC)
-            .withInitializeListener(PlayerEntity::refreshDisplayName)
-            .withChangeListener(PlayerEntity::refreshDisplayName);
+            .withInitializeListener(Player::refreshDisplayName)
+            .withChangeListener(Player::refreshDisplayName);
     public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
 
     private static final RoleLookup LOOKUP = new RoleLookup() {
         @Override
         @Nonnull
         public RoleReader byEntity(Entity entity) {
-            if (entity instanceof ServerPlayerEntity) {
-                RoleReader roles = PlayerRoleManager.get().getRolesForOnline(((ServerPlayerEntity) entity));
+            if (entity instanceof ServerPlayer) {
+                RoleReader roles = PlayerRoleManager.get().getRolesForOnline(((ServerPlayer) entity));
                 return roles != null ? roles : RoleReader.EMPTY;
             }
             return RoleReader.EMPTY;
@@ -74,7 +74,7 @@ public class LTPermissions {
 
         @Override
         @Nonnull
-        public RoleReader bySource(CommandSource source) {
+        public RoleReader bySource(CommandSourceStack source) {
             Entity entity = source.getEntity();
             return entity != null ? this.byEntity(entity) : RoleReader.EMPTY;
         }
@@ -105,7 +105,7 @@ public class LTPermissions {
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
-        CommandDispatcher<CommandSource> dispatcher = event.getDispatcher();
+        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 
         RoleCommand.register(dispatcher);
         FlyCommand.register(dispatcher);
@@ -115,14 +115,14 @@ public class LTPermissions {
         for (Map.Entry<String, String[]> entry : aliasConfig.getAliases().entrySet()) {
             String[] literals = entry.getKey().split(" ");
 
-            LiteralArgumentBuilder<CommandSource>[] nodes = new LiteralArgumentBuilder[literals.length];
+            LiteralArgumentBuilder<CommandSourceStack>[] nodes = new LiteralArgumentBuilder[literals.length];
             for (int i = 0; i < literals.length; i++) {
                 nodes[i] = Commands.literal(literals[i]);
             }
 
             String[] commands = entry.getValue();
             nodes[nodes.length - 1].executes(context -> {
-                CommandSource source = context.getSource().withPermission(4).withSuppressedOutput();
+                CommandSourceStack source = context.getSource().withPermission(4).withSuppressedOutput();
                 int result = Command.SINGLE_SUCCESS;
                 for (String command : commands) {
                     result = dispatcher.execute(command, source);
@@ -130,9 +130,9 @@ public class LTPermissions {
                 return result;
             });
 
-            LiteralArgumentBuilder<CommandSource> chain = nodes[0];
+            LiteralArgumentBuilder<CommandSourceStack> chain = nodes[0];
             for (int i = 1; i < nodes.length; i++) {
-                LiteralArgumentBuilder<CommandSource> next = nodes[i];
+                LiteralArgumentBuilder<CommandSourceStack> next = nodes[i];
                 chain.then(next);
                 chain = next;
             }
@@ -142,11 +142,11 @@ public class LTPermissions {
     }
 
     private void onServerChat(ServerChatEvent event) {
-        ServerPlayerEntity player = event.getPlayer();
+        ServerPlayer player = event.getPlayer();
 
         RoleReader roles = LTPermissions.lookup().byPlayer(player);
         if (roles.overrides().test(MUTE)) {
-            player.displayClientMessage(new StringTextComponent("You are muted!").withStyle(TextFormatting.RED), true);
+            player.displayClientMessage(new TextComponent("You are muted!").withStyle(ChatFormatting.RED), true);
             event.setCanceled(true);
         }
     }

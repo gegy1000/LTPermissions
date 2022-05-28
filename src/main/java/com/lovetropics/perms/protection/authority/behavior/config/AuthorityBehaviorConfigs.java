@@ -6,8 +6,8 @@ import com.lovetropics.lib.codec.CodecRegistry;
 import com.lovetropics.perms.LTPermissions;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.resources.IResource;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -42,7 +42,7 @@ public final class AuthorityBehaviorConfigs {
                 for (ResourceLocation location : locations) {
                     ResourceLocation id = getIdFromLocation(location);
 
-                    try (IResource resource = resourceManager.getResource(location)) {
+                    try (Resource resource = resourceManager.getResource(location)) {
                         DataResult<AuthorityBehaviorConfig> result = loadConfig(resource);
                         result.result().ifPresent(config -> REGISTRY.register(id, config));
 
@@ -61,7 +61,7 @@ public final class AuthorityBehaviorConfigs {
         });
     }
 
-    private static DataResult<AuthorityBehaviorConfig> loadConfig(IResource resource) throws IOException {
+    private static DataResult<AuthorityBehaviorConfig> loadConfig(Resource resource) throws IOException {
         try (InputStream input = resource.getInputStream()) {
             JsonElement json = PARSER.parse(new BufferedReader(new InputStreamReader(input)));
             return AuthorityBehaviorConfig.CODEC.parse(JsonOps.INSTANCE, json);

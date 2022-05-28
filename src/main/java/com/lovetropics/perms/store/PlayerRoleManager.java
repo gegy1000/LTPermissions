@@ -5,9 +5,9 @@ import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.role.RoleReader;
 import com.lovetropics.perms.store.db.PlayerRoleDatabase;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.storage.FolderName;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -52,22 +52,22 @@ public final class PlayerRoleManager {
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.LoadFromFile event) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
-        if (instance != null && event.getPlayer() instanceof ServerPlayerEntity) {
-            instance.onPlayerJoin((ServerPlayerEntity) event.getPlayer());
+        if (instance != null && event.getPlayer() instanceof ServerPlayer) {
+            instance.onPlayerJoin((ServerPlayer) event.getPlayer());
         }
     }
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
-        if (instance != null && event.getPlayer() instanceof ServerPlayerEntity) {
-            instance.onPlayerLeave((ServerPlayerEntity) event.getPlayer());
+        if (instance != null && event.getPlayer() instanceof ServerPlayer) {
+            instance.onPlayerLeave((ServerPlayer) event.getPlayer());
         }
     }
 
     private static PlayerRoleManager open(MinecraftServer server) {
         try {
-            Path path = server.getWorldPath(FolderName.PLAYER_DATA_DIR).resolve("player_roles");
+            Path path = server.getWorldPath(LevelResource.PLAYER_DATA_DIR).resolve("player_roles");
             PlayerRoleDatabase database = PlayerRoleDatabase.open(path);
             return new PlayerRoleManager(database);
         } catch (IOException e) {
@@ -79,7 +79,7 @@ public final class PlayerRoleManager {
         return Objects.requireNonNull(instance, "player role manager not initialized");
     }
 
-    public void onPlayerJoin(ServerPlayerEntity player) {
+    public void onPlayerJoin(ServerPlayer player) {
         if (!this.onlinePlayerRoles.containsKey(player.getUUID())) {
             RolesConfig config = RolesConfig.get();
             PlayerRoleSet roles = this.loadPlayerRoles(player, config);
@@ -87,7 +87,7 @@ public final class PlayerRoleManager {
         }
     }
 
-    public void onPlayerLeave(ServerPlayerEntity player) {
+    public void onPlayerLeave(ServerPlayer player) {
         PlayerRoleSet roles = this.onlinePlayerRoles.remove(player.getUUID());
         if (roles != null && roles.isDirty()) {
             this.database.trySave(player.getUUID(), roles);
@@ -96,12 +96,12 @@ public final class PlayerRoleManager {
     }
 
     public void onRoleReload(MinecraftServer server, RolesConfig config) {
-        for (ServerPlayerEntity player : server.getPlayerList().getPlayers()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             this.loadPlayerRoles(player, config);
         }
     }
 
-    private PlayerRoleSet loadPlayerRoles(ServerPlayerEntity player, RolesConfig config) {
+    private PlayerRoleSet loadPlayerRoles(ServerPlayer player, RolesConfig config) {
         PlayerRoleSet oldRoles = this.onlinePlayerRoles.get(player.getUUID());
 
         PlayerRoleSet newRoles = new PlayerRoleSet(config.everyone(), player);
@@ -117,7 +117,7 @@ public final class PlayerRoleManager {
 
     private void close(MinecraftServer server) {
         try {
-            for (ServerPlayerEntity player : server.getPlayerList().getPlayers()) {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 this.onPlayerLeave(player);
             }
         } finally {
@@ -157,7 +157,7 @@ public final class PlayerRoleManager {
     }
 
     @Nullable
-    public RoleReader getRolesForOnline(ServerPlayerEntity player) {
+    public RoleReader getRolesForOnline(ServerPlayer player) {
         return this.onlinePlayerRoles.get(player.getUUID());
     }
 }

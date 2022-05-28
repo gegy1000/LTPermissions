@@ -1,6 +1,6 @@
 package com.lovetropics.perms.protection.authority.behavior;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 public interface AuthorityBehavior {
     AuthorityBehavior EMPTY = new AuthorityBehavior() {
@@ -10,10 +10,10 @@ public interface AuthorityBehavior {
         return new Composite(behaviors);
     }
 
-    default void onPlayerEnter(ServerPlayerEntity player) {
+    default void onPlayerEnter(ServerPlayer player) {
     }
 
-    default void onPlayerExit(ServerPlayerEntity player) {
+    default void onPlayerExit(ServerPlayer player) {
     }
 
     final class Composite implements AuthorityBehavior {
@@ -24,14 +24,14 @@ public interface AuthorityBehavior {
         }
 
         @Override
-        public void onPlayerEnter(ServerPlayerEntity player) {
+        public void onPlayerEnter(ServerPlayer player) {
             for (AuthorityBehavior behavior : this.behaviors) {
                 behavior.onPlayerEnter(player);
             }
         }
 
         @Override
-        public void onPlayerExit(ServerPlayerEntity player) {
+        public void onPlayerExit(ServerPlayer player) {
             for (AuthorityBehavior behavior : this.behaviors) {
                 behavior.onPlayerExit(player);
             }
