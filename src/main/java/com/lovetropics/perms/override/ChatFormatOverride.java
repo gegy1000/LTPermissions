@@ -111,7 +111,7 @@ public final class ChatFormatOverride {
 
         void pushText(ITextComponent text) {
             this.flushStringBuilder();
-            this.appendText(text.deepCopy());
+            this.appendText(text.copy());
         }
 
         void pushString(String string) {
@@ -131,7 +131,7 @@ public final class ChatFormatOverride {
             if (this.result == null) {
                 this.result = text;
             } else {
-                this.result = this.result.appendSibling(text);
+                this.result = this.result.append(text);
             }
         }
 

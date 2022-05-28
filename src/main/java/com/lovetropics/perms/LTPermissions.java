@@ -51,7 +51,7 @@ public class LTPermissions {
             .withChangeListener(player -> {
                 MinecraftServer server = player.getServer();
                 if (server != null) {
-                    server.getCommandManager().send(player);
+                    server.getCommands().sendCommands(player);
                 }
             });
 
@@ -122,7 +122,7 @@ public class LTPermissions {
 
             String[] commands = entry.getValue();
             nodes[nodes.length - 1].executes(context -> {
-                CommandSource source = context.getSource().withPermissionLevel(4).withFeedbackDisabled();
+                CommandSource source = context.getSource().withPermission(4).withSuppressedOutput();
                 int result = Command.SINGLE_SUCCESS;
                 for (String command : commands) {
                     result = dispatcher.execute(command, source);
@@ -146,7 +146,7 @@ public class LTPermissions {
 
         RoleReader roles = LTPermissions.lookup().byPlayer(player);
         if (roles.overrides().test(MUTE)) {
-            player.sendStatusMessage(new StringTextComponent("You are muted!").mergeStyle(TextFormatting.RED), true);
+            player.displayClientMessage(new StringTextComponent("You are muted!").withStyle(TextFormatting.RED), true);
             event.setCanceled(true);
         }
     }

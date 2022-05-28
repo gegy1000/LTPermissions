@@ -67,7 +67,7 @@ public final class PlayerRoleManager {
 
     private static PlayerRoleManager open(MinecraftServer server) {
         try {
-            Path path = server.func_240776_a_(FolderName.PLAYERDATA).resolve("player_roles");
+            Path path = server.getWorldPath(FolderName.PLAYER_DATA_DIR).resolve("player_roles");
             PlayerRoleDatabase database = PlayerRoleDatabase.open(path);
             return new PlayerRoleManager(database);
         } catch (IOException e) {
@@ -80,17 +80,17 @@ public final class PlayerRoleManager {
     }
 
     public void onPlayerJoin(ServerPlayerEntity player) {
-        if (!this.onlinePlayerRoles.containsKey(player.getUniqueID())) {
+        if (!this.onlinePlayerRoles.containsKey(player.getUUID())) {
             RolesConfig config = RolesConfig.get();
             PlayerRoleSet roles = this.loadPlayerRoles(player, config);
-            this.database.tryLoadInto(player.getUniqueID(), roles);
+            this.database.tryLoadInto(player.getUUID(), roles);
         }
     }
 
     public void onPlayerLeave(ServerPlayerEntity player) {
-        PlayerRoleSet roles = this.onlinePlayerRoles.remove(player.getUniqueID());
+        PlayerRoleSet roles = this.onlinePlayerRoles.remove(player.getUUID());
         if (roles != null && roles.isDirty()) {
-            this.database.trySave(player.getUniqueID(), roles);
+            this.database.trySave(player.getUUID(), roles);
             roles.setDirty(false);
         }
     }
@@ -102,7 +102,7 @@ public final class PlayerRoleManager {
     }
 
     private PlayerRoleSet loadPlayerRoles(ServerPlayerEntity player, RolesConfig config) {
-        PlayerRoleSet oldRoles = this.onlinePlayerRoles.get(player.getUniqueID());
+        PlayerRoleSet oldRoles = this.onlinePlayerRoles.get(player.getUUID());
 
         PlayerRoleSet newRoles = new PlayerRoleSet(config.everyone(), player);
         if (oldRoles != null) {
@@ -110,7 +110,7 @@ public final class PlayerRoleManager {
             newRoles.rebuildOverridesAndNotify();
         }
 
-        this.onlinePlayerRoles.put(player.getUniqueID(), newRoles);
+        this.onlinePlayerRoles.put(player.getUUID(), newRoles);
 
         return newRoles;
     }
@@ -158,6 +158,6 @@ public final class PlayerRoleManager {
 
     @Nullable
     public RoleReader getRolesForOnline(ServerPlayerEntity player) {
-        return this.onlinePlayerRoles.get(player.getUniqueID());
+        return this.onlinePlayerRoles.get(player.getUUID());
     }
 }

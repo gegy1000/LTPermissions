@@ -20,9 +20,9 @@ public final class AuthorityBehaviorArgument {
     );
 
     public static RequiredArgumentBuilder<CommandSource, ResourceLocation> argument(String name) {
-        return Commands.argument(name, ResourceLocationArgument.resourceLocation())
+        return Commands.argument(name, ResourceLocationArgument.id())
                 .suggests((context, builder) -> {
-                    return ISuggestionProvider.func_212476_a(
+                    return ISuggestionProvider.suggestResource(
                             AuthorityBehaviorConfigs.REGISTRY.keySet().stream(),
                             builder
                     );
@@ -30,7 +30,7 @@ public final class AuthorityBehaviorArgument {
     }
 
     public static Pair<ResourceLocation, AuthorityBehaviorConfig> get(CommandContext<CommandSource> context, String name) throws CommandSyntaxException {
-        ResourceLocation id = ResourceLocationArgument.getResourceLocation(context, name);
+        ResourceLocation id = ResourceLocationArgument.getId(context, name);
         AuthorityBehaviorConfig config = AuthorityBehaviorConfigs.REGISTRY.get(id);
         if (config == null) {
             throw BEHAVIOR_DOES_NOT_EXIST.create(id);

@@ -30,11 +30,11 @@ public final class NameStyleOverride {
                 Color color = null;
 
                 for (String formatKey : formatKeys) {
-                    TextFormatting format = TextFormatting.getValueByName(formatKey);
+                    TextFormatting format = TextFormatting.getByName(formatKey);
                     if (format != null) {
                         formats.add(format);
                     } else {
-                        Color parsedColor = Color.fromHex(formatKey);
+                        Color parsedColor = Color.parseColor(formatKey);
                         if (parsedColor != null) {
                             color = parsedColor;
                         }
@@ -46,11 +46,11 @@ public final class NameStyleOverride {
             override -> {
                 List<String> formatKeys = new ArrayList<>();
                 if (override.color != null) {
-                    formatKeys.add(override.color.getName());
+                    formatKeys.add(override.color.serialize());
                 }
 
                 for (TextFormatting format : override.formats) {
-                    formatKeys.add(format.getFriendlyName());
+                    formatKeys.add(format.getName());
                 }
 
                 return formatKeys;
@@ -78,9 +78,9 @@ public final class NameStyleOverride {
     }
 
     private Style applyStyle(Style style) {
-        style = style.mergeWithFormatting(this.formats);
+        style = style.applyFormats(this.formats);
         if (this.color != null) {
-            style = style.setColor(this.color);
+            style = style.withColor(this.color);
         }
         return style;
     }
@@ -89,7 +89,7 @@ public final class NameStyleOverride {
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         // TODO: temporary patch to make sure name style updates! in cases like teams changing we aren't refreshing.
         if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayerEntity) {
-            if (event.player.ticksExisted % (20 * 10) == 0) {
+            if (event.player.tickCount % (20 * 10) == 0) {
                 event.player.refreshDisplayName();
             }
         }
@@ -105,7 +105,7 @@ public final class NameStyleOverride {
 
                 NameStyleOverride nameStyle = roles.overrides().select(LTPermissions.NAME_STYLE);
                 if (nameStyle != null) {
-                    event.setDisplayname(nameStyle.apply(displayName.deepCopy()));
+                    event.setDisplayname(nameStyle.apply(displayName.copy()));
                 }
             }
         }

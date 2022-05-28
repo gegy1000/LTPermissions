@@ -33,7 +33,7 @@ public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior
         }
 
         CommandSource source = this.getSource(player);
-        Commands commandManager = player.server.getCommandManager();
+        Commands commandManager = player.server.getCommands();
         for (String command : commands) {
             try {
                 commandManager.getDispatcher().execute(command, source);
@@ -44,9 +44,9 @@ public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior
     }
 
     private CommandSource getSource(ServerPlayerEntity player) {
-        CommandSource source = player.getCommandSource().withPermissionLevel(4);
+        CommandSource source = player.createCommandSourceStack().withPermission(4);
         if (!this.commandFeedback) {
-            source = source.withFeedbackDisabled();
+            source = source.withSuppressedOutput();
         }
         return source;
     }

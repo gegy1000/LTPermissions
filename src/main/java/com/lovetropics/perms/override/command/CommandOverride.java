@@ -58,7 +58,7 @@ public final class CommandOverride {
     }
 
     public static boolean doesBypassPermissions(CommandSource source) {
-        return source.hasPermissionLevel(4);
+        return source.hasPermission(4);
     }
 
     public PermissionResult test(MatchableCommand command) {

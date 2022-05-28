@@ -26,7 +26,7 @@ public final class EventSource {
     }
 
     public static EventSource at(World world, BlockPos pos) {
-        return new EventSource(world.getDimensionKey(), pos, null);
+        return new EventSource(world.dimension(), pos, null);
     }
 
     public static EventSource at(RegistryKey<World> dimension, BlockPos pos) {
@@ -34,7 +34,7 @@ public final class EventSource {
     }
 
     public static EventSource allOf(World world) {
-        return new EventSource(world.getDimensionKey(), null, null);
+        return new EventSource(world.dimension(), null, null);
     }
 
     public static EventSource allOf(RegistryKey<World> dimension) {
@@ -42,11 +42,11 @@ public final class EventSource {
     }
 
     public static EventSource forEntity(Entity entity) {
-        return new EventSource(entity.world.getDimensionKey(), entity.getPosition(), entity);
+        return new EventSource(entity.level.dimension(), entity.blockPosition(), entity);
     }
 
     public static EventSource forEntityAt(Entity entity, BlockPos pos) {
-        return new EventSource(entity.world.getDimensionKey(), pos, entity);
+        return new EventSource(entity.level.dimension(), pos, entity);
     }
 
     public static EventSource transform(EventSource source, UnaryOperator<BlockPos> transform) {

@@ -15,7 +15,7 @@ public enum PermissionResult implements IStringSerializable {
     ALLOW("allow", TextFormatting.GREEN),
     DENY("deny", TextFormatting.RED);
 
-    public static final Codec<PermissionResult> CODEC = IStringSerializable.createEnumCodec(PermissionResult::values, PermissionResult::byKey);
+    public static final Codec<PermissionResult> CODEC = IStringSerializable.fromEnum(PermissionResult::values, PermissionResult::byKey);
 
     private static final String[] KEYS = { "pass", "allow", "deny" };
 
@@ -24,7 +24,7 @@ public enum PermissionResult implements IStringSerializable {
 
     PermissionResult(String key, TextFormatting color) {
         this.key = key;
-        this.name = new StringTextComponent(key).mergeStyle(color);
+        this.name = new StringTextComponent(key).withStyle(color);
     }
 
     public boolean isTerminator() {
@@ -52,7 +52,7 @@ public enum PermissionResult implements IStringSerializable {
     }
 
     @Override
-    public String getString() {
+    public String getSerializedName() {
         return this.key;
     }
 

@@ -52,7 +52,7 @@ public final class RoleCommand {
     // @formatter:off
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(literal("role")
-                .requires(s -> s.hasPermissionLevel(4))
+                .requires(s -> s.hasPermission(4))
                 .then(literal("assign")
                     .then(argument("targets", GameProfileArgument.gameProfile())
                     .then(argument("role", StringArgumentType.word()).suggests(roleSuggestions())
@@ -102,7 +102,7 @@ public final class RoleCommand {
             }
         }
 
-        source.sendFeedback(new TranslationTextComponent(success, roleName, count), true);
+        source.sendSuccess(new TranslationTextComponent(success, roleName, count), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -112,8 +112,8 @@ public final class RoleCommand {
 
         List<Role> roles = roleManager.peekRoles(player.getId())
                 .stream().collect(Collectors.toList());
-        ITextComponent rolesComponent = TextComponentUtils.func_240649_b_(roles, role -> new StringTextComponent(role.id()).setStyle(Style.EMPTY.setFormatting(TextFormatting.GRAY)));
-        source.sendFeedback(new TranslationTextComponent("Found %s roles on player: %s", roles.size(), rolesComponent), false);
+        ITextComponent rolesComponent = TextComponentUtils.formatList(roles, role -> new StringTextComponent(role.id()).setStyle(Style.EMPTY.withColor(TextFormatting.GRAY)));
+        source.sendSuccess(new TranslationTextComponent("Found %s roles on player: %s", roles.size(), rolesComponent), false);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -128,13 +128,13 @@ public final class RoleCommand {
             roleManager.onRoleReload(server, RolesConfig.get());
 
             if (errors.isEmpty()) {
-                source.sendFeedback(new StringTextComponent("Role configuration successfully reloaded"), false);
+                source.sendSuccess(new StringTextComponent("Role configuration successfully reloaded"), false);
             } else {
                 IFormattableTextComponent errorFeedback = new StringTextComponent("Failed to reload roles configuration!");
                 for (String error : errors) {
-                    errorFeedback = errorFeedback.appendString("\n - " + error);
+                    errorFeedback = errorFeedback.append("\n - " + error);
                 }
-                source.sendErrorMessage(errorFeedback);
+                source.sendFailure(errorFeedback);
             }
         });
 

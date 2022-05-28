@@ -6,7 +6,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 
 public final class DimensionShape implements AuthorityShape {
-    public static final Codec<DimensionShape> CODEC = World.CODEC.xmap(DimensionShape::new, shape -> shape.dimension);
+    public static final Codec<DimensionShape> CODEC = World.RESOURCE_KEY_CODEC.xmap(DimensionShape::new, shape -> shape.dimension);
 
     private final RegistryKey<World> dimension;
 

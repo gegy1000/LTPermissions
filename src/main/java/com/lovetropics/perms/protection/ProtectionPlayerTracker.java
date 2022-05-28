@@ -30,7 +30,7 @@ public final class ProtectionPlayerTracker {
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PlayerEntity player = event.getPlayer();
-        INSTANCE.trackers.remove(player.getUniqueID());
+        INSTANCE.trackers.remove(player.getUUID());
     }
 
     @SubscribeEvent
@@ -54,14 +54,14 @@ public final class ProtectionPlayerTracker {
     }
 
     private void onPlayerChangeDimension(ServerPlayerEntity player) {
-        this.queuedReinitialize.add(player.getUniqueID());
+        this.queuedReinitialize.add(player.getUUID());
     }
 
     private void tickPlayer(ServerPlayerEntity player) {
-        UUID uuid = player.getUniqueID();
+        UUID uuid = player.getUUID();
         Tracker tracker = this.getOrInitializeTracker(player, uuid);
 
-        long blockPos = player.getPosition().toLong();
+        long blockPos = player.blockPosition().asLong();
         if (blockPos != tracker.lastBlockPos) {
             this.onPlayerMoved(player, tracker);
             tracker.lastBlockPos = blockPos;
@@ -90,9 +90,9 @@ public final class ProtectionPlayerTracker {
         ProtectionManager protection = ProtectionManager.get(player.server);
 
         Tracker tracker = new Tracker();
-        tracker.lastBlockPos = player.getPosition().toLong();
+        tracker.lastBlockPos = player.blockPosition().asLong();
 
-        AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.world.getDimensionKey());
+        AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.level.dimension());
         if (authorities == null) {
             return tracker;
         }

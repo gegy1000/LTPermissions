@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public final class PolygonShape implements AuthorityShape {
     public static final Codec<PolygonShape> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(
-                World.CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+                World.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
                 BlockPos.CODEC.listOf().fieldOf("points").forGetter(c -> c.points),
                 Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
                 Codec.INT.fieldOf("max_y").forGetter(c -> c.maxY)
@@ -100,7 +100,7 @@ public final class PolygonShape implements AuthorityShape {
 
     @Override
     public Region tryIntoRegion(MinecraftServer server) {
-        ServerWorld world = server.getWorld(this.dimension);
+        ServerWorld world = server.getLevel(this.dimension);
         return new Polygonal2DRegion(ForgeAdapter.adapt(world), this.worldEditPoints, this.minY, this.maxY);
     }
 }

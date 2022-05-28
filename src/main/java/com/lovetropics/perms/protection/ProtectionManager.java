@@ -56,7 +56,7 @@ public final class ProtectionManager extends WorldSavedData {
     }
 
     public static ProtectionManager get(MinecraftServer server) {
-        return server.func_241755_D_().getSavedData().getOrCreate(ProtectionManager::new, KEY);
+        return server.overworld().getDataStorage().computeIfAbsent(ProtectionManager::new, KEY);
     }
 
     public PermissionResult test(EventSource source, ProtectionRule rule) {
@@ -115,24 +115,24 @@ public final class ProtectionManager extends WorldSavedData {
     }
 
     private void onWorldLoad(ServerWorld world) {
-        if (!this.builtinDimensions.containsKey(world.getDimensionKey())) {
-            BuiltinAuthority dimension = BuiltinAuthority.dimension(world.getDimensionKey());
-            this.addBuiltinDimension(world.getDimensionKey(), dimension);
+        if (!this.builtinDimensions.containsKey(world.dimension())) {
+            BuiltinAuthority dimension = BuiltinAuthority.dimension(world.dimension());
+            this.addBuiltinDimension(world.dimension(), dimension);
         }
 
-        this.allAuthorities.addDimensionIndex(world.getDimensionKey());
+        this.allAuthorities.addDimensionIndex(world.dimension());
 
         this.onAuthoritiesChanged();
     }
 
     private void onWorldUnload(ServerWorld world) {
-        BuiltinAuthority dimension = this.builtinDimensions.get(world.getDimensionKey());
+        BuiltinAuthority dimension = this.builtinDimensions.get(world.dimension());
         if (dimension != null && dimension.isEmpty()) {
-            this.builtinDimensions.remove(world.getDimensionKey());
+            this.builtinDimensions.remove(world.dimension());
             this.allAuthorities.remove(dimension);
         }
 
-        this.allAuthorities.removeDimensionIndex(world.getDimensionKey());
+        this.allAuthorities.removeDimensionIndex(world.dimension());
 
         this.onAuthoritiesChanged();
     }
@@ -227,7 +227,7 @@ public final class ProtectionManager extends WorldSavedData {
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT root) {
+    public CompoundNBT save(CompoundNBT root) {
         ListNBT authorityList = new ListNBT();
 
         for (UserAuthority authority : this.userAuthorities) {
@@ -253,7 +253,7 @@ public final class ProtectionManager extends WorldSavedData {
             Codec<BuiltinAuthority> codec = BuiltinAuthority.dimensionCodec(dimension);
             codec.encodeStart(NBTDynamicOps.INSTANCE, authority)
                     .result().ifPresent(nbt -> {
-                        dimensionsTag.put(dimension.getLocation().toString(), nbt);
+                        dimensionsTag.put(dimension.location().toString(), nbt);
                     });
         }
 
@@ -268,7 +268,7 @@ public final class ProtectionManager extends WorldSavedData {
     }
 
     @Override
-    public void read(CompoundNBT root) {
+    public void load(CompoundNBT root) {
         ListNBT authoritiesList = root.getList("authorities", Constants.NBT.TAG_COMPOUND);
 
         for (INBT authorityTag : authoritiesList) {
@@ -285,8 +285,8 @@ public final class ProtectionManager extends WorldSavedData {
 
     private void readBuiltin(CompoundNBT root) {
         CompoundNBT dimensionsTag = root.getCompound("dimensions");
-        for (String dimensionKey : dimensionsTag.keySet()) {
-            RegistryKey<World> dimension = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(dimensionKey));
+        for (String dimensionKey : dimensionsTag.getAllKeys()) {
+            RegistryKey<World> dimension = RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(dimensionKey));
 
             Codec<BuiltinAuthority> codec = BuiltinAuthority.dimensionCodec(dimension);
             codec.decode(NBTDynamicOps.INSTANCE, dimensionsTag.getCompound(dimensionKey))

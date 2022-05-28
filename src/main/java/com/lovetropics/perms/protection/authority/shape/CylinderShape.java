@@ -20,7 +20,7 @@ import net.minecraft.world.server.ServerWorld;
 public final class CylinderShape implements AuthorityShape {
     public static final Codec<CylinderShape> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(
-                World.CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+                World.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
                 Codec.INT.fieldOf("center_x").forGetter(c -> c.centerX),
                 Codec.INT.fieldOf("center_z").forGetter(c -> c.centerZ),
                 Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
@@ -98,7 +98,7 @@ public final class CylinderShape implements AuthorityShape {
 
     @Override
     public Region tryIntoRegion(MinecraftServer server) {
-        ServerWorld world = server.getWorld(this.dimension);
+        ServerWorld world = server.getLevel(this.dimension);
         return new CylinderRegion(
                 ForgeAdapter.adapt(world),
                 BlockVector3.at(this.centerX, 0, this.centerZ),

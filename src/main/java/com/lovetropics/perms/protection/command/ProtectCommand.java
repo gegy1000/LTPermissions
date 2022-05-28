@@ -64,7 +64,7 @@ public final class ProtectCommand {
         // @formatter:off
         dispatcher.register(
             literal("protect")
-                .requires(source -> source.hasPermissionLevel(3))
+                .requires(source -> source.hasPermission(3))
                 .then(literal("add")
                     .then(argument("authority", StringArgumentType.string())
                     .then(argument("level", IntegerArgumentType.integer())
@@ -163,11 +163,11 @@ public final class ProtectCommand {
         UserAuthority authority = UserAuthority.create(key).withLevel(level);
         if (protection.addAuthority(authority)) {
             ITextComponent message = new StringTextComponent("Added authority '")
-                    .appendSibling(new StringTextComponent(key).mergeStyle(TextFormatting.AQUA))
-                    .appendString("' ")
-                    .appendSibling(new StringTextComponent("@" + level).mergeStyle(TextFormatting.AQUA))
-                    .mergeStyle(TextFormatting.GREEN);
-            context.getSource().sendFeedback(message, true);
+                    .append(new StringTextComponent(key).withStyle(TextFormatting.AQUA))
+                    .append("' ")
+                    .append(new StringTextComponent("@" + level).withStyle(TextFormatting.AQUA))
+                    .withStyle(TextFormatting.GREEN);
+            context.getSource().sendSuccess(message, true);
         } else {
             throw AUTHORITY_ALREADY_EXISTS.create(key);
         }
@@ -181,10 +181,10 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         if (protection.removeAuthority(authority)) {
             ITextComponent message = new StringTextComponent("Removed authority '")
-                    .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                    .appendString("'")
-                    .mergeStyle(TextFormatting.GOLD);
-            context.getSource().sendFeedback(message, true);
+                    .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                    .append("'")
+                    .withStyle(TextFormatting.GOLD);
+            context.getSource().sendSuccess(message, true);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -200,12 +200,12 @@ public final class ProtectCommand {
         protection.replaceAuthority(authority, authority.addShape(shape, selection));
 
         ITextComponent message = new StringTextComponent("Set shape on '")
-                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                .appendString("' with key '")
-                .appendSibling(new StringTextComponent(shape).mergeStyle(TextFormatting.AQUA))
-                .appendString("'")
-                .mergeStyle(TextFormatting.GREEN);
-        context.getSource().sendFeedback(message, true);
+                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append("' with key '")
+                .append(new StringTextComponent(shape).withStyle(TextFormatting.AQUA))
+                .append("'")
+                .withStyle(TextFormatting.GREEN);
+        context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -219,12 +219,12 @@ public final class ProtectCommand {
         protection.replaceAuthority(authority, authority.removeShape(shapeKey));
 
         ITextComponent message = new StringTextComponent("Removed shape from '")
-                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                .appendString("' with key '")
-                .appendSibling(new StringTextComponent(shapeKey).mergeStyle(TextFormatting.AQUA))
-                .appendString("'")
-                .mergeStyle(TextFormatting.GOLD);
-        context.getSource().sendFeedback(message, true);
+                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append("' with key '")
+                .append(new StringTextComponent(shapeKey).withStyle(TextFormatting.AQUA))
+                .append("'")
+                .withStyle(TextFormatting.GOLD);
+        context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -237,12 +237,12 @@ public final class ProtectCommand {
         applySelectionFor(context.getSource(), authority.shape().get(shapeKey));
 
         ITextComponent message = new StringTextComponent("Selected shape from '")
-                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                .appendString("' with key '")
-                .appendSibling(new StringTextComponent(shapeKey).mergeStyle(TextFormatting.AQUA))
-                .appendString("'")
-                .mergeStyle(TextFormatting.GREEN);
-        context.getSource().sendFeedback(message, true);
+                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append("' with key '")
+                .append(new StringTextComponent(shapeKey).withStyle(TextFormatting.AQUA))
+                .append("'")
+                .withStyle(TextFormatting.GREEN);
+        context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -256,12 +256,12 @@ public final class ProtectCommand {
         protection.replaceAuthority(authority, authority.withRule(rule, result));
 
         ITextComponent message = new StringTextComponent("Set rule ")
-                .appendSibling(new StringTextComponent(rule.key() + "=").appendSibling(result.getName()).mergeStyle(TextFormatting.AQUA))
-                .appendString(" for '")
-                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                .appendString("'")
-                .mergeStyle(TextFormatting.GREEN);
-        context.getSource().sendFeedback(message, true);
+                .append(new StringTextComponent(rule.key() + "=").append(result.getName()).withStyle(TextFormatting.AQUA))
+                .append(" for '")
+                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append("'")
+                .withStyle(TextFormatting.GREEN);
+        context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -308,17 +308,17 @@ public final class ProtectCommand {
         protection.replaceAuthority(authority, newAuthority);
 
         ITextComponent message = new StringTextComponent("Updated exclusions for '")
-                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                .appendString("'")
-                .mergeStyle(TextFormatting.GREEN);
-        context.getSource().sendFeedback(message, true);
+                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append("'")
+                .withStyle(TextFormatting.GREEN);
+        context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
 
     private static void applySelectionFor(CommandSource source, AuthorityShape shape) throws CommandSyntaxException {
         SessionManager sessionManager = WorldEdit.getInstance().getSessionManager();
-        ForgePlayer player = ForgeAdapter.adaptPlayer(source.asPlayer());
+        ForgePlayer player = ForgeAdapter.adaptPlayer(source.getPlayerOrException());
         LocalSession session = sessionManager.get(player);
 
         RegionSelector selector = WorldEditShapes.tryIntoRegionSelector(source.getServer(), shape);
@@ -331,7 +331,7 @@ public final class ProtectCommand {
     }
 
     private static AuthorityShape getSelectionFor(CommandSource source) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.asPlayer();
+        ServerPlayerEntity player = source.getPlayerOrException();
 
         SessionManager sessionManager = WorldEdit.getInstance().getSessionManager();
         LocalSession session = sessionManager.get(ForgeAdapter.adaptPlayer(player));
@@ -357,12 +357,12 @@ public final class ProtectCommand {
         protection.replaceAuthority(authority, authority.addBehavior(behaviorId));
 
         ITextComponent message = new StringTextComponent("Added behavior '")
-                .appendSibling(new StringTextComponent(behaviorId.toString()).mergeStyle(TextFormatting.AQUA))
-                .appendString("' to '")
-                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                .appendString("'")
-                .mergeStyle(TextFormatting.GREEN);
-        context.getSource().sendFeedback(message, true);
+                .append(new StringTextComponent(behaviorId.toString()).withStyle(TextFormatting.AQUA))
+                .append("' to '")
+                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append("'")
+                .withStyle(TextFormatting.GREEN);
+        context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -375,12 +375,12 @@ public final class ProtectCommand {
         protection.replaceAuthority(authority, authority.removeBehavior(behaviorId));
 
         ITextComponent message = new StringTextComponent("Removed behavior '")
-                .appendSibling(new StringTextComponent(behaviorId.toString()).mergeStyle(TextFormatting.AQUA))
-                .appendString("' from '")
-                .appendSibling(new StringTextComponent(authority.key()).mergeStyle(TextFormatting.AQUA))
-                .appendString("'")
-                .mergeStyle(TextFormatting.GOLD);
-        context.getSource().sendFeedback(message, true);
+                .append(new StringTextComponent(behaviorId.toString()).withStyle(TextFormatting.AQUA))
+                .append("' from '")
+                .append(new StringTextComponent(authority.key()).withStyle(TextFormatting.AQUA))
+                .append("'")
+                .withStyle(TextFormatting.GOLD);
+        context.getSource().sendSuccess(message, true);
 
         return Command.SINGLE_SUCCESS;
     }

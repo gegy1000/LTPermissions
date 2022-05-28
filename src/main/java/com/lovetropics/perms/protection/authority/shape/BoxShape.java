@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 public final class BoxShape implements AuthorityShape {
     public static final Codec<BoxShape> CODEC = RecordCodecBuilder.create(instance -> {
         return instance.group(
-                World.CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
+                World.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
                 BlockBox.CODEC.fieldOf("box").forGetter(c -> c.box)
         ).apply(instance, BoxShape::new);
     });
@@ -53,7 +53,7 @@ public final class BoxShape implements AuthorityShape {
     @Nullable
     @Override
     public Region tryIntoRegion(MinecraftServer server) {
-        ServerWorld world = server.getWorld(this.dimension);
+        ServerWorld world = server.getLevel(this.dimension);
         return new CuboidRegion(
                 ForgeAdapter.adapt(world),
                 ForgeAdapter.adapt(this.box.min),

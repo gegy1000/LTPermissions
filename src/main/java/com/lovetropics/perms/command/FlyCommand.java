@@ -12,11 +12,11 @@ public class FlyCommand {
 	
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(literal("fly")
-        		  .requires(ctx -> ctx.hasPermissionLevel(2))
+        		  .requires(ctx -> ctx.hasPermission(2))
         		  .executes(ctx -> {
-			        	ServerPlayerEntity player = ctx.getSource().asPlayer();
-			        	player.abilities.allowFlying = !player.abilities.allowFlying;
-			        	player.sendPlayerAbilities();
+			        	ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
+			        	player.abilities.mayfly = !player.abilities.mayfly;
+			        	player.onUpdateAbilities();
 			        	return Command.SINGLE_SUCCESS;
         		  }));
     }

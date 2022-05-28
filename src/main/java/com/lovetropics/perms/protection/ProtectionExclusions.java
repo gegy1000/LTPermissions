@@ -83,12 +83,12 @@ public final class ProtectionExclusions implements EventFilter {
     }
 
     public boolean isExcluded(PlayerEntity player) {
-        if (this.players.contains(player.getUniqueID())) {
+        if (this.players.contains(player.getUUID())) {
             return true;
         }
 
         if (player instanceof ServerPlayerEntity) {
-            if (this.operators && player.hasPermissionLevel(4)) {
+            if (this.operators && player.hasPermissions(4)) {
                 return true;
             }
 

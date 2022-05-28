@@ -38,7 +38,7 @@ public final class AuthorityBehaviorConfigs {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 REGISTRY.clear();
 
-                Collection<ResourceLocation> locations = resourceManager.getAllResourceLocations("authority_behaviors", file -> file.endsWith(".json"));
+                Collection<ResourceLocation> locations = resourceManager.listResources("authority_behaviors", file -> file.endsWith(".json"));
                 for (ResourceLocation location : locations) {
                     ResourceLocation id = getIdFromLocation(location);
 
@@ -57,7 +57,7 @@ public final class AuthorityBehaviorConfigs {
                 RELOADED.set(true);
             }, backgroundExecutor);
 
-            return future.thenCompose(stage::markCompleteAwaitingOthers);
+            return future.thenCompose(stage::wait);
         });
     }
 

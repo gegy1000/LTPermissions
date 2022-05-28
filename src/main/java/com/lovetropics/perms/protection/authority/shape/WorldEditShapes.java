@@ -71,6 +71,6 @@ public final class WorldEditShapes {
 
     public static RegistryKey<World> asDimension(com.sk89q.worldedit.world.World world) {
         ForgeWorld forgeWorld = (ForgeWorld) world;
-        return forgeWorld.getWorld().getDimensionKey();
+        return forgeWorld.getWorld().dimension();
     }
 }

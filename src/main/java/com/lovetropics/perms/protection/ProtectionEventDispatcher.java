@@ -25,9 +25,9 @@ public final class ProtectionEventDispatcher {
     public static void onTickPlayer(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.START && event.player instanceof ServerPlayerEntity) {
             ServerPlayerEntity player = (ServerPlayerEntity) event.player;
-            FoodStats food = player.getFoodStats();
-            if (food.needFood()) {
-                ProtectionManager protect = protect(player.getServerWorld());
+            FoodStats food = player.getFoodData();
+            if (food.needsFood()) {
+                ProtectionManager protect = protect(player.getLevel());
                 EventSource source = EventSource.forEntity(player);
                 if (protect.denies(source, ProtectionRule.HUNGER)) {
                     food.setFoodLevel(20);
@@ -128,9 +128,9 @@ public final class ProtectionEventDispatcher {
     public static void onAttackEntity(AttackEntityEvent event) {
         PlayerEntity player = event.getPlayer();
         Entity target = event.getTarget();
-        if (player instanceof ServerPlayerEntity && target.world instanceof ServerWorld) {
-            ProtectionManager protect = protect((ServerWorld) target.world);
-            EventSource source = EventSource.forEntityAt(event.getPlayer(), target.getPosition());
+        if (player instanceof ServerPlayerEntity && target.level instanceof ServerWorld) {
+            ProtectionManager protect = protect((ServerWorld) target.level);
+            EventSource source = EventSource.forEntityAt(event.getPlayer(), target.blockPosition());
             if (protect.denies(source, ProtectionRule.ATTACK)) {
                 event.setCanceled(true);
             } else if (target instanceof PlayerEntity && protect.denies(source, ProtectionRule.PVP)) {
@@ -142,8 +142,8 @@ public final class ProtectionEventDispatcher {
     @SubscribeEvent
     public static void onEntityDamage(LivingDamageEvent event) {
         LivingEntity entity = event.getEntityLiving();
-        if (entity.world instanceof ServerWorld) {
-            ProtectionManager protect = protect((ServerWorld) entity.world);
+        if (entity.level instanceof ServerWorld) {
+            ProtectionManager protect = protect((ServerWorld) entity.level);
 
             EventSource source = EventSource.forEntity(entity);
             if (protect.denies(source, ProtectionRule.DAMAGE)) {
