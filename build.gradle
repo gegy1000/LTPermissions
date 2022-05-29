@@ -53,6 +53,8 @@ minecraft {
 
 configurations {
   shade
+  library
+  implementation.extendsFrom library
 }
 
 repositories {
@@ -69,10 +71,16 @@ dependencies {
   implementation fg.deobf(ltlib)
   shade ltlib
 
-  implementation "com.sk89q.worldedit:worldedit-core:7.2.11-SNAPSHOT"
+  library "com.sk89q.worldedit:worldedit-core:7.2.11-SNAPSHOT"
   implementation fg.deobf("com.sk89q.worldedit:worldedit-forge-mc1.18.2:7.2.11-SNAPSHOT")
 
 //  implementation fg.deobf('com.github.hexomod:WorldEdit-CUI-FE3:1.16.5-3.0.9')
+}
+
+minecraft.runs.all {
+  lazyToken('minecraft_classpath') {
+    configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+  }
 }
 
 shadowJar {
