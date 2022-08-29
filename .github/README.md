@@ -1,2 +1,2 @@
 # LT Permissions
-*Because why not*
+*Because why*
