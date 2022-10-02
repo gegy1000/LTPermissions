@@ -1,6 +1,7 @@
 package com.lovetropics.perms.config;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.lovetropics.perms.override.RoleOverrideMap;
 import com.lovetropics.perms.role.Role;
 import com.mojang.datafixers.util.Pair;
@@ -11,13 +12,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class RoleConfigMap implements Iterable<Pair<String, RoleConfig>> {
@@ -30,8 +28,7 @@ public final class RoleConfigMap implements Iterable<Pair<String, RoleConfig>> {
     }
 
     public static <T> RoleConfigMap parse(Dynamic<T> root, ConfigErrorConsumer error) {
-        List<Pair<Dynamic<T>, Dynamic<T>>> roleEntries = root.asMapOpt().result().orElse(Stream.empty())
-                .collect(Collectors.toList());
+        List<Pair<Dynamic<T>, Dynamic<T>>> roleEntries = root.asMapOpt().result().orElse(Stream.empty()).toList();
 
         Builder roleBuilder = new Builder();
 
@@ -92,13 +89,13 @@ public final class RoleConfigMap implements Iterable<Pair<String, RoleConfig>> {
                 RoleConfig role = roles.get(name);
 
                 RoleOverrideMap resolvedOverrides = new RoleOverrideMap();
-                resolvedOverrides.addAll(role.overrides);
+                resolvedOverrides.addAll(role.overrides());
 
                 // add includes to our resolved overrides with lower priority than our own
-                for (String include : role.includes) {
+                for (String include : role.includes()) {
                     RoleConfig includeRole = result.get(include);
                     if (includeRole != null) {
-                        resolvedOverrides.addAll(includeRole.overrides);
+                        resolvedOverrides.addAll(includeRole.overrides());
                     } else {
                         if (roles.containsKey(include)) {
                             error.report("'" + name + "' tried to include '" + include + "' but it is of a higher level");
@@ -108,22 +105,14 @@ public final class RoleConfigMap implements Iterable<Pair<String, RoleConfig>> {
                     }
                 }
 
-                result.put(name, new RoleConfig(role.level, resolvedOverrides, new String[0]));
+                result.put(name, new RoleConfig(resolvedOverrides, new String[0]));
             }
 
             return result;
         }
 
         private List<String> sortRoles() {
-            List<String> roleOrder = new ArrayList<>(this.roleOrder);
-
-            Collections.reverse(roleOrder);
-            roleOrder.sort(Comparator.comparingInt(name -> {
-                RoleConfig role = this.roles.get(name);
-                return role.level;
-            }));
-
-            return roleOrder;
+            return Lists.reverse(roleOrder);
         }
     }
 }

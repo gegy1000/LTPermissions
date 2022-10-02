@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public final class RolesConfig implements RoleProvider {
-    private static final JsonParser JSON = new JsonParser();
-
     private static RolesConfig instance = new RolesConfig(Collections.emptyList(), Role.empty(Role.EVERYONE));
 
     private final ImmutableMap<String, Role> roles;
@@ -60,9 +58,8 @@ public final class RolesConfig implements RoleProvider {
         ConfigErrorConsumer errorConsumer = errors::add;
 
         try (BufferedReader reader = Files.newBufferedReader(path)) {
-            JsonElement root = JSON.parse(reader);
-            RolesConfig config = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
-            instance = config;
+            JsonElement root = JsonParser.parseReader(reader);
+            instance = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
         } catch (IOException e) {
             errorConsumer.report("Failed to read roles.json configuration", e);
             LTPermissions.LOGGER.warn("Failed to load roles.json configuration", e);
