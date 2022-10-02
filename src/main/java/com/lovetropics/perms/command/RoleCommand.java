@@ -1,9 +1,10 @@
 package com.lovetropics.perms.command;
 
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.override.command.CommandOverride;
-import com.lovetropics.perms.role.Role;
 import com.lovetropics.perms.store.PlayerRoleManager;
 import com.lovetropics.perms.store.PlayerRoleSet;
 import com.mojang.authlib.GameProfile;
@@ -164,7 +165,7 @@ public final class RoleCommand {
 
             boolean admin = hasAdminPower(source);
             Role highestRole = getHighestRole(source);
-            Comparator<Role> comparator = Comparator.<Role>nullsLast(Comparator.<Role>naturalOrder());
+            Comparator<Role> comparator = Comparator.nullsLast(Comparator.naturalOrder());
 
             return SharedSuggestionProvider.suggest(
                     RolesConfig.get().stream()
@@ -177,7 +178,7 @@ public final class RoleCommand {
 
     @Nullable
     private static Role getHighestRole(CommandSourceStack source) {
-        return LTPermissions.lookup().bySource(source).stream()
+        return PermissionsApi.lookup().bySource(source).stream()
                 .min(Comparator.naturalOrder())
                 .orElse(null);
     }

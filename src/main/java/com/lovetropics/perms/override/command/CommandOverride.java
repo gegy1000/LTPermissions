@@ -1,8 +1,9 @@
 package com.lovetropics.perms.override.command;
 
+import com.lovetropics.lib.permission.PermissionResult;
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
-import com.lovetropics.perms.PermissionResult;
-import com.lovetropics.perms.role.RoleReader;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.serialization.Codec;
 import net.minecraft.commands.CommandSourceStack;
@@ -35,12 +36,10 @@ public final class CommandOverride {
             CommandRequirementHooks<CommandSourceStack> hooks = CommandRequirementHooks.tryCreate((nodes, parent) -> {
                 MatchableCommand command = MatchableCommand.compile(nodes);
 
-                return source -> {
-                    switch (canUseCommand(source, command)) {
-                        case ALLOW: return true;
-                        case DENY: return false;
-                        default: return parent.test(source);
-                    }
+                return source -> switch (canUseCommand(source, command)) {
+                    case ALLOW -> true;
+                    case DENY -> false;
+                    default -> parent.test(source);
                 };
             });
 
@@ -53,7 +52,7 @@ public final class CommandOverride {
     private static PermissionResult canUseCommand(CommandSourceStack source, MatchableCommand command) {
         if (doesBypassPermissions(source)) return PermissionResult.PASS;
 
-        RoleReader roles = LTPermissions.lookup().bySource(source);
+        RoleReader roles = PermissionsApi.lookup().bySource(source);
         return roles.overrides().test(LTPermissions.COMMANDS, m -> m.test(command));
     }
 

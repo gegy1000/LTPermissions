@@ -1,12 +1,13 @@
 package com.lovetropics.perms.override;
 
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
-import com.lovetropics.perms.role.RoleReader;
 import com.mojang.serialization.Codec;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -38,7 +39,7 @@ public final class ChatFormatOverride {
     @SubscribeEvent
     public static void onPlayerChat(ServerChatEvent event) {
         ServerPlayer player = event.getPlayer();
-        RoleReader roles = LTPermissions.lookup().byPlayer(player);
+        RoleReader roles = PermissionsApi.lookup().byPlayer(player);
 
         ChatFormatOverride chatFormat = roles.overrides().select(LTPermissions.CHAT_FORMAT);
         if (chatFormat != null) {

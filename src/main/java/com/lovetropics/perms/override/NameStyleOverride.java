@@ -1,8 +1,9 @@
 package com.lovetropics.perms.override;
 
 import com.lovetropics.lib.codec.MoreCodecs;
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
-import com.lovetropics.perms.role.RoleReader;
 import com.mojang.serialization.Codec;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
@@ -101,7 +102,7 @@ public final class NameStyleOverride {
         if (player instanceof ServerPlayer) {
             Component displayName = event.getDisplayname();
             if (displayName.getStyle().getColor() == null && !hasTeamColor((ServerPlayer) player)) {
-                RoleReader roles = LTPermissions.lookup().byPlayer(player);
+                RoleReader roles = PermissionsApi.lookup().byPlayer(player);
 
                 NameStyleOverride nameStyle = roles.overrides().select(LTPermissions.NAME_STYLE);
                 if (nameStyle != null) {

@@ -1,7 +1,8 @@
 package com.lovetropics.perms.protection.command.argument;
 
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.perms.LTPermissions;
-import com.lovetropics.perms.role.Role;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -23,7 +24,7 @@ public final class RoleArgument {
         return Commands.argument(name, StringArgumentType.string())
                 .suggests((context, builder) -> {
                     return SharedSuggestionProvider.suggest(
-                            LTPermissions.roles().stream().map(Role::id),
+                            PermissionsApi.provider().stream().map(Role::id),
                             builder
                     );
                 });
@@ -32,7 +33,7 @@ public final class RoleArgument {
     @Nonnull
     public static Role get(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
         String id = StringArgumentType.getString(context, name);
-        Role role = LTPermissions.roles().get(id);
+        Role role = PermissionsApi.provider().get(id);
         if (role == null) {
             throw ROLE_DOES_NOT_EXIST.create(id);
         }

@@ -1,6 +1,6 @@
 package com.lovetropics.perms.protection.command.argument;
 
-import com.lovetropics.perms.PermissionResult;
+import com.lovetropics.lib.permission.PermissionResult;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;

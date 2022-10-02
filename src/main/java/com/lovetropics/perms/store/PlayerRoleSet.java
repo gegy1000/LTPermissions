@@ -1,11 +1,11 @@
 package com.lovetropics.perms.store;
 
+import com.lovetropics.lib.permission.role.Role;
+import com.lovetropics.lib.permission.role.RoleOverrideReader;
+import com.lovetropics.lib.permission.role.RoleProvider;
+import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.override.RoleOverrideMap;
-import com.lovetropics.perms.override.RoleOverrideReader;
-import com.lovetropics.perms.role.Role;
-import com.lovetropics.perms.role.RoleProvider;
-import com.lovetropics.perms.role.RoleReader;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import net.minecraft.server.level.ServerPlayer;

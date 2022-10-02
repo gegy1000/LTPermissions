@@ -1,17 +1,19 @@
 package com.lovetropics.perms;
 
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.RoleLookup;
+import com.lovetropics.lib.permission.role.RoleOverrideType;
+import com.lovetropics.lib.permission.role.RoleProvider;
+import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.command.FlyCommand;
 import com.lovetropics.perms.command.RoleCommand;
+import com.lovetropics.perms.config.RoleConfig;
 import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.override.ChatFormatOverride;
 import com.lovetropics.perms.override.NameStyleOverride;
-import com.lovetropics.perms.override.RoleOverrideType;
 import com.lovetropics.perms.override.command.CommandOverride;
 import com.lovetropics.perms.protection.authority.shape.AuthorityShape;
 import com.lovetropics.perms.protection.command.ProtectCommand;
-import com.lovetropics.perms.role.RoleLookup;
-import com.lovetropics.perms.role.RoleProvider;
-import com.lovetropics.perms.role.RoleReader;
 import com.lovetropics.perms.store.PlayerRoleManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -87,6 +89,8 @@ public class LTPermissions {
         // Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class,
                 () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+
+        PermissionsApi.setRoleLookup(LOOKUP);
     }
 
     private void setup(FMLCommonSetupEvent event) {
@@ -143,18 +147,10 @@ public class LTPermissions {
     private void onServerChat(ServerChatEvent event) {
         ServerPlayer player = event.getPlayer();
 
-        RoleReader roles = LTPermissions.lookup().byPlayer(player);
+        RoleReader roles = PermissionsApi.lookup().byPlayer(player);
         if (roles.overrides().test(MUTE)) {
             player.displayClientMessage(new TextComponent("You are muted!").withStyle(ChatFormatting.RED), true);
             event.setCanceled(true);
         }
-    }
-
-    public static RoleProvider roles() {
-        return RolesConfig.get();
-    }
-
-    public static RoleLookup lookup() {
-        return LOOKUP;
     }
 }

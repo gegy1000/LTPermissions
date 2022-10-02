@@ -1,7 +1,7 @@
 package com.lovetropics.perms.protection;
 
+import com.lovetropics.lib.permission.PermissionResult;
 import com.lovetropics.perms.LTPermissions;
-import com.lovetropics.perms.PermissionResult;
 import com.lovetropics.perms.protection.authority.Authority;
 import com.lovetropics.perms.protection.authority.BuiltinAuthority;
 import com.lovetropics.perms.protection.authority.UserAuthority;

@@ -2,6 +2,8 @@ package com.lovetropics.perms.override;
 
 import com.google.common.collect.ImmutableList;
 import com.lovetropics.lib.codec.MoreCodecs;
+import com.lovetropics.lib.permission.role.RoleOverrideReader;
+import com.lovetropics.lib.permission.role.RoleOverrideType;
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.server.level.ServerPlayer;

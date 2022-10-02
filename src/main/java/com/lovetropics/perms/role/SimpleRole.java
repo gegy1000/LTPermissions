@@ -1,5 +1,6 @@
 package com.lovetropics.perms.role;
 
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.perms.override.RoleOverrideMap;
 
 public record SimpleRole(String id, RoleOverrideMap overrides, int index) implements Role {

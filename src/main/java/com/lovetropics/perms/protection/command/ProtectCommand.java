@@ -1,6 +1,7 @@
 package com.lovetropics.perms.protection.command;
 
-import com.lovetropics.perms.PermissionResult;
+import com.lovetropics.lib.permission.PermissionResult;
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.perms.protection.ProtectionManager;
 import com.lovetropics.perms.protection.ProtectionRule;
 import com.lovetropics.perms.protection.authority.Authority;
@@ -13,7 +14,6 @@ import com.lovetropics.perms.protection.command.argument.AuthorityShapeArgument;
 import com.lovetropics.perms.protection.command.argument.PermissionResultArgument;
 import com.lovetropics.perms.protection.command.argument.ProtectionRuleArgument;
 import com.lovetropics.perms.protection.command.argument.RoleArgument;
-import com.lovetropics.perms.role.Role;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;

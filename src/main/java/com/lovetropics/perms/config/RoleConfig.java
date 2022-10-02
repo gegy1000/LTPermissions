@@ -1,8 +1,8 @@
 package com.lovetropics.perms.config;
 
 import com.lovetropics.lib.codec.MoreCodecs;
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.perms.override.RoleOverrideMap;
-import com.lovetropics.perms.role.Role;
 import com.lovetropics.perms.role.SimpleRole;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

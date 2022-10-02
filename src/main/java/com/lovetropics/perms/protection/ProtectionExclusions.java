@@ -1,14 +1,14 @@
 package com.lovetropics.perms.protection;
 
-import com.lovetropics.perms.LTPermissions;
-import com.lovetropics.perms.role.Role;
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.Role;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,8 +91,8 @@ public final class ProtectionExclusions implements EventFilter {
             }
 
             for (String excludeRoleId : this.roles) {
-                Role excludeRole = LTPermissions.roles().get(excludeRoleId);
-                if (excludeRole != null && LTPermissions.lookup().byPlayer(player).has(excludeRole)) {
+                Role excludeRole = PermissionsApi.provider().get(excludeRoleId);
+                if (excludeRole != null && PermissionsApi.lookup().byPlayer(player).has(excludeRole)) {
                     return true;
                 }
             }

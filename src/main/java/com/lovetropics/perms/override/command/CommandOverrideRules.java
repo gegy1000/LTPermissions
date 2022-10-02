@@ -1,6 +1,6 @@
 package com.lovetropics.perms.override.command;
 
-import com.lovetropics.perms.PermissionResult;
+import com.lovetropics.lib.permission.PermissionResult;
 import com.mojang.serialization.Codec;
 
 import java.util.ArrayList;

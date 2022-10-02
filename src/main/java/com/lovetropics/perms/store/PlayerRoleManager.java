@@ -1,8 +1,8 @@
 package com.lovetropics.perms.store;
 
+import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.config.RolesConfig;
-import com.lovetropics.perms.role.RoleReader;
 import com.lovetropics.perms.store.db.PlayerRoleDatabase;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.server.MinecraftServer;

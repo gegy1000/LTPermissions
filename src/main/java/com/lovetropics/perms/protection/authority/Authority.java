@@ -1,12 +1,12 @@
 package com.lovetropics.perms.protection.authority;
 
-import com.lovetropics.perms.PermissionResult;
+import com.lovetropics.lib.permission.PermissionResult;
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.perms.protection.EventFilter;
 import com.lovetropics.perms.protection.ProtectionExclusions;
 import com.lovetropics.perms.protection.ProtectionRule;
 import com.lovetropics.perms.protection.ProtectionRuleMap;
 import com.lovetropics.perms.protection.authority.behavior.AuthorityBehaviorMap;
-import com.lovetropics.perms.role.Role;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.resources.ResourceLocation;
 

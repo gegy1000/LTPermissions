@@ -1,6 +1,6 @@
 package com.lovetropics.perms.protection;
 
-import com.lovetropics.perms.PermissionResult;
+import com.lovetropics.lib.permission.PermissionResult;
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 

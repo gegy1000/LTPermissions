@@ -2,8 +2,8 @@ package com.lovetropics.perms.config;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.perms.override.RoleOverrideMap;
-import com.lovetropics.perms.role.Role;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;

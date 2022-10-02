@@ -5,9 +5,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.Role;
+import com.lovetropics.lib.permission.role.RoleProvider;
 import com.lovetropics.perms.LTPermissions;
-import com.lovetropics.perms.role.Role;
-import com.lovetropics.perms.role.RoleProvider;
 import com.lovetropics.perms.role.SimpleRole;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
@@ -61,6 +62,7 @@ public final class RolesConfig implements RoleProvider {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             JsonElement root = JsonParser.parseReader(reader);
             instance = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
+            PermissionsApi.setRoleProvider(instance);
         } catch (IOException e) {
             errorConsumer.report("Failed to read roles.json configuration", e);
             LTPermissions.LOGGER.warn("Failed to load roles.json configuration", e);
