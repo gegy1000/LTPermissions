@@ -3,6 +3,7 @@ package com.lovetropics.perms.config;
 import com.lovetropics.lib.codec.MoreCodecs;
 import com.lovetropics.perms.override.RoleOverrideMap;
 import com.lovetropics.perms.role.Role;
+import com.lovetropics.perms.role.SimpleRole;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -13,6 +14,6 @@ public record RoleConfig(RoleOverrideMap overrides, String[] includes) {
     ).apply(i, RoleConfig::new));
 
     public Role create(String name, int index) {
-        return new Role(name, this.overrides, index);
+        return new SimpleRole(name, this.overrides, index);
     }
 }

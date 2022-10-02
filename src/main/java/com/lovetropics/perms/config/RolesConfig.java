@@ -8,6 +8,7 @@ import com.google.gson.JsonSyntaxException;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.role.Role;
 import com.lovetropics.perms.role.RoleProvider;
+import com.lovetropics.perms.role.SimpleRole;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public final class RolesConfig implements RoleProvider {
-    private static RolesConfig instance = new RolesConfig(Collections.emptyList(), Role.empty(Role.EVERYONE));
+    private static RolesConfig instance = new RolesConfig(Collections.emptyList(), SimpleRole.empty(Role.EVERYONE));
 
     private final ImmutableMap<String, Role> roles;
     private final Role everyone;
@@ -90,7 +91,7 @@ public final class RolesConfig implements RoleProvider {
     private static <T> RolesConfig parse(Dynamic<T> root, ConfigErrorConsumer error) {
         RoleConfigMap roleConfigs = RoleConfigMap.parse(root, error);
 
-        Role everyone = Role.empty(Role.EVERYONE);
+        Role everyone = SimpleRole.empty(Role.EVERYONE);
         List<Role> roles = new ArrayList<>();
 
         int index = 1;
