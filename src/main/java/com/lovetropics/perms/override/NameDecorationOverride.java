@@ -69,7 +69,7 @@ public record NameDecorationOverride(
 			if (displayName.getStyle().getColor() == null && !hasTeamColor((ServerPlayer) player)) {
 				final RoleReader roles = PermissionsApi.lookup().byPlayer(player);
 
-				final NameDecorationOverride nameDecoration = roles.overrides().select(LTPermissions.NAME_DECORATION);
+				final NameDecorationOverride nameDecoration = roles.overrides().getOrNull(LTPermissions.NAME_DECORATION);
 				if (nameDecoration != null) {
 					event.setDisplayname(nameDecoration.apply(displayName.copy()));
 				}

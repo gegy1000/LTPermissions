@@ -36,6 +36,10 @@ public final class CommandOverrideRules {
         this.rules = commands;
     }
 
+    public static CommandOverrideRules combine(List<CommandOverrideRules> rules) {
+        return new CommandOverrideRules(rules.stream().flatMap(r -> Arrays.stream(r.rules)).toArray(Rule[]::new));
+    }
+
     public static Builder builder() {
         return new Builder();
     }

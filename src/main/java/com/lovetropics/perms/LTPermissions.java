@@ -47,6 +47,7 @@ public class LTPermissions {
     public static final Logger LOGGER = LogManager.getLogger(ID);
 
     public static final RoleOverrideType<CommandOverride> COMMANDS = RoleOverrideType.register("commands", CommandOverride.CODEC)
+            .withBuilder(CommandOverride::build)
             .withChangeListener(player -> {
                 MinecraftServer server = player.getServer();
                 if (server != null) {
@@ -55,9 +56,11 @@ public class LTPermissions {
             });
 
     public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
+
     public static final RoleOverrideType<NameDecorationOverride> NAME_DECORATION = RoleOverrideType.register("name_decoration", NameDecorationOverride.CODEC)
             .withInitializeListener(Player::refreshDisplayName)
             .withChangeListener(Player::refreshDisplayName);
+
     public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
 
     private static final RoleLookup LOOKUP = new RoleLookup() {

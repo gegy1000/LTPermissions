@@ -1,6 +1,5 @@
 package com.lovetropics.perms.override;
 
-import com.google.common.collect.ImmutableList;
 import com.lovetropics.lib.codec.MoreCodecs;
 import com.lovetropics.lib.permission.role.RoleOverrideReader;
 import com.lovetropics.lib.permission.role.RoleOverrideType;
@@ -8,7 +7,7 @@ import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.server.level.ServerPlayer;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,9 +22,18 @@ public final class RoleOverrideMap implements RoleOverrideReader {
             .xmap(RoleOverrideMap::new, m -> m.overrides);
 
     private final Map<RoleOverrideType<?>, List<Object>> overrides;
+    private final Map<RoleOverrideType<?>, Object> combinedOverrides = new Reference2ObjectOpenHashMap<>();
 
     private RoleOverrideMap(Map<RoleOverrideType<?>, List<Object>> overrides) {
         this.overrides = new Reference2ObjectOpenHashMap<>(overrides);
+        overrides.forEach((type, values) -> {
+            combinedOverrides.put(type, combineOverridesUnchecked(type, values));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T combineOverridesUnchecked(RoleOverrideType<T> type, List<?> overrides) {
+        return type.build((List<T>) overrides);
     }
 
     public static Builder builder() {
@@ -33,34 +41,27 @@ public final class RoleOverrideMap implements RoleOverrideReader {
     }
 
     public void notifyInitialize(ServerPlayer player) {
-        for (RoleOverrideType<?> override : overrides.keySet()) {
+        for (RoleOverrideType<?> override : combinedOverrides.keySet()) {
             override.notifyInitialize(player);
         }
     }
 
     public void notifyChange(ServerPlayer player) {
-        for (RoleOverrideType<?> override : overrides.keySet()) {
+        for (RoleOverrideType<?> override : combinedOverrides.keySet()) {
             override.notifyChange(player);
         }
     }
 
     @Override
-    @Nonnull
+    @Nullable
     @SuppressWarnings("unchecked")
-    public <T> List<T> get(RoleOverrideType<T> type) {
-        return (List<T>) overrides.getOrDefault(type, ImmutableList.of());
-    }
-
-    @Override
-    @Nonnull
-    @SuppressWarnings("unchecked")
-    public <T> List<T> getOrNull(RoleOverrideType<T> type) {
-        return (List<T>) overrides.get(type);
+    public <T> T getOrNull(RoleOverrideType<T> type) {
+        return (T) combinedOverrides.get(type);
     }
 
     @Override
     public Set<RoleOverrideType<?>> typeSet() {
-        return overrides.keySet();
+        return combinedOverrides.keySet();
     }
 
     public static class Builder {
@@ -71,14 +72,17 @@ public final class RoleOverrideMap implements RoleOverrideReader {
 
         public Builder addAll(RoleOverrideReader overrides) {
             for (RoleOverrideType<?> type : overrides.typeSet()) {
-                addAllUnchecked(type, overrides.get(type));
+                Object override = overrides.getOrNull(type);
+                if (override != null) {
+                    addUnchecked(type, override);
+                }
             }
             return this;
         }
 
         @SuppressWarnings("unchecked")
-        private <T> Builder addAllUnchecked(RoleOverrideType<T> type, Collection<?> overrides) {
-            getOrCreateOverrides(type).addAll((Collection<T>) overrides);
+        private <T> Builder addUnchecked(RoleOverrideType<T> type, Object override) {
+            getOrCreateOverrides(type).add((T) override);
             return this;
         }
 

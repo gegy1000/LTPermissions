@@ -12,6 +12,8 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.List;
+
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
 public final class CommandOverride {
     public static final Codec<CommandOverride> CODEC = CommandOverrideRules.CODEC.xmap(CommandOverride::new, CommandOverride::rules);
@@ -24,6 +26,11 @@ public final class CommandOverride {
 
     public CommandOverrideRules rules() {
         return this.rules;
+    }
+
+    public static CommandOverride build(List<CommandOverride> overrides) {
+        List<CommandOverrideRules> rules = overrides.stream().map(CommandOverride::rules).toList();
+        return new CommandOverride(CommandOverrideRules.combine(rules));
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)

@@ -41,7 +41,7 @@ public final class ChatFormatOverride {
         ServerPlayer player = event.getPlayer();
         RoleReader roles = PermissionsApi.lookup().byPlayer(player);
 
-        ChatFormatOverride chatFormat = roles.overrides().select(LTPermissions.CHAT_FORMAT);
+        ChatFormatOverride chatFormat = roles.overrides().getOrNull(LTPermissions.CHAT_FORMAT);
         if (chatFormat != null) {
             event.setComponent(chatFormat.make(player.getDisplayName(), event.getMessage()));
         }
