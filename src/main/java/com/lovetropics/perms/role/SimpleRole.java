@@ -5,7 +5,7 @@ import com.lovetropics.perms.override.RoleOverrideMap;
 
 public record SimpleRole(String id, RoleOverrideMap overrides, int index) implements Role {
     public static SimpleRole empty(String id) {
-        return new SimpleRole(id, new RoleOverrideMap(), 0);
+        return new SimpleRole(id, RoleOverrideMap.EMPTY, 0);
     }
 
     @Override

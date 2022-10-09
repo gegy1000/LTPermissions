@@ -23,7 +23,7 @@ public final class PlayerRoleSet implements RoleReader {
     private final ServerPlayer player;
 
     private final ObjectSortedSet<Role> roles = new ObjectAVLTreeSet<>();
-    private final RoleOverrideMap overrides = new RoleOverrideMap();
+    private RoleOverrideMap overrides = RoleOverrideMap.EMPTY;
 
     private boolean dirty;
 
@@ -49,8 +49,9 @@ public final class PlayerRoleSet implements RoleReader {
     }
 
     private void rebuildOverrides() {
-        this.overrides.clear();
-        this.stream().forEach(role -> this.overrides.addAll(role.overrides()));
+        RoleOverrideMap.Builder builder = RoleOverrideMap.builder();
+        stream().forEach(role -> builder.addAll(role.overrides()));
+        overrides = builder.build();
     }
 
     public boolean add(Role role) {

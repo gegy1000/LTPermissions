@@ -16,28 +16,30 @@ import java.util.Map;
 import java.util.Set;
 
 public final class RoleOverrideMap implements RoleOverrideReader {
+    public static final RoleOverrideMap EMPTY = new RoleOverrideMap(Map.of());
+
     @SuppressWarnings("unchecked")
     public static final Codec<RoleOverrideMap> CODEC = MoreCodecs.dispatchByMapKey(RoleOverrideType.REGISTRY, t -> MoreCodecs.listOrUnit((Codec<Object>) t.getCodec()))
             .xmap(RoleOverrideMap::new, m -> m.overrides);
 
     private final Map<RoleOverrideType<?>, List<Object>> overrides;
 
-    public RoleOverrideMap() {
-        this.overrides = new Reference2ObjectOpenHashMap<>();
-    }
-
     private RoleOverrideMap(Map<RoleOverrideType<?>, List<Object>> overrides) {
         this.overrides = new Reference2ObjectOpenHashMap<>(overrides);
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public void notifyInitialize(ServerPlayer player) {
-        for (RoleOverrideType<?> override : this.overrides.keySet()) {
+        for (RoleOverrideType<?> override : overrides.keySet()) {
             override.notifyInitialize(player);
         }
     }
 
     public void notifyChange(ServerPlayer player) {
-        for (RoleOverrideType<?> override : this.overrides.keySet()) {
+        for (RoleOverrideType<?> override : overrides.keySet()) {
             override.notifyChange(player);
         }
     }
@@ -46,46 +48,57 @@ public final class RoleOverrideMap implements RoleOverrideReader {
     @Nonnull
     @SuppressWarnings("unchecked")
     public <T> List<T> get(RoleOverrideType<T> type) {
-        return (List<T>) this.overrides.getOrDefault(type, ImmutableList.of());
+        return (List<T>) overrides.getOrDefault(type, ImmutableList.of());
     }
 
     @Override
     @Nonnull
     @SuppressWarnings("unchecked")
     public <T> List<T> getOrNull(RoleOverrideType<T> type) {
-        return (List<T>) this.overrides.get(type);
+        return (List<T>) overrides.get(type);
     }
 
     @Override
     public Set<RoleOverrideType<?>> typeSet() {
-        return this.overrides.keySet();
+        return overrides.keySet();
     }
 
-    public void clear() {
-        this.overrides.clear();
-    }
+    public static class Builder {
+        private final Map<RoleOverrideType<?>, List<Object>> overrides = new Reference2ObjectOpenHashMap<>();
 
-    public void addAll(RoleOverrideReader overrides) {
-        for (RoleOverrideType<?> type : overrides.typeSet()) {
-            this.addAllUnchecked(type, overrides.get(type));
+        private Builder() {
         }
-    }
 
-    @SuppressWarnings("unchecked")
-    private <T> void addAllUnchecked(RoleOverrideType<T> type, Collection<?> overrides) {
-        this.getOrCreateOverrides(type).addAll((Collection<T>) overrides);
-    }
+        public Builder addAll(RoleOverrideReader overrides) {
+            for (RoleOverrideType<?> type : overrides.typeSet()) {
+                addAllUnchecked(type, overrides.get(type));
+            }
+            return this;
+        }
 
-    public <T> void addAll(RoleOverrideType<T> type, Collection<T> overrides) {
-        this.getOrCreateOverrides(type).addAll(overrides);
-    }
+        @SuppressWarnings("unchecked")
+        private <T> Builder addAllUnchecked(RoleOverrideType<T> type, Collection<?> overrides) {
+            getOrCreateOverrides(type).addAll((Collection<T>) overrides);
+            return this;
+        }
 
-    public <T> void add(RoleOverrideType<T> type, T override) {
-        this.getOrCreateOverrides(type).add(override);
-    }
+        public <T> Builder addAll(RoleOverrideType<T> type, Collection<T> overrides) {
+            getOrCreateOverrides(type).addAll(overrides);
+            return this;
+        }
 
-    @SuppressWarnings("unchecked")
-    private <T> List<T> getOrCreateOverrides(RoleOverrideType<T> type) {
-        return (List<T>) this.overrides.computeIfAbsent(type, t -> new ArrayList<>());
+        public <T> Builder add(RoleOverrideType<T> type, T override) {
+            getOrCreateOverrides(type).add(override);
+            return this;
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T> List<T> getOrCreateOverrides(RoleOverrideType<T> type) {
+            return (List<T>) overrides.computeIfAbsent(type, t -> new ArrayList<>());
+        }
+
+        public RoleOverrideMap build() {
+            return new RoleOverrideMap(overrides);
+        }
     }
 }

@@ -88,8 +88,8 @@ public final class RoleConfigMap implements Iterable<Pair<String, RoleConfig>> {
             for (String name : order) {
                 RoleConfig role = roles.get(name);
 
-                RoleOverrideMap resolvedOverrides = new RoleOverrideMap();
-                resolvedOverrides.addAll(role.overrides());
+                RoleOverrideMap.Builder resolvedOverrides = RoleOverrideMap.builder()
+                        .addAll(role.overrides());
 
                 // add includes to our resolved overrides with lower priority than our own
                 for (String include : role.includes()) {
@@ -105,7 +105,7 @@ public final class RoleConfigMap implements Iterable<Pair<String, RoleConfig>> {
                     }
                 }
 
-                result.put(name, new RoleConfig(resolvedOverrides, new String[0]));
+                result.put(name, new RoleConfig(resolvedOverrides.build(), new String[0]));
             }
 
             return result;
