@@ -3,14 +3,12 @@ package com.lovetropics.perms;
 import com.lovetropics.lib.permission.PermissionsApi;
 import com.lovetropics.lib.permission.role.RoleLookup;
 import com.lovetropics.lib.permission.role.RoleOverrideType;
-import com.lovetropics.lib.permission.role.RoleProvider;
 import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.command.FlyCommand;
 import com.lovetropics.perms.command.RoleCommand;
-import com.lovetropics.perms.config.RoleConfig;
 import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.override.ChatFormatOverride;
-import com.lovetropics.perms.override.NameStyleOverride;
+import com.lovetropics.perms.override.NameDecorationOverride;
 import com.lovetropics.perms.override.command.CommandOverride;
 import com.lovetropics.perms.protection.authority.shape.AuthorityShape;
 import com.lovetropics.perms.protection.command.ProtectCommand;
@@ -57,7 +55,7 @@ public class LTPermissions {
             });
 
     public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
-    public static final RoleOverrideType<NameStyleOverride> NAME_STYLE = RoleOverrideType.register("name_style", NameStyleOverride.CODEC)
+    public static final RoleOverrideType<NameDecorationOverride> NAME_DECORATION = RoleOverrideType.register("name_decoration", NameDecorationOverride.CODEC)
             .withInitializeListener(Player::refreshDisplayName)
             .withChangeListener(Player::refreshDisplayName);
     public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
