@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
 public record NameDecorationOverride(
@@ -32,6 +33,8 @@ public record NameDecorationOverride(
 		Optional<AddSuffix> suffix,
 		Optional<ApplyStyle> applyStyle
 ) {
+	private static final NameDecorationOverride EMPTY = new NameDecorationOverride(Optional.empty(), Optional.empty(), Optional.empty());
+
 	public static final Codec<NameDecorationOverride> CODEC = RecordCodecBuilder.create(i -> i.group(
 			AddPrefix.CODEC.optionalFieldOf("prefix").forGetter(NameDecorationOverride::prefix),
 			AddSuffix.CODEC.optionalFieldOf("suffix").forGetter(NameDecorationOverride::suffix),
@@ -49,6 +52,27 @@ public record NameDecorationOverride(
 			name = suffix.get().apply(name);
 		}
 		return name;
+	}
+
+	public static NameDecorationOverride build(List<NameDecorationOverride> overrides) {
+		if (overrides.isEmpty()) {
+			return EMPTY;
+		}
+
+		Optional<AddPrefix> prefix = join(overrides.stream().flatMap(override -> override.prefix().stream()).map(AddPrefix::prefix)).map(AddPrefix::new);
+		Optional<AddSuffix> suffix = join(overrides.stream().flatMap(override -> override.suffix().stream()).map(AddSuffix::suffix)).map(AddSuffix::new);
+		Optional<ApplyStyle> style = overrides.get(0).applyStyle();
+		return new NameDecorationOverride(prefix, suffix, style);
+	}
+
+	private static Optional<Component> join(Stream<Component> stream) {
+		List<Component> components = stream.toList();
+		if (components.isEmpty()) {
+			return Optional.empty();
+		}
+		MutableComponent result = new TextComponent("");
+		components.forEach(result::append);
+		return Optional.of(result);
 	}
 
 	@SubscribeEvent

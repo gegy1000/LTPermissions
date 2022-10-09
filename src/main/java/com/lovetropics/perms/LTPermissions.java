@@ -58,6 +58,7 @@ public class LTPermissions {
     public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
 
     public static final RoleOverrideType<NameDecorationOverride> NAME_DECORATION = RoleOverrideType.register("name_decoration", NameDecorationOverride.CODEC)
+            .withBuilder(NameDecorationOverride::build)
             .withInitializeListener(Player::refreshDisplayName)
             .withChangeListener(Player::refreshDisplayName);
 
