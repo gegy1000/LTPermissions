@@ -136,6 +136,10 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onEntityDamage(LivingDamageEvent event) {
+        if (event.getSource().isBypassInvul()) {
+            return;
+        }
+
         LivingEntity entity = event.getEntityLiving();
         if (entity.level instanceof ServerLevel) {
             ProtectionManager protect = protect((ServerLevel) entity.level);
