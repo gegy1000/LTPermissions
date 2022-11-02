@@ -150,6 +150,11 @@ public final class ProtectionEventDispatcher {
                 return;
             }
 
+            if (entity instanceof Player && protect.denies(source, ProtectionRule.PLAYER_DAMAGE)) {
+                event.setCanceled(true);
+                return;
+            }
+
             if (event.getSource() == DamageSource.FALL && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
                 event.setCanceled(true);
             }

@@ -26,6 +26,7 @@ public final class ProtectionRule {
     public static final ProtectionRule HUNGER = register("hunger");
     public static final ProtectionRule FALL_DAMAGE = register("fall_damage");
     public static final ProtectionRule DAMAGE = register("damage");
+    public static final ProtectionRule PLAYER_DAMAGE = register("player_damage");
 
     private final String key;
 
