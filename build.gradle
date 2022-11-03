@@ -10,13 +10,11 @@ buildscript {
   }
 }
 
-plugins {
-  id 'com.github.johnrengelman.shadow' version '7.1.2'
-}
-
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
 apply plugin: 'eclipse'
+
+jarJar.enable()
 
 group = "com.lovetropics"
 archivesBaseName = "ltperms"
@@ -60,7 +58,6 @@ minecraft {
 
 
 configurations {
-  shade
   library
   implementation.extendsFrom library
 }
@@ -75,9 +72,9 @@ repositories {
 dependencies {
   minecraft "net.minecraftforge:forge:$minecraft_version-$forge_version"
 
-  def ltlib = "com.lovetropics.lib:LTLib:1.2.0-release+7"
-  implementation fg.deobf(ltlib)
-  shade ltlib
+  jarJar(implementation(fg.deobf("com.lovetropics.lib:LTLib:1.2.0-release+9"))) {
+    jarJar.ranged(it, "[1.2,1.3)")
+  }
 
   library "com.sk89q.worldedit:worldedit-core:7.2.11-SNAPSHOT"
   implementation fg.deobf("com.sk89q.worldedit:worldedit-forge-mc1.18.2:7.2.11-SNAPSHOT")
@@ -91,18 +88,14 @@ minecraft.runs.all {
   }
 }
 
-shadowJar {
-  configurations = [project.configurations.shade]
-  relocate 'com.lovetropics.lib', 'com.lovetropics.perms.repack.ltlib'
-  classifier = ''
+tasks.jarJar.configure {
+  classifier ''
+  finalizedBy('reobfJarJar')
 }
 
 reobf {
-  shadowJar {}
+  jarJar { }
 }
-
-build.dependsOn shadowJar
-build.dependsOn reobfShadowJar
 
 jar {
   classifier = 'slim'
