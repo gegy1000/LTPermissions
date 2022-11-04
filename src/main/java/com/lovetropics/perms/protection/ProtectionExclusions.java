@@ -112,6 +112,6 @@ public final class ProtectionExclusions implements EventFilter {
     }
 
     public boolean isEmpty() {
-        return this.players.isEmpty() && this.roles.isEmpty() && !this.operators;
+        return this.players.isEmpty() && this.roles.isEmpty() && this.operators;
     }
 }
