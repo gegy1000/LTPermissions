@@ -111,15 +111,15 @@ public final class ProtectionPlayerTracker {
 
     // TODO: consolidate with movement logic?
     private void onTrackerReinitialized(ServerPlayer player, Tracker lastTracker, Tracker newTracker) {
-        for (Authority authority : newTracker.inside) {
-            if (!lastTracker.inside.contains(authority)) {
-                this.onPlayerEnter(player, authority);
-            }
-        }
-
         for (Authority authority : lastTracker.inside) {
             if (!newTracker.inside.contains(authority)) {
                 this.onPlayerExit(player, authority);
+            }
+        }
+
+        for (Authority authority : newTracker.inside) {
+            if (!lastTracker.inside.contains(authority)) {
+                this.onPlayerEnter(player, authority);
             }
         }
     }
