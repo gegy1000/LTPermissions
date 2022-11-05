@@ -25,7 +25,7 @@ public final class ProtectionPlayerTracker {
     public static final ProtectionPlayerTracker INSTANCE = new ProtectionPlayerTracker();
 
     private final Object2ObjectMap<UUID, Tracker> trackers = new Object2ObjectOpenHashMap<>();
-    private final Set<UUID> queuedReinitialize = new ObjectOpenHashSet<>();
+    private final Set<UUID> queuedClear = new ObjectOpenHashSet<>();
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -50,15 +50,20 @@ public final class ProtectionPlayerTracker {
     }
 
     public void onAuthoritiesChanged() {
-        this.queuedReinitialize.addAll(this.trackers.keySet());
+        queuedClear.addAll(trackers.keySet());
     }
 
     private void onPlayerChangeDimension(ServerPlayer player) {
-        this.queuedReinitialize.add(player.getUUID());
+        clearTracker(player, player.getUUID());
     }
 
     private void tickPlayer(ServerPlayer player) {
         UUID uuid = player.getUUID();
+        if (queuedClear.remove(uuid)) {
+            clearTracker(player, uuid);
+            return;
+        }
+
         Tracker tracker = this.getOrInitializeTracker(player, uuid);
 
         long blockPos = player.blockPosition().asLong();
@@ -69,20 +74,11 @@ public final class ProtectionPlayerTracker {
     }
 
     private Tracker getOrInitializeTracker(ServerPlayer player, UUID uuid) {
-        Object2ObjectMap<UUID, Tracker> trackers = this.trackers;
         Tracker tracker = trackers.get(uuid);
-
         if (tracker == null) {
-            tracker = this.initializeTracker(player);
-            trackers.put(uuid, tracker);
-        } else if (this.queuedReinitialize.remove(uuid)) {
-            Tracker lastTracker = tracker;
-            tracker = this.initializeTracker(player);
-            this.onTrackerReinitialized(player, lastTracker, tracker);
-
+            tracker = initializeTracker(player);
             trackers.put(uuid, tracker);
         }
-
         return tracker;
     }
 
@@ -101,6 +97,7 @@ public final class ProtectionPlayerTracker {
         for (Authority authority : authorities) {
             if (authority.eventFilter().accepts(source)) {
                 tracker.inside.add(authority);
+                onPlayerEnter(player, authority);
             } else {
                 tracker.outside.add(authority);
             }
@@ -109,17 +106,11 @@ public final class ProtectionPlayerTracker {
         return tracker;
     }
 
-    // TODO: consolidate with movement logic?
-    private void onTrackerReinitialized(ServerPlayer player, Tracker lastTracker, Tracker newTracker) {
-        for (Authority authority : lastTracker.inside) {
-            if (!newTracker.inside.contains(authority)) {
-                this.onPlayerExit(player, authority);
-            }
-        }
-
-        for (Authority authority : newTracker.inside) {
-            if (!lastTracker.inside.contains(authority)) {
-                this.onPlayerEnter(player, authority);
+    private void clearTracker(ServerPlayer player, UUID uuid) {
+        Tracker tracker = trackers.remove(uuid);
+        if (tracker != null) {
+            for (Authority authority : tracker.inside) {
+                onPlayerExit(player, authority);
             }
         }
     }
