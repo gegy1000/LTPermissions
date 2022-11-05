@@ -28,6 +28,7 @@ public class FlyCommand {
 	private static int updateFly(CommandContext<CommandSourceStack> context, boolean canFly) throws CommandSyntaxException {
 		ServerPlayer player = context.getSource().getPlayerOrException();
 		Abilities abilities = player.getAbilities();
+		canFly |= player.isCreative();
 		abilities.mayfly = canFly;
 		if (!canFly) {
 			abilities.flying = false;
