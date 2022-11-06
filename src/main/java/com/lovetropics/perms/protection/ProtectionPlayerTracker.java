@@ -2,10 +2,12 @@ package com.lovetropics.perms.protection;
 
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.protection.authority.Authority;
+import com.lovetropics.perms.protection.authority.behavior.AuthorityBehavior;
 import com.lovetropics.perms.protection.authority.map.AuthorityMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
@@ -97,7 +99,7 @@ public final class ProtectionPlayerTracker {
         for (Authority authority : authorities) {
             if (authority.eventFilter().accepts(source)) {
                 tracker.inside.add(authority);
-                onPlayerEnter(player, authority);
+                authority.behavior().getBehavior().onPlayerEnter(player);
             } else {
                 tracker.outside.add(authority);
             }
@@ -110,7 +112,7 @@ public final class ProtectionPlayerTracker {
         Tracker tracker = trackers.remove(uuid);
         if (tracker != null) {
             for (Authority authority : tracker.inside) {
-                onPlayerExit(player, authority);
+                authority.behavior().getBehavior().onPlayerExit(player);
             }
         }
     }
@@ -121,32 +123,39 @@ public final class ProtectionPlayerTracker {
         // TODO: how can we optimise this further?
         List<Authority> entering = this.collectEntering(tracker, source);
         List<Authority> exiting = this.collectExiting(tracker, source);
+        if (entering == null && exiting == null) {
+            return;
+        }
 
+        Set<AuthorityBehavior> enteringBehaviors = new ReferenceArraySet<>();
         if (entering != null) {
             for (Authority authority : entering) {
                 tracker.inside.add(authority);
                 tracker.outside.remove(authority);
-
-                this.onPlayerEnter(player, authority);
+                enteringBehaviors.add(authority.behavior().getBehavior());
             }
         }
 
+        Set<AuthorityBehavior> exitingBehaviors = new ReferenceArraySet<>();
         if (exiting != null) {
             for (Authority authority : exiting) {
                 tracker.outside.add(authority);
                 tracker.inside.remove(authority);
-
-                this.onPlayerExit(player, authority);
+                exitingBehaviors.add(authority.behavior().getBehavior());
             }
         }
-    }
 
-    private void onPlayerEnter(ServerPlayer player, Authority authority) {
-        authority.behavior().getBehavior().onPlayerEnter(player);
-    }
+        for (AuthorityBehavior behavior : enteringBehaviors) {
+            if (!exitingBehaviors.contains(behavior)) {
+                behavior.onPlayerEnter(player);
+            }
+        }
 
-    private void onPlayerExit(ServerPlayer player, Authority authority) {
-        authority.behavior().getBehavior().onPlayerExit(player);
+        for (AuthorityBehavior behavior : exitingBehaviors) {
+            if (!enteringBehaviors.contains(behavior)) {
+                behavior.onPlayerExit(player);
+            }
+        }
     }
 
     @Nullable
