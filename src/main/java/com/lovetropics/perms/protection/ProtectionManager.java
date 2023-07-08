@@ -16,20 +16,19 @@ import com.mojang.serialization.DataResult;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.Registry;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -83,54 +82,50 @@ public final class ProtectionManager extends SavedData {
     }
 
     @SubscribeEvent
-    public static void onWorldLoad(WorldEvent.Load event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel) {
-            ServerLevel serverWorld = (ServerLevel) world;
-            ProtectionManager protection = get(serverWorld.getServer());
-            protection.onWorldLoad(serverWorld);
+    public static void onLevelLoad(LevelEvent.Load event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protection = get(level.getServer());
+            protection.onLevelLoad(level);
         }
     }
 
     @SubscribeEvent
-    public static void onWorldUnload(WorldEvent.Unload event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel) {
-            ServerLevel serverWorld = (ServerLevel) world;
-            ProtectionManager protection = get(serverWorld.getServer());
-            protection.onWorldUnload(serverWorld);
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protection = get(level.getServer());
+            protection.onLevelUnload(level);
         }
     }
 
     @SubscribeEvent
-    public static void onWorldTick(TickEvent.WorldTickEvent event) {
-        if (event.phase == TickEvent.Phase.END && event.world instanceof ServerLevel) {
+    public static void onLevelTick(TickEvent.LevelTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel level) {
             if (AuthorityBehaviorConfigs.hasReloaded()) {
-                ProtectionManager protection = get(event.world.getServer());
+                ProtectionManager protection = get(level.getServer());
                 protection.onReload();
             }
         }
     }
 
-    private void onWorldLoad(ServerLevel world) {
-        if (!this.builtinDimensions.containsKey(world.dimension())) {
-            BuiltinAuthority dimension = BuiltinAuthority.dimension(world.dimension());
-            this.addBuiltinDimension(world.dimension(), dimension);
+    private void onLevelLoad(ServerLevel level) {
+        if (!this.builtinDimensions.containsKey(level.dimension())) {
+            BuiltinAuthority dimension = BuiltinAuthority.dimension(level.dimension());
+            this.addBuiltinDimension(level.dimension(), dimension);
         }
 
-        this.allAuthorities.addDimensionIndex(world.dimension());
+        this.allAuthorities.addDimensionIndex(level.dimension());
 
         this.onAuthoritiesChanged();
     }
 
-    private void onWorldUnload(ServerLevel world) {
-        BuiltinAuthority dimension = this.builtinDimensions.get(world.dimension());
+    private void onLevelUnload(ServerLevel level) {
+        BuiltinAuthority dimension = this.builtinDimensions.get(level.dimension());
         if (dimension != null && dimension.isEmpty()) {
-            this.builtinDimensions.remove(world.dimension());
+            this.builtinDimensions.remove(level.dimension());
             this.allAuthorities.remove(dimension);
         }
 
-        this.allAuthorities.removeDimensionIndex(world.dimension());
+        this.allAuthorities.removeDimensionIndex(level.dimension());
 
         this.onAuthoritiesChanged();
     }
@@ -287,7 +282,7 @@ public final class ProtectionManager extends SavedData {
     private void readBuiltin(CompoundTag root) {
         CompoundTag dimensionsTag = root.getCompound("dimensions");
         for (String dimensionKey : dimensionsTag.getAllKeys()) {
-            ResourceKey<Level> dimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(dimensionKey));
+            ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(dimensionKey));
 
             Codec<BuiltinAuthority> codec = BuiltinAuthority.dimensionCodec(dimension);
             codec.decode(NbtOps.INSTANCE, dimensionsTag.getCompound(dimensionKey))

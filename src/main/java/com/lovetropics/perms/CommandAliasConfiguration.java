@@ -1,6 +1,5 @@
 package com.lovetropics.perms;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.lovetropics.lib.codec.MoreCodecs;
@@ -11,13 +10,14 @@ import com.mojang.serialization.JsonOps;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
 public record CommandAliasConfiguration(Map<String, String[]> aliases) {
-    private static final CommandAliasConfiguration EMPTY = new CommandAliasConfiguration(ImmutableMap.of());
+    private static final CommandAliasConfiguration EMPTY = new CommandAliasConfiguration(Map.of());
 
     public static final Codec<CommandAliasConfiguration> CODEC = Codec.unboundedMap(Codec.STRING, MoreCodecs.arrayOrUnit(Codec.STRING, String[]::new))
             .xmap(CommandAliasConfiguration::new, CommandAliasConfiguration::aliases);
@@ -30,7 +30,7 @@ public record CommandAliasConfiguration(Map<String, String[]> aliases) {
             }
         }
 
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
             DataResult<CommandAliasConfiguration> result = CODEC.parse(JsonOps.INSTANCE, root);
             result.error().ifPresent(error -> {

@@ -11,13 +11,13 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nonnull;
 
 public final class RoleArgument {
     private static final DynamicCommandExceptionType ROLE_DOES_NOT_EXIST = new DynamicCommandExceptionType(arg ->
-            new TranslatableComponent("Role with id '%s' does not exist!", arg)
+            Component.translatable("Role with id '%s' does not exist!", arg)
     );
 
     public static RequiredArgumentBuilder<CommandSourceStack, String> argument(String name) {

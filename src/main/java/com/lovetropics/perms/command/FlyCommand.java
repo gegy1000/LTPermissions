@@ -5,6 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Abilities;
 
@@ -14,7 +15,7 @@ public class FlyCommand {
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(literal("fly")
-				.requires(ctx -> ctx.hasPermission(2))
+				.requires(ctx -> ctx.hasPermission(Commands.LEVEL_GAMEMASTERS))
 				.then(literal("enable").executes(context -> updateFly(context, true)))
 				.then(literal("disable").executes(context -> updateFly(context, false)))
 				.executes(ctx -> {

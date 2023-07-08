@@ -16,16 +16,15 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TranslatableComponent;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -38,22 +37,16 @@ import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
 public final class RoleCommand {
-    public static final DynamicCommandExceptionType ROLE_NOT_FOUND = new DynamicCommandExceptionType(arg -> {
-        return new TranslatableComponent("Role with name '%s' was not found!", arg);
-    });
+    public static final DynamicCommandExceptionType ROLE_NOT_FOUND = new DynamicCommandExceptionType(arg -> Component.translatable("Role with name '%s' was not found!", arg));
 
-    public static final SimpleCommandExceptionType ROLE_POWER_TOO_LOW = new SimpleCommandExceptionType(
-            new TextComponent("You do not have sufficient power to manage this role")
-    );
+    public static final SimpleCommandExceptionType ROLE_POWER_TOO_LOW = new SimpleCommandExceptionType(Component.literal("You do not have sufficient power to manage this role"));
 
-    public static final SimpleCommandExceptionType TOO_MANY_SELECTED = new SimpleCommandExceptionType(
-            new TextComponent("Too many players selected!")
-    );
+    public static final SimpleCommandExceptionType TOO_MANY_SELECTED = new SimpleCommandExceptionType(Component.literal("Too many players selected!"));
 
     // @formatter:off
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(literal("role")
-                .requires(s -> s.hasPermission(4))
+                .requires(s -> s.hasPermission(Commands.LEVEL_OWNERS))
                 .then(literal("assign")
                     .then(argument("targets", GameProfileArgument.gameProfile())
                     .then(argument("role", StringArgumentType.word()).suggests(roleSuggestions())
@@ -103,7 +96,8 @@ public final class RoleCommand {
             }
         }
 
-        source.sendSuccess(new TranslatableComponent(success, roleName, count), true);
+        int finalCount = count;
+        source.sendSuccess(() -> Component.translatable(success, roleName, finalCount), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -113,8 +107,10 @@ public final class RoleCommand {
 
         List<Role> roles = roleManager.peekRoles(player.getId())
                 .stream().collect(Collectors.toList());
-        Component rolesComponent = ComponentUtils.formatList(roles, role -> new TextComponent(role.id()).setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
-        source.sendSuccess(new TranslatableComponent("Found %s roles on player: %s", roles.size(), rolesComponent), false);
+        source.sendSuccess(() -> {
+            Component rolesComponent = ComponentUtils.formatList(roles, role -> Component.literal(role.id()).setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
+            return Component.translatable("Found %s roles on player: %s", roles.size(), rolesComponent);
+        }, false);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -129,9 +125,9 @@ public final class RoleCommand {
             roleManager.onRoleReload(server, RolesConfig.get());
 
             if (errors.isEmpty()) {
-                source.sendSuccess(new TextComponent("Role configuration successfully reloaded"), false);
+                source.sendSuccess(() -> Component.literal("Role configuration successfully reloaded"), false);
             } else {
-                MutableComponent errorFeedback = new TextComponent("Failed to reload roles configuration!");
+                MutableComponent errorFeedback = Component.literal("Failed to reload roles configuration!");
                 for (String error : errors) {
                     errorFeedback = errorFeedback.append("\n - " + error);
                 }

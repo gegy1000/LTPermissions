@@ -19,19 +19,17 @@ import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public final class RolesConfig implements RoleProvider {
     private static RolesConfig instance = new RolesConfig(Collections.emptyList(), SimpleRole.empty(Role.EVERYONE));
 
-    private final ImmutableMap<String, Role> roles;
+    private final Map<String, Role> roles;
     private final Role everyone;
 
     private RolesConfig(List<Role> roles, Role everyone) {
@@ -59,7 +57,7 @@ public final class RolesConfig implements RoleProvider {
         List<String> errors = new ArrayList<>();
         ConfigErrorConsumer errorConsumer = errors::add;
 
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             JsonElement root = JsonParser.parseReader(reader);
             instance = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
             PermissionsApi.setRoleProvider(instance);

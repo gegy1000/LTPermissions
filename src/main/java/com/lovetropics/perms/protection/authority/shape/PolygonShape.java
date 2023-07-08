@@ -88,7 +88,7 @@ public final class PolygonShape implements AuthorityShape {
         ResourceKey<Level> dimension = WorldEditShapes.asDimension(region.getWorld());
         List<BlockPos> blockPoints = points.stream()
                 .map(pos -> new BlockPos(pos.getX(), 0, pos.getZ()))
-                .collect(Collectors.toList());
+                .toList();
 
         int minY = region.getMinimumPoint().getY();
         int maxY = region.getMaximumPoint().getY();

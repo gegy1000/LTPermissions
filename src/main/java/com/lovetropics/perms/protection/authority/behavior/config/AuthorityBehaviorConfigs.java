@@ -4,74 +4,71 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.lovetropics.lib.codec.CodecRegistry;
 import com.lovetropics.perms.LTPermissions;
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.server.packs.resources.Resource;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
 public final class AuthorityBehaviorConfigs {
-    private static final Logger LOGGER = LogManager.getLogger(AuthorityBehaviorConfigs.class);
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final CodecRegistry<ResourceLocation, AuthorityBehaviorConfig> REGISTRY = CodecRegistry.resourceLocationKeys();
 
-    private static final JsonParser PARSER = new JsonParser();
+    private static final FileToIdConverter FILE_TO_ID_CONVERTER = FileToIdConverter.json("authority_behaviors");
 
     private static final AtomicBoolean RELOADED = new AtomicBoolean();
 
     @SubscribeEvent
     public static void addReloadListener(AddReloadListenerEvent event) {
-        event.addListener((stage, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) -> {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                REGISTRY.clear();
+        event.addListener((stage, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
+                CompletableFuture.supplyAsync(() -> load(resourceManager), backgroundExecutor)
+                        .thenCompose(stage::wait)
+                        .thenAcceptAsync(configs -> {
+                            REGISTRY.clear();
+                            configs.forEach(REGISTRY::register);
+                            RELOADED.set(true);
+                        }, gameExecutor));
+    }
 
-                Collection<ResourceLocation> locations = resourceManager.listResources("authority_behaviors", file -> file.endsWith(".json"));
-                for (ResourceLocation location : locations) {
-                    ResourceLocation id = getIdFromLocation(location);
+    private static Map<ResourceLocation, AuthorityBehaviorConfig> load(ResourceManager resourceManager) {
+        Map<ResourceLocation, AuthorityBehaviorConfig> result = new Object2ObjectOpenHashMap<>();
 
-                    try (Resource resource = resourceManager.getResource(location)) {
-                        DataResult<AuthorityBehaviorConfig> result = loadConfig(resource);
-                        result.result().ifPresent(config -> REGISTRY.register(id, config));
+        Map<ResourceLocation, Resource> resources = FILE_TO_ID_CONVERTER.listMatchingResources(resourceManager);
+        for (Map.Entry<ResourceLocation, Resource> entry : resources.entrySet()) {
+            ResourceLocation location = entry.getKey();
+            try {
+                ResourceLocation id = FILE_TO_ID_CONVERTER.fileToId(location);
+                loadConfig(entry.getValue())
+                        .resultOrPartial(error -> LOGGER.error("Failed to load game authority behavior at {}: {}", location, error))
+                        .ifPresent(config -> result.put(id, config));
+            } catch (Exception e) {
+                LOGGER.error("Failed to load authority behavior config at {}", location, e);
+            }
+        }
 
-                        result.error().ifPresent(error -> {
-                            LOGGER.error("Failed to load game authority behavior at {}: {}", location, error);
-                        });
-                    } catch (Exception e) {
-                        LOGGER.error("Failed to load authority behavior config at {}", location, e);
-                    }
-                }
-
-                RELOADED.set(true);
-            }, backgroundExecutor);
-
-            return future.thenCompose(stage::wait);
-        });
+        return result;
     }
 
     private static DataResult<AuthorityBehaviorConfig> loadConfig(Resource resource) throws IOException {
-        try (InputStream input = resource.getInputStream()) {
-            JsonElement json = PARSER.parse(new BufferedReader(new InputStreamReader(input)));
+        try (BufferedReader reader = resource.openAsReader()) {
+            JsonElement json = JsonParser.parseReader(reader);
             return AuthorityBehaviorConfig.CODEC.parse(JsonOps.INSTANCE, json);
         }
-    }
-
-    private static ResourceLocation getIdFromLocation(ResourceLocation location) {
-        String path = location.getPath();
-        String name = path.substring("authority_behaviors/".length(), path.length() - ".json".length());
-        return new ResourceLocation(location.getNamespace(), name);
     }
 
     public static boolean hasReloaded() {

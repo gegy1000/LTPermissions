@@ -1,20 +1,19 @@
 package com.lovetropics.perms.protection;
 
 import com.lovetropics.perms.LTPermissions;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.food.FoodData;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.BlockItem;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -26,7 +25,7 @@ public final class ProtectionEventDispatcher {
         if (event.phase == TickEvent.Phase.START && event.player instanceof ServerPlayer player) {
             FoodData food = player.getFoodData();
             if (food.needsFood()) {
-                ProtectionManager protect = protect(player.getLevel());
+                ProtectionManager protect = protect(player.serverLevel());
                 EventSource source = EventSource.forEntity(player);
                 if (protect.denies(source, ProtectionRule.HUNGER)) {
                     food.setFoodLevel(20);
@@ -37,9 +36,8 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onBreakBlock(BlockEvent.BreakEvent event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel serverWorld) {
-            ProtectionManager protect = protect(serverWorld);
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
             EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
             if (protect.denies(source, ProtectionRule.BREAK)) {
                 event.setCanceled(true);
@@ -49,9 +47,8 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onTrampleFarmland(BlockEvent.FarmlandTrampleEvent event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel serverWorld) {
-            ProtectionManager protect = protect(serverWorld);
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
             EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
             if (protect.denies(source, ProtectionRule.BREAK)) {
                 event.setCanceled(true);
@@ -61,10 +58,9 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel serverWorld) {
-            ProtectionManager protect = protect(serverWorld);
-            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
             if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_BLOCKS)) {
                 event.setCanceled(true);
             }
@@ -73,10 +69,9 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel serverWorld) {
-            ProtectionManager protect = protect(serverWorld);
-            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
             if (protect.denies(source, ProtectionRule.INTERACT)) {
                 event.setCanceled(true);
                 return;
@@ -97,10 +92,9 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel) {
-            ProtectionManager protect = protect((ServerLevel) world);
-            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
             if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ITEMS)) {
                 event.setCanceled(true);
             }
@@ -109,10 +103,9 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel) {
-            ProtectionManager protect = protect((ServerLevel) world);
-            EventSource source = EventSource.forEntityAt(event.getPlayer(), event.getPos());
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
             if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ENTITIES)) {
                 event.setCanceled(true);
             }
@@ -121,11 +114,10 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onAttackEntity(AttackEntityEvent event) {
-        Player player = event.getPlayer();
         Entity target = event.getTarget();
-        if (player instanceof ServerPlayer && target.level instanceof ServerLevel) {
-            ProtectionManager protect = protect((ServerLevel) target.level);
-            EventSource source = EventSource.forEntityAt(event.getPlayer(), target.blockPosition());
+        if (event.getEntity() instanceof ServerPlayer player && target.level() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            EventSource source = EventSource.forEntityAt(player, target.blockPosition());
             if (protect.denies(source, ProtectionRule.ATTACK)) {
                 event.setCanceled(true);
             } else if (target instanceof Player && protect.denies(source, ProtectionRule.PVP)) {
@@ -136,13 +128,13 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onEntityDamage(LivingDamageEvent event) {
-        if (event.getSource().isBypassInvul()) {
+        if (event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
 
-        LivingEntity entity = event.getEntityLiving();
-        if (entity.level instanceof ServerLevel) {
-            ProtectionManager protect = protect((ServerLevel) entity.level);
+        LivingEntity entity = event.getEntity();
+        if (entity.level() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
 
             EventSource source = EventSource.forEntity(entity);
             if (protect.denies(source, ProtectionRule.DAMAGE)) {
@@ -155,7 +147,7 @@ public final class ProtectionEventDispatcher {
                 return;
             }
 
-            if (event.getSource() == DamageSource.FALL && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
+            if (event.getSource().is(DamageTypeTags.IS_FALL) && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
                 event.setCanceled(true);
             }
         }
@@ -163,17 +155,16 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onSpawnPortal(BlockEvent.PortalSpawnEvent event) {
-        LevelAccessor world = event.getWorld();
-        if (world instanceof ServerLevel serverWorld) {
-            ProtectionManager protect = protect(serverWorld);
-            EventSource source = EventSource.at(serverWorld, event.getPos());
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            EventSource source = EventSource.at(level, event.getPos());
             if (protect.denies(source, ProtectionRule.PORTALS)) {
                 event.setCanceled(true);
             }
         }
     }
 
-    private static ProtectionManager protect(ServerLevel world) {
-        return ProtectionManager.get(world.getServer());
+    private static ProtectionManager protect(ServerLevel level) {
+        return ProtectionManager.get(level.getServer());
     }
 }

@@ -11,12 +11,10 @@ import net.minecraft.commands.SharedSuggestionProvider;
 public final class PermissionResultArgument {
     public static RequiredArgumentBuilder<CommandSourceStack, String> argument(String name) {
         return Commands.argument(name, StringArgumentType.string())
-                .suggests((context, builder) -> {
-                    return SharedSuggestionProvider.suggest(
-                            PermissionResult.keysStream(),
-                            builder
-                    );
-                });
+                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                        PermissionResult.keysStream(),
+                        builder
+                ));
     }
 
     public static PermissionResult get(CommandContext<CommandSourceStack> context, String name) {

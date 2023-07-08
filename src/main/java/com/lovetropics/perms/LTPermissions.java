@@ -7,7 +7,6 @@ import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.command.FlyCommand;
 import com.lovetropics.perms.command.RoleCommand;
 import com.lovetropics.perms.config.RolesConfig;
-import com.lovetropics.perms.override.ChatFormatOverride;
 import com.lovetropics.perms.override.NameDecorationOverride;
 import com.lovetropics.perms.override.command.CommandOverride;
 import com.lovetropics.perms.protection.authority.shape.AuthorityShape;
@@ -16,15 +15,16 @@ import com.lovetropics.perms.store.PlayerRoleManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.ChatFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
@@ -34,8 +34,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkConstants;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -44,7 +43,7 @@ import java.util.Map;
 @Mod(LTPermissions.ID)
 public class LTPermissions {
     public static final String ID = "ltperms";
-    public static final Logger LOGGER = LogManager.getLogger(ID);
+    public static final Logger LOGGER = LogUtils.getLogger();
 
     public static final RoleOverrideType<CommandOverride> COMMANDS = RoleOverrideType.register("commands", CommandOverride.CODEC)
             .withBuilder(CommandOverride::build)
@@ -54,8 +53,6 @@ public class LTPermissions {
                     server.getCommands().sendCommands(player);
                 }
             });
-
-    public static final RoleOverrideType<ChatFormatOverride> CHAT_FORMAT = RoleOverrideType.register("chat_format", ChatFormatOverride.CODEC);
 
     public static final RoleOverrideType<NameDecorationOverride> NAME_DECORATION = RoleOverrideType.register("name_decoration", NameDecorationOverride.CODEC)
             .withBuilder(NameDecorationOverride::build)
@@ -151,7 +148,7 @@ public class LTPermissions {
 
         RoleReader roles = PermissionsApi.lookup().byPlayer(player);
         if (roles.overrides().test(MUTE)) {
-            player.displayClientMessage(new TextComponent("You are muted!").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.literal("You are muted!").withStyle(ChatFormatting.RED), true);
             event.setCanceled(true);
         }
     }

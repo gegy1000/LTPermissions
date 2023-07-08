@@ -60,11 +60,11 @@ public final class RoleConfigMap implements Iterable<Pair<String, RoleConfig>> {
         return Iterators.transform(this.roleOrder.iterator(), name -> Pair.of(name, this.roles.get(name)));
     }
 
-    static final class Builder {
+    private static final class Builder {
         private final Map<String, RoleConfig> roles = new Object2ObjectOpenHashMap<>();
         private final List<String> roleOrder = new ArrayList<>();
 
-        Builder() {
+        private Builder() {
         }
 
         public Builder add(String name, RoleConfig role) {

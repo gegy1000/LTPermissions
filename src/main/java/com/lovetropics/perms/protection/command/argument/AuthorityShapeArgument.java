@@ -10,11 +10,11 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 
 public final class AuthorityShapeArgument {
     private static final DynamicCommandExceptionType SHAPE_NOT_FOUND = new DynamicCommandExceptionType(arg ->
-            new TranslatableComponent("Shape with key '%s' was not found!", arg)
+            Component.translatable("Shape with key '%s' was not found!", arg)
     );
 
     public static RequiredArgumentBuilder<CommandSourceStack, String> argument(String authorityName, String shapeName) {

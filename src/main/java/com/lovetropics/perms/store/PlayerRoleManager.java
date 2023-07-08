@@ -52,16 +52,16 @@ public final class PlayerRoleManager {
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.LoadFromFile event) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
-        if (instance != null && event.getPlayer() instanceof ServerPlayer) {
-            instance.onPlayerJoin((ServerPlayer) event.getPlayer());
+        if (instance != null && event.getEntity() instanceof ServerPlayer player) {
+            instance.onPlayerJoin(player);
         }
     }
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
-        if (instance != null && event.getPlayer() instanceof ServerPlayer) {
-            instance.onPlayerLeave((ServerPlayer) event.getPlayer());
+        if (instance != null && event.getEntity() instanceof ServerPlayer player) {
+            instance.onPlayerLeave(player);
         }
     }
 

@@ -61,13 +61,11 @@ public final class BuiltinAuthority implements Authority {
     }
 
     private static Codec<BuiltinAuthority> codec(Parse parse) {
-        return RecordCodecBuilder.create(instance -> {
-            return instance.group(
-                    ProtectionRuleMap.CODEC.optionalFieldOf("rules", ProtectionRuleMap.EMPTY).forGetter(a -> a.rules),
-                    ProtectionExclusions.CODEC.optionalFieldOf("exclusions", ProtectionExclusions.EMPTY).forGetter(a -> a.exclusions),
-                    AuthorityBehaviorMap.CODEC.optionalFieldOf("behavior", AuthorityBehaviorMap.EMPTY).forGetter(a -> a.behavior)
-            ).apply(instance, parse::create);
-        });
+        return RecordCodecBuilder.create(i -> i.group(
+                ProtectionRuleMap.CODEC.optionalFieldOf("rules", ProtectionRuleMap.EMPTY).forGetter(a -> a.rules),
+                ProtectionExclusions.CODEC.optionalFieldOf("exclusions", ProtectionExclusions.EMPTY).forGetter(a -> a.exclusions),
+                AuthorityBehaviorMap.CODEC.optionalFieldOf("behavior", AuthorityBehaviorMap.EMPTY).forGetter(a -> a.behavior)
+        ).apply(i, parse::create));
     }
 
     @Override

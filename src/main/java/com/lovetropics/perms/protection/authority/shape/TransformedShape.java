@@ -38,30 +38,29 @@ public final class TransformedShape implements AuthorityShape {
 
         @Override
         public <T> DataResult<T> encode(Transform transform, DynamicOps<T> ops, T prefix) {
-            if (transform instanceof AffineTransform) {
-                return AFFINE_TRANSFORM_CODEC.encode((AffineTransform) transform, ops, prefix);
-            } else if (transform instanceof CombinedTransform) {
-                return COMBINED_TRANSFORM.encode((CombinedTransform) transform, ops, prefix);
+            if (transform instanceof AffineTransform affineTransform) {
+                return AFFINE_TRANSFORM_CODEC.encode(affineTransform, ops, prefix);
+            } else if (transform instanceof CombinedTransform combinedTransform) {
+                return COMBINED_TRANSFORM.encode(combinedTransform, ops, prefix);
             }
-            return DataResult.error("Unknown transform type " + transform.getClass().getSimpleName());
+            return DataResult.error(() -> "Unknown transform type " + transform.getClass().getSimpleName());
         }
     };
 
-    private static final Codec<AffineTransform> AFFINE_TRANSFORM_CODEC = Codec.DOUBLE.listOf()
-            .comapFlatMap(
-                    list -> {
-                        if (list.size() != 12) {
-                            return DataResult.error("Must have 12 elements");
-                        }
+    private static final Codec<AffineTransform> AFFINE_TRANSFORM_CODEC = Codec.DOUBLE.listOf().comapFlatMap(
+            list -> {
+                if (list.size() != 12) {
+                    return DataResult.error(() -> "Must have 12 elements");
+                }
 
-                        double[] array = new double[list.size()];
-                        for (int i = 0; i < array.length; i++) {
-                            array[i] = list.get(i);
-                        }
-                        return DataResult.success(new AffineTransform(array));
-                    },
-                    transform -> Arrays.stream(transform.coefficients()).boxed().collect(Collectors.toList())
-            );
+                double[] array = new double[list.size()];
+                for (int i = 0; i < array.length; i++) {
+                    array[i] = list.get(i);
+                }
+                return DataResult.success(new AffineTransform(array));
+            },
+            transform -> Arrays.stream(transform.coefficients()).boxed().collect(Collectors.toList())
+    );
 
     private static final Codec<CombinedTransform> COMBINED_TRANSFORM = TRANSFORM_CODEC.listOf()
             .xmap(
@@ -87,7 +86,7 @@ public final class TransformedShape implements AuthorityShape {
         this.inverseTransform = pos -> {
             Vector3 vector = Vector3.at(pos.getX(), pos.getY(), pos.getZ());
             vector = inverseTransform.apply(vector);
-            return new BlockPos(vector.getX(), vector.getY(), vector.getZ());
+            return BlockPos.containing(vector.getX(), vector.getY(), vector.getZ());
         };
     }
 

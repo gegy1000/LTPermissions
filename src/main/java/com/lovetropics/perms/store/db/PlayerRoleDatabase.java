@@ -2,11 +2,11 @@ package com.lovetropics.perms.store.db;
 
 import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.store.PlayerRoleSet;
+import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 public final class PlayerRoleDatabase implements Closeable {
-    private static final Logger LOGGER = LogManager.getLogger(PlayerRoleDatabase.class);
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Uuid2BinaryDatabase binary;
 

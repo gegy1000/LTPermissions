@@ -11,12 +11,12 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.TranslatableComponent;
 
 public final class AuthorityBehaviorArgument {
     private static final DynamicCommandExceptionType BEHAVIOR_DOES_NOT_EXIST = new DynamicCommandExceptionType(arg ->
-            new TranslatableComponent("Behavior with id '%s' does not exist!", arg)
+            Component.translatable("Behavior with id '%s' does not exist!", arg)
     );
 
     public static RequiredArgumentBuilder<CommandSourceStack, ResourceLocation> argument(String name) {

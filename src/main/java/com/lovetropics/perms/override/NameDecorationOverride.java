@@ -12,9 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -70,7 +69,7 @@ public record NameDecorationOverride(
 		if (components.isEmpty()) {
 			return Optional.empty();
 		}
-		MutableComponent result = new TextComponent("");
+		MutableComponent result = Component.empty();
 		components.forEach(result::append);
 		return Optional.of(result);
 	}
@@ -87,10 +86,9 @@ public record NameDecorationOverride(
 
 	@SubscribeEvent
 	public static void onFormatName(PlayerEvent.NameFormat event) {
-		final Player player = event.getPlayer();
-		if (player instanceof ServerPlayer) {
+		if (event.getEntity() instanceof ServerPlayer player) {
 			final Component displayName = event.getDisplayname();
-			if (displayName.getStyle().getColor() == null && !hasTeamColor((ServerPlayer) player)) {
+			if (displayName.getStyle().getColor() == null && !hasTeamColor(player)) {
 				final RoleReader roles = PermissionsApi.lookup().byPlayer(player);
 
 				final NameDecorationOverride nameDecoration = roles.overrides().getOrNull(LTPermissions.NAME_DECORATION);
@@ -109,15 +107,15 @@ public record NameDecorationOverride(
 	}
 
 	public record AddPrefix(Component prefix) {
-		public static final Codec<AddPrefix> CODEC = MoreCodecs.TEXT.xmap(AddPrefix::new, AddPrefix::prefix);
+		public static final Codec<AddPrefix> CODEC = ExtraCodecs.COMPONENT.xmap(AddPrefix::new, AddPrefix::prefix);
 
 		public MutableComponent apply(final MutableComponent name) {
-			return new TextComponent("").append(this.prefix).append(name);
+			return Component.empty().append(this.prefix).append(name);
 		}
 	}
 
 	public record AddSuffix(Component suffix) {
-		public static final Codec<AddSuffix> CODEC = MoreCodecs.TEXT.xmap(AddSuffix::new, AddSuffix::suffix);
+		public static final Codec<AddSuffix> CODEC = ExtraCodecs.COMPONENT.xmap(AddSuffix::new, AddSuffix::suffix);
 
 		public MutableComponent apply(final MutableComponent name) {
 			return name.append(suffix);

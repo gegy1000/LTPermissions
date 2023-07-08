@@ -37,7 +37,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -162,12 +161,11 @@ public final class ProtectCommand {
 
         UserAuthority authority = UserAuthority.create(key).withLevel(level);
         if (protection.addAuthority(authority)) {
-            Component message = new TextComponent("Added authority '")
-                    .append(new TextComponent(key).withStyle(ChatFormatting.AQUA))
+            context.getSource().sendSuccess(() -> Component.literal("Added authority '")
+                    .append(Component.literal(key).withStyle(ChatFormatting.AQUA))
                     .append("' ")
-                    .append(new TextComponent("@" + level).withStyle(ChatFormatting.AQUA))
-                    .withStyle(ChatFormatting.GREEN);
-            context.getSource().sendSuccess(message, true);
+                    .append(Component.literal("@" + level).withStyle(ChatFormatting.AQUA))
+                    .withStyle(ChatFormatting.GREEN), true);
         } else {
             throw AUTHORITY_ALREADY_EXISTS.create(key);
         }
@@ -180,11 +178,10 @@ public final class ProtectCommand {
 
         ProtectionManager protection = protection(context);
         if (protection.removeAuthority(authority)) {
-            Component message = new TextComponent("Removed authority '")
-                    .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+            context.getSource().sendSuccess(() -> Component.literal("Removed authority '")
+                    .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                     .append("'")
-                    .withStyle(ChatFormatting.GOLD);
-            context.getSource().sendSuccess(message, true);
+                    .withStyle(ChatFormatting.GOLD), true);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -199,13 +196,12 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.addShape(shape, selection));
 
-        Component message = new TextComponent("Set shape on '")
-                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+        context.getSource().sendSuccess(() -> Component.literal("Set shape on '")
+                .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("' with key '")
-                .append(new TextComponent(shape).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(shape).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(ChatFormatting.GREEN);
-        context.getSource().sendSuccess(message, true);
+                .withStyle(ChatFormatting.GREEN), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -218,13 +214,12 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.removeShape(shapeKey));
 
-        Component message = new TextComponent("Removed shape from '")
-                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+        context.getSource().sendSuccess(() -> Component.literal("Removed shape from '")
+                .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("' with key '")
-                .append(new TextComponent(shapeKey).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(shapeKey).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(ChatFormatting.GOLD);
-        context.getSource().sendSuccess(message, true);
+                .withStyle(ChatFormatting.GOLD), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -236,13 +231,12 @@ public final class ProtectCommand {
 
         applySelectionFor(context.getSource(), authority.shape().get(shapeKey));
 
-        Component message = new TextComponent("Selected shape from '")
-                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+        context.getSource().sendSuccess(() -> Component.literal("Selected shape from '")
+                .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("' with key '")
-                .append(new TextComponent(shapeKey).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(shapeKey).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(ChatFormatting.GREEN);
-        context.getSource().sendSuccess(message, true);
+                .withStyle(ChatFormatting.GREEN), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -255,13 +249,12 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.withRule(rule, result));
 
-        Component message = new TextComponent("Set rule ")
-                .append(new TextComponent(rule.key() + "=").append(result.getName()).withStyle(ChatFormatting.AQUA))
+        context.getSource().sendSuccess(() -> Component.literal("Set rule ")
+                .append(Component.literal(rule.key() + "=").append(result.getName()).withStyle(ChatFormatting.AQUA))
                 .append(" for '")
-                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(ChatFormatting.GREEN);
-        context.getSource().sendSuccess(message, true);
+                .withStyle(ChatFormatting.GREEN), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -307,11 +300,10 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, newAuthority);
 
-        Component message = new TextComponent("Updated exclusions for '")
-                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+        context.getSource().sendSuccess(() -> Component.literal("Updated exclusions for '")
+                .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(ChatFormatting.GREEN);
-        context.getSource().sendSuccess(message, true);
+                .withStyle(ChatFormatting.GREEN), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -356,13 +348,12 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.addBehavior(behaviorId));
 
-        Component message = new TextComponent("Added behavior '")
-                .append(new TextComponent(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
+        context.getSource().sendSuccess(() -> Component.literal("Added behavior '")
+                .append(Component.literal(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
                 .append("' to '")
-                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(ChatFormatting.GREEN);
-        context.getSource().sendSuccess(message, true);
+                .withStyle(ChatFormatting.GREEN), true);
 
         return Command.SINGLE_SUCCESS;
     }
@@ -374,13 +365,12 @@ public final class ProtectCommand {
         ProtectionManager protection = protection(context);
         protection.replaceAuthority(authority, authority.removeBehavior(behaviorId));
 
-        Component message = new TextComponent("Removed behavior '")
-                .append(new TextComponent(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
+        context.getSource().sendSuccess(() -> Component.literal("Removed behavior '")
+                .append(Component.literal(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
                 .append("' from '")
-                .append(new TextComponent(authority.key()).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
                 .append("'")
-                .withStyle(ChatFormatting.GOLD);
-        context.getSource().sendSuccess(message, true);
+                .withStyle(ChatFormatting.GOLD), true);
 
         return Command.SINGLE_SUCCESS;
     }

@@ -11,8 +11,8 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.network.chat.TranslatableComponent;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 
 public final class AuthorityArgument {
     private static final DynamicCommandExceptionType AUTHORITY_NOT_FOUND = new DynamicCommandExceptionType(arg ->
-            new TranslatableComponent("Authority with key '%s' was not found!", arg)
+            Component.translatable("Authority with key '%s' was not found!", arg)
     );
 
     public static RequiredArgumentBuilder<CommandSourceStack, String> argumentAll(String name) {

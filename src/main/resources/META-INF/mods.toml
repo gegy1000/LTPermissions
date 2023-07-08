@@ -4,8 +4,8 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="ltperms"
-version="${file.jarVersion}"
-displayName="LoveTropics: Perms"
+version="$mod_version"
+displayName="LoveTropics: Permissions"
 authors="LoveTropics"
 credits=""
 description='''
@@ -14,14 +14,14 @@ description='''
 [[dependencies.ltperms]]
     modId="forge"
     mandatory=true
-    versionRange="[36,)"
+    versionRange="[47,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.ltperms]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.18.2,)"
+    versionRange="[1.20.1,)"
     ordering="NONE"
     side="BOTH"
 

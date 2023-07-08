@@ -42,11 +42,11 @@ public final class EventSource {
     }
 
     public static EventSource forEntity(Entity entity) {
-        return new EventSource(entity.level.dimension(), entity.blockPosition(), entity);
+        return new EventSource(entity.level().dimension(), entity.blockPosition(), entity);
     }
 
     public static EventSource forEntityAt(Entity entity, BlockPos pos) {
-        return new EventSource(entity.level.dimension(), pos, entity);
+        return new EventSource(entity.level().dimension(), pos, entity);
     }
 
     public static EventSource transform(EventSource source, UnaryOperator<BlockPos> transform) {

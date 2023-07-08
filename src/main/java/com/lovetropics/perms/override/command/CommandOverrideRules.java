@@ -62,7 +62,7 @@ public final class CommandOverrideRules {
     public static class Builder {
         private final List<Rule> rules = new ArrayList<>();
 
-        Builder() {
+        private Builder() {
         }
 
         public Builder add(Pattern[] patterns, PermissionResult result) {
@@ -77,16 +77,8 @@ public final class CommandOverrideRules {
         }
     }
 
-    private static final class Rule {
-        private final Pattern[] patterns;
-        private final PermissionResult result;
-
-        Rule(Pattern[] patterns, PermissionResult result) {
-            this.patterns = patterns;
-            this.result = result;
-        }
-
-        PermissionResult test(MatchableCommand command) {
+    private record Rule(Pattern[] patterns, PermissionResult result) {
+        public PermissionResult test(MatchableCommand command) {
             if (this.result.isAllowed()) {
                 return command.matchesAllow(this.patterns) ? this.result : PermissionResult.PASS;
             } else if (this.result.isDenied()) {
@@ -95,7 +87,7 @@ public final class CommandOverrideRules {
             return PermissionResult.PASS;
         }
 
-        int size() {
+        public int size() {
             return this.patterns.length;
         }
 

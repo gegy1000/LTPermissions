@@ -9,11 +9,11 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 
 public final class ProtectionRuleArgument {
     private static final DynamicCommandExceptionType RULE_DOES_NOT_EXIST = new DynamicCommandExceptionType(arg ->
-            new TranslatableComponent("Rule with key '%s' does not exist!", arg)
+            Component.translatable("Rule with key '%s' does not exist!", arg)
     );
 
     public static RequiredArgumentBuilder<CommandSourceStack, String> argument(String name) {
