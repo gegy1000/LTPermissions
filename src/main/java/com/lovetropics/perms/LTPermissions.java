@@ -1,6 +1,7 @@
 package com.lovetropics.perms;
 
 import com.lovetropics.lib.permission.PermissionsApi;
+import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.lib.permission.role.RoleLookup;
 import com.lovetropics.lib.permission.role.RoleOverrideType;
 import com.lovetropics.lib.permission.role.RoleReader;
@@ -20,6 +21,8 @@ import com.mojang.serialization.Codec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.selector.options.EntitySelectorOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -90,6 +93,21 @@ public class LTPermissions {
                 () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
 
         PermissionsApi.setRoleLookup(LOOKUP);
+
+        EntitySelectorOptions.register("role", parser -> {
+            boolean inverted = parser.shouldInvertValue();
+            parser.setSuggestions((builder, consumer) -> SharedSuggestionProvider.suggest(RolesConfig.get().stream().map(Role::id), builder));
+            String name = parser.getReader().readUnquotedString();
+            parser.addPredicate(entity -> {
+                final RoleReader roles = PermissionsApi.lookup().byEntity(entity);
+                for (final Role role : roles) {
+                    if (name.equals(role.id())) {
+                        return !inverted;
+                    }
+                }
+                return inverted;
+            });
+        }, parser -> true, Component.literal("Player Role"));
     }
 
     private void setup(FMLCommonSetupEvent event) {
