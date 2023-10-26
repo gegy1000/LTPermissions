@@ -107,10 +107,13 @@ public final class PlayerRoleManager {
         PlayerRoleSet newRoles = new PlayerRoleSet(config.everyone(), player);
         if (oldRoles != null) {
             newRoles.reloadFrom(config, oldRoles);
-            newRoles.rebuildOverridesAndNotify();
         }
 
         this.onlinePlayerRoles.put(player.getUUID(), newRoles);
+
+        if (oldRoles != null) {
+            newRoles.rebuildOverridesAndNotify();
+        }
 
         return newRoles;
     }
