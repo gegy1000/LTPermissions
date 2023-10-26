@@ -30,14 +30,16 @@ import java.util.stream.Stream;
 public record NameDecorationOverride(
 		Optional<AddPrefix> prefix,
 		Optional<AddSuffix> suffix,
-		Optional<ApplyStyle> applyStyle
+		Optional<ApplyStyle> applyStyle,
+		boolean inTabList
 ) {
-	private static final NameDecorationOverride EMPTY = new NameDecorationOverride(Optional.empty(), Optional.empty(), Optional.empty());
+	private static final NameDecorationOverride EMPTY = new NameDecorationOverride(Optional.empty(), Optional.empty(), Optional.empty(), false);
 
 	public static final Codec<NameDecorationOverride> CODEC = RecordCodecBuilder.create(i -> i.group(
 			AddPrefix.CODEC.optionalFieldOf("prefix").forGetter(NameDecorationOverride::prefix),
 			AddSuffix.CODEC.optionalFieldOf("suffix").forGetter(NameDecorationOverride::suffix),
-			ApplyStyle.CODEC.optionalFieldOf("style").forGetter(NameDecorationOverride::applyStyle)
+			ApplyStyle.CODEC.optionalFieldOf("style").forGetter(NameDecorationOverride::applyStyle),
+			Codec.BOOL.optionalFieldOf("in_tab_list", true).forGetter(NameDecorationOverride::inTabList)
 	).apply(i, NameDecorationOverride::new));
 
 	public Component apply(MutableComponent name) {
@@ -61,7 +63,8 @@ public record NameDecorationOverride(
 		Optional<AddPrefix> prefix = join(overrides.stream().flatMap(override -> override.prefix().stream()).map(AddPrefix::prefix)).map(AddPrefix::new);
 		Optional<AddSuffix> suffix = join(overrides.stream().flatMap(override -> override.suffix().stream()).map(AddSuffix::suffix)).map(AddSuffix::new);
 		Optional<ApplyStyle> style = overrides.get(0).applyStyle();
-		return new NameDecorationOverride(prefix, suffix, style);
+		boolean inTabList = overrides.stream().anyMatch(NameDecorationOverride::inTabList);
+		return new NameDecorationOverride(prefix, suffix, style, inTabList);
 	}
 
 	private static Optional<Component> join(Stream<Component> stream) {
@@ -77,9 +80,10 @@ public record NameDecorationOverride(
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		// TODO: temporary patch to make sure name style updates! in cases like teams changing we aren't refreshing.
-		if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer) {
-			if (event.player.tickCount % (SharedConstants.TICKS_PER_SECOND * 10) == 0) {
-				event.player.refreshDisplayName();
+		if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+			if (player.tickCount % (SharedConstants.TICKS_PER_SECOND * 10) == 0) {
+				player.refreshDisplayName();
+				player.refreshTabListName();
 			}
 		}
 	}
@@ -87,16 +91,34 @@ public record NameDecorationOverride(
 	@SubscribeEvent
 	public static void onFormatName(PlayerEvent.NameFormat event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
-			final Component displayName = event.getDisplayname();
-			if (displayName.getStyle().getColor() == null && !hasTeamColor(player)) {
-				final RoleReader roles = PermissionsApi.lookup().byPlayer(player);
-
-				final NameDecorationOverride nameDecoration = roles.overrides().getOrNull(LTPermissions.NAME_DECORATION);
-				if (nameDecoration != null) {
-					event.setDisplayname(nameDecoration.apply(displayName.copy()));
-				}
+			final Component displayName = formatDisplayName(player, event.getDisplayname());
+			if (displayName != null) {
+				event.setDisplayname(displayName);
 			}
 		}
+	}
+
+	@SubscribeEvent
+	public static void onFormatName(PlayerEvent.TabListNameFormat event) {
+		if (event.getEntity() instanceof ServerPlayer player) {
+			final Component displayName = formatDisplayName(player, player.getName());
+			if (displayName != null) {
+				event.setDisplayName(displayName);
+			}
+		}
+	}
+
+	@Nullable
+	private static Component formatDisplayName(final ServerPlayer player, final Component name) {
+        if (name.getStyle().getColor() != null || hasTeamColor(player)) {
+            return null;
+        }
+        final RoleReader roles = PermissionsApi.lookup().byPlayer(player);
+        final NameDecorationOverride nameDecoration = roles.overrides().getOrNull(LTPermissions.NAME_DECORATION);
+        if (nameDecoration != null) {
+            return nameDecoration.apply(name.copy());
+        }
+        return null;
 	}
 
 	private static boolean hasTeamColor(ServerPlayer player) {

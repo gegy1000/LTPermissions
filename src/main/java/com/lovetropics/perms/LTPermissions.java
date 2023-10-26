@@ -27,7 +27,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
@@ -59,8 +58,13 @@ public class LTPermissions {
 
     public static final RoleOverrideType<NameDecorationOverride> NAME_DECORATION = RoleOverrideType.register("name_decoration", NameDecorationOverride.CODEC)
             .withBuilder(NameDecorationOverride::build)
-            .withInitializeListener(Player::refreshDisplayName)
-            .withChangeListener(Player::refreshDisplayName);
+            .withInitializeListener(LTPermissions::refreshNameDecoration)
+            .withChangeListener(LTPermissions::refreshNameDecoration);
+
+    private static void refreshNameDecoration(final ServerPlayer player) {
+        player.refreshDisplayName();
+        player.refreshTabListName();
+    }
 
     public static final RoleOverrideType<Boolean> MUTE = RoleOverrideType.register("mute", Codec.BOOL);
 
