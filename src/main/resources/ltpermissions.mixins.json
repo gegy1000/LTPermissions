@@ -4,6 +4,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "ltpermissions.refmap.json",
   "mixins": [
+    "rule.LecternMenuMixin",
+    "rule.SignBlockMixin"
   ],
   "injectors": {
     "defaultRequire": 1

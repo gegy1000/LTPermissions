@@ -18,6 +18,11 @@ public final class ProtectionRule {
     public static final ProtectionRule INTERACT_ENTITIES = register("interact_entities");
     public static final ProtectionRule INTERACT_ITEMS = register("interact_items");
     public static final ProtectionRule INTERACT = register("interact");
+    public static final ProtectionRule MODIFY = register("modify");
+    public static final ProtectionRule MODIFY_ITEM_FRAMES = register("modify_item_frames");
+    public static final ProtectionRule MODIFY_ARMOR_STANDS = register("modify_armor_stands");
+    public static final ProtectionRule MODIFY_LECTERNS = register("modify_lecterns");
+    public static final ProtectionRule MODIFY_SIGNS = register("modify_signs");
 
     public static final ProtectionRule ATTACK = register("attack");
     public static final ProtectionRule PVP = register("pvp");

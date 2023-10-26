@@ -1,11 +1,14 @@
 package com.lovetropics.perms.protection;
 
 import com.lovetropics.perms.LTPermissions;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.BlockItem;
@@ -108,6 +111,13 @@ public final class ProtectionEventDispatcher {
             EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
             if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ENTITIES)) {
                 event.setCanceled(true);
+                return;
+            }
+
+            if (event.getTarget() instanceof ItemFrame && protect.denies(source, ProtectionRule.MODIFY_ITEM_FRAMES, ProtectionRule.MODIFY)) {
+                event.setCanceled(true);
+            } else if (event.getTarget() instanceof ArmorStand && protect.denies(source, ProtectionRule.MODIFY_ARMOR_STANDS, ProtectionRule.MODIFY)) {
+                event.setCanceled(true);
             }
         }
     }
@@ -120,7 +130,13 @@ public final class ProtectionEventDispatcher {
             EventSource source = EventSource.forEntityAt(player, target.blockPosition());
             if (protect.denies(source, ProtectionRule.ATTACK)) {
                 event.setCanceled(true);
+                return;
             } else if (target instanceof Player && protect.denies(source, ProtectionRule.PVP)) {
+                event.setCanceled(true);
+                return;
+            }
+
+            if (event.getTarget() instanceof ItemFrame && protect.denies(source, ProtectionRule.MODIFY_ITEM_FRAMES, ProtectionRule.MODIFY)) {
                 event.setCanceled(true);
             }
         }
@@ -162,6 +178,20 @@ public final class ProtectionEventDispatcher {
                 event.setCanceled(true);
             }
         }
+    }
+
+    public static boolean onEditSign(final ServerPlayer player, final BlockPos pos) {
+        final ServerLevel level = player.serverLevel();
+        final ProtectionManager protect = protect(level);
+        final EventSource source = EventSource.at(level, pos);
+        return protect.denies(source, ProtectionRule.MODIFY_SIGNS, ProtectionRule.MODIFY);
+    }
+
+    public static boolean onRemoveBookFromLectern(final ServerPlayer player) {
+        final ProtectionManager protect = protect(player.serverLevel());
+        // TODO: The position checked here isn't quite correct, as we don't have the context for where the Lectern is
+        final EventSource source = EventSource.forEntity(player);
+        return protect.denies(source, ProtectionRule.MODIFY_LECTERNS, ProtectionRule.MODIFY);
     }
 
     private static ProtectionManager protect(ServerLevel level) {

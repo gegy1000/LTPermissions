@@ -77,6 +77,16 @@ public final class ProtectionManager extends SavedData {
         return this.test(source, rule).isDenied();
     }
 
+    public boolean denies(EventSource source, ProtectionRule... rules) {
+        for (final ProtectionRule rule : rules) {
+            final PermissionResult result = test(source, rule);
+            if (result.isTerminator()) {
+                return result.isDenied();
+            }
+        }
+        return false;
+    }
+
     @Nullable
     public AuthorityMap<Authority> selectWithBehavior(ResourceKey<Level> dimension) {
         return this.allAuthorities.selectWithBehavior(dimension);
