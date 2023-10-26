@@ -78,4 +78,14 @@ public final class AuthorityBehaviorMap {
     public boolean isEmpty() {
         return this.behaviorIds.isEmpty();
     }
+
+    @Override
+    public boolean equals(final Object obj) {
+        return obj instanceof AuthorityBehaviorMap map && behaviorIds.equals(map.behaviorIds);
+    }
+
+    @Override
+    public int hashCode() {
+        return behaviorIds.hashCode();
+    }
 }

@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -48,7 +47,7 @@ public final class ProtectionPlayerTracker {
         }
     }
 
-    public void onAuthoritiesChanged() {
+    public void invalidate() {
         queuedClear.addAll(trackers.keySet());
     }
 
@@ -60,6 +59,7 @@ public final class ProtectionPlayerTracker {
         UUID uuid = player.getUUID();
         if (queuedClear.remove(uuid)) {
             clearTracker(player, uuid);
+            // Clearing and re-entering within the same tick can cause troubles, so wait to process
             return;
         }
 

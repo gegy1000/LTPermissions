@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
@@ -114,8 +115,6 @@ public final class ProtectionManager extends SavedData {
         }
 
         this.allAuthorities.addDimensionIndex(level.dimension());
-
-        this.onAuthoritiesChanged();
     }
 
     private void onLevelUnload(ServerLevel level) {
@@ -126,8 +125,6 @@ public final class ProtectionManager extends SavedData {
         }
 
         this.allAuthorities.removeDimensionIndex(level.dimension());
-
-        this.onAuthoritiesChanged();
     }
 
     private void onReload() {
@@ -147,7 +144,7 @@ public final class ProtectionManager extends SavedData {
     public boolean addAuthority(UserAuthority authority) {
         if (this.userAuthorities.add(authority)) {
             this.allAuthorities.add(authority);
-            this.onAuthoritiesChanged();
+            this.invalidateBehaviors();
             return true;
         } else {
             return false;
@@ -157,7 +154,7 @@ public final class ProtectionManager extends SavedData {
     public boolean removeAuthority(UserAuthority authority) {
         if (this.userAuthorities.remove(authority)) {
             this.allAuthorities.remove(authority);
-            this.onAuthoritiesChanged();
+            this.invalidateBehaviors();
             return true;
         } else {
             return false;
@@ -174,7 +171,9 @@ public final class ProtectionManager extends SavedData {
                 this.replaceBuiltinAuthority((BuiltinAuthority) from, (BuiltinAuthority) to);
             }
 
-            this.onAuthoritiesChanged();
+            if (!Objects.equals(from.behavior(), to.behavior())) {
+                this.invalidateBehaviors();
+            }
         }
     }
 
@@ -197,8 +196,8 @@ public final class ProtectionManager extends SavedData {
         }
     }
 
-    private void onAuthoritiesChanged() {
-        ProtectionPlayerTracker.INSTANCE.onAuthoritiesChanged();
+    private void invalidateBehaviors() {
+        ProtectionPlayerTracker.INSTANCE.invalidate();
     }
 
     @Nullable
@@ -274,7 +273,7 @@ public final class ProtectionManager extends SavedData {
 
         manager.readBuiltin(root.getCompound("builtin"));
 
-        manager.onAuthoritiesChanged();
+        manager.invalidateBehaviors();
 
         return manager;
     }
