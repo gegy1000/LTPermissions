@@ -183,7 +183,7 @@ public final class ProtectionEventDispatcher {
     public static boolean onEditSign(final ServerPlayer player, final BlockPos pos) {
         final ServerLevel level = player.serverLevel();
         final ProtectionManager protect = protect(level);
-        final EventSource source = EventSource.at(level, pos);
+        final EventSource source = EventSource.forEntityAt(player, pos);
         return protect.denies(source, ProtectionRule.MODIFY_SIGNS, ProtectionRule.MODIFY);
     }
 
