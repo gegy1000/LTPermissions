@@ -36,7 +36,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
@@ -147,7 +146,7 @@ public final class ProtectionManager extends SavedData {
 
         for (Authority authority : authoritiesWithBehavior) {
             AuthorityBehaviorMap behavior = authority.behavior().rebuild();
-            this.replaceAuthority(authority, authority.withBehavior(behavior));
+            this.replaceAuthority(authority, authority.withBehavior(behavior), true);
         }
     }
 
@@ -171,7 +170,8 @@ public final class ProtectionManager extends SavedData {
         }
     }
 
-    public void replaceAuthority(Authority from, Authority to) {
+    // TODO: Remove this flag and implement handling of changed behaviors/shape/etc properly.
+    public void replaceAuthority(Authority from, Authority to, boolean invalidateBehaviors) {
         if (this.allAuthorities.replace(from, to)) {
             if (from instanceof UserAuthority && to instanceof UserAuthority) {
                 this.replaceUserAuthority((UserAuthority) from, (UserAuthority) to);
@@ -181,7 +181,7 @@ public final class ProtectionManager extends SavedData {
                 this.replaceBuiltinAuthority((BuiltinAuthority) from, (BuiltinAuthority) to);
             }
 
-            if (!Objects.equals(from.behavior(), to.behavior())) {
+            if (invalidateBehaviors) {
                 this.invalidateBehaviors();
             }
         }
