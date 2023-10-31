@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -28,9 +29,11 @@ public final class ProtectionPlayerTracker {
     private final Object2ObjectMap<UUID, Tracker> trackers = new Object2ObjectOpenHashMap<>();
     private final Set<UUID> queuedClear = new ObjectOpenHashSet<>();
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        INSTANCE.trackers.remove(event.getEntity().getUUID());
+        if (event.getEntity() instanceof final ServerPlayer player) {
+            INSTANCE.clearTracker(player, player.getUUID());
+        }
     }
 
     @SubscribeEvent
