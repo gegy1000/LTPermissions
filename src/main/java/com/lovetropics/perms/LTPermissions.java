@@ -145,7 +145,8 @@ public class LTPermissions {
             }
 
             String[] commands = entry.getValue();
-            nodes[nodes.length - 1].executes(context -> {
+            LiteralArgumentBuilder<CommandSourceStack> last = nodes[nodes.length - 1];
+            last.executes(context -> {
                 CommandSourceStack source = context.getSource().withPermission(4).withSuppressedOutput();
                 int result = Command.SINGLE_SUCCESS;
                 for (String command : commands) {
@@ -154,14 +155,11 @@ public class LTPermissions {
                 return result;
             });
 
-            LiteralArgumentBuilder<CommandSourceStack> chain = nodes[0];
-            for (int i = 1; i < nodes.length; i++) {
-                LiteralArgumentBuilder<CommandSourceStack> next = nodes[i];
-                chain.then(next);
-                chain = next;
+            for (int i = nodes.length - 2; i >= 0; i--) {
+                last = nodes[i].then(last);
             }
 
-            dispatcher.register(nodes[0]);
+            dispatcher.register(last);
         }
     }
 
