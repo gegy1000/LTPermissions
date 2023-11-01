@@ -46,7 +46,7 @@ public final class RoleCommand {
     // @formatter:off
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(literal("role")
-                .requires(s -> s.hasPermission(Commands.LEVEL_OWNERS))
+                .requires(s -> s.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(literal("assign")
                     .then(argument("targets", GameProfileArgument.gameProfile())
                     .then(argument("role", StringArgumentType.word()).suggests(roleSuggestions())
