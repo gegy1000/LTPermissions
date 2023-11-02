@@ -23,6 +23,7 @@ public final class ProtectionRule {
     public static final ProtectionRule MODIFY_ARMOR_STANDS = register("modify_armor_stands");
     public static final ProtectionRule MODIFY_LECTERNS = register("modify_lecterns");
     public static final ProtectionRule MODIFY_SIGNS = register("modify_signs");
+    public static final ProtectionRule MODIFY_BOOKSHELVES = register("modify_bookshelves");
 
     public static final ProtectionRule ATTACK = register("attack");
     public static final ProtectionRule PVP = register("pvp");

@@ -12,6 +12,8 @@ import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -85,6 +87,11 @@ public final class ProtectionEventDispatcher {
             }
             if (protect.denies(source, ProtectionRule.INTERACT_ITEMS) || (isBlockItem(event) && protect.denies(source, ProtectionRule.PLACE))) {
                 event.setUseItem(Event.Result.DENY);
+            }
+
+            final BlockState state = level.getBlockState(event.getPos());
+            if (state.is(Blocks.CHISELED_BOOKSHELF) && protect.denies(source, ProtectionRule.MODIFY_BOOKSHELVES, ProtectionRule.MODIFY)) {
+                event.setUseBlock(Event.Result.DENY);
             }
         }
     }
