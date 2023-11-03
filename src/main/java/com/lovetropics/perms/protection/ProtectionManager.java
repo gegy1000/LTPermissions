@@ -146,7 +146,7 @@ public final class ProtectionManager extends SavedData {
 
         for (Authority authority : authoritiesWithBehavior) {
             AuthorityBehaviorMap behavior = authority.behavior().rebuild();
-            this.replaceAuthority(authority, authority.withBehavior(behavior), true);
+            this.replaceAuthority(authority, authority.withBehavior(behavior));
         }
     }
 
@@ -170,8 +170,7 @@ public final class ProtectionManager extends SavedData {
         }
     }
 
-    // TODO: Remove this flag and implement handling of changed behaviors/shape/etc properly.
-    public void replaceAuthority(Authority from, Authority to, boolean invalidateBehaviors) {
+    public void replaceAuthority(Authority from, Authority to) {
         if (this.allAuthorities.replace(from, to)) {
             if (from instanceof UserAuthority && to instanceof UserAuthority) {
                 this.replaceUserAuthority((UserAuthority) from, (UserAuthority) to);
@@ -181,9 +180,7 @@ public final class ProtectionManager extends SavedData {
                 this.replaceBuiltinAuthority((BuiltinAuthority) from, (BuiltinAuthority) to);
             }
 
-            if (invalidateBehaviors) {
-                this.invalidateBehaviors();
-            }
+            this.invalidateBehaviors();
         }
     }
 

@@ -27,7 +27,7 @@ public final class ProtectionPlayerTracker {
     public static final ProtectionPlayerTracker INSTANCE = new ProtectionPlayerTracker();
 
     private final Object2ObjectMap<UUID, Tracker> trackers = new Object2ObjectOpenHashMap<>();
-    private final Set<UUID> queuedClear = new ObjectOpenHashSet<>();
+    private final Set<UUID> queuedReset = new ObjectOpenHashSet<>();
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -51,24 +51,30 @@ public final class ProtectionPlayerTracker {
     }
 
     public void invalidate() {
-        queuedClear.addAll(trackers.keySet());
+        queuedReset.addAll(trackers.keySet());
     }
 
     private void onPlayerChangeDimension(ServerPlayer player) {
-        clearTracker(player, player.getUUID());
+        final Tracker tracker = trackers.get(player);
+        if (tracker != null) {
+            resetTracker(player, tracker);
+        }
     }
 
-    private void tickPlayer(ServerPlayer player) {
-        UUID uuid = player.getUUID();
-        if (queuedClear.remove(uuid)) {
-            clearTracker(player, uuid);
-            // Clearing and re-entering within the same tick can cause troubles, so wait to process
-            return;
+    private void tickPlayer(final ServerPlayer player) {
+        final UUID playerId = player.getUUID();
+        if (queuedReset.remove(playerId)) {
+            final Tracker tracker = trackers.get(player);
+            if (tracker != null) {
+                resetTracker(player, tracker);
+                // We already updated the tracker state for this tick, so we don't need to check it again
+                return;
+            }
         }
 
-        Tracker tracker = this.getOrInitializeTracker(player, uuid);
+        final Tracker tracker = getOrInitializeTracker(player, playerId);
 
-        long blockPos = player.blockPosition().asLong();
+        final long blockPos = player.blockPosition().asLong();
         if (blockPos != tracker.lastBlockPos) {
             this.onPlayerMoved(player, tracker);
             tracker.lastBlockPos = blockPos;
@@ -78,34 +84,44 @@ public final class ProtectionPlayerTracker {
     private Tracker getOrInitializeTracker(ServerPlayer player, UUID uuid) {
         Tracker tracker = trackers.get(uuid);
         if (tracker == null) {
-            tracker = initializeTracker(player);
+            tracker = new Tracker();
+            resetTracker(player, tracker);
             trackers.put(uuid, tracker);
         }
         return tracker;
     }
 
-    private Tracker initializeTracker(ServerPlayer player) {
-        ProtectionManager protection = ProtectionManager.get(player.server);
+    private void resetTracker(final ServerPlayer player, final Tracker tracker) {
+        final ProtectionManager protection = ProtectionManager.get(player.server);
 
-        Tracker tracker = new Tracker();
-        tracker.lastBlockPos = player.blockPosition().asLong();
-
-        AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.level().dimension());
-        if (authorities == null) {
-            return tracker;
+        final Set<AuthorityBehavior> exitingBehaviors = new ReferenceArraySet<>(tracker.inside.size());
+        for (final Authority authority : tracker.inside) {
+            exitingBehaviors.add(authority.behavior().getBehavior());
         }
 
-        EventSource source = EventSource.forEntity(player);
-        for (Authority authority : authorities) {
-            if (authority.eventFilter().accepts(source)) {
-                tracker.inside.add(authority);
-                authority.behavior().getBehavior().onPlayerEnter(player);
-            } else {
-                tracker.outside.add(authority);
+        tracker.outside.clear();
+        tracker.inside.clear();
+        tracker.lastBlockPos = player.blockPosition().asLong();
+
+        final AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.level().dimension());
+        if (authorities != null) {
+            final EventSource source = EventSource.forEntity(player);
+            for (final Authority authority : authorities) {
+                if (authority.eventFilter().accepts(source)) {
+                    final AuthorityBehavior behavior = authority.behavior().getBehavior();
+                    if (!exitingBehaviors.remove(behavior)) {
+                        behavior.onPlayerEnter(player);
+                    }
+                    tracker.inside.add(authority);
+                } else {
+                    tracker.outside.add(authority);
+                }
             }
         }
 
-        return tracker;
+        for (final AuthorityBehavior behavior : exitingBehaviors) {
+            behavior.onPlayerExit(player);
+        }
     }
 
     private void clearTracker(ServerPlayer player, UUID uuid) {

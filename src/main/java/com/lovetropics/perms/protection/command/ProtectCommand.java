@@ -194,7 +194,7 @@ public final class ProtectCommand {
         AuthorityShape selection = getSelectionFor(context.getSource());
 
         ProtectionManager protection = protection(context);
-        protection.replaceAuthority(authority, authority.addShape(shape, selection), true);
+        protection.replaceAuthority(authority, authority.addShape(shape, selection));
 
         context.getSource().sendSuccess(() -> Component.literal("Set shape on '")
                 .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
@@ -212,7 +212,7 @@ public final class ProtectCommand {
         String shapeKey = shape.getSecond();
 
         ProtectionManager protection = protection(context);
-        protection.replaceAuthority(authority, authority.removeShape(shapeKey), true);
+        protection.replaceAuthority(authority, authority.removeShape(shapeKey));
 
         context.getSource().sendSuccess(() -> Component.literal("Removed shape from '")
                 .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
@@ -247,7 +247,7 @@ public final class ProtectCommand {
         PermissionResult result = PermissionResultArgument.get(context, "result");
 
         ProtectionManager protection = protection(context);
-        protection.replaceAuthority(authority, authority.withRule(rule, result), false);
+        protection.replaceAuthority(authority, authority.withRule(rule, result));
 
         context.getSource().sendSuccess(() -> Component.literal("Set rule ")
                 .append(Component.literal(rule.key() + "=").append(result.getName()).withStyle(ChatFormatting.AQUA))
@@ -298,7 +298,7 @@ public final class ProtectCommand {
         Authority newAuthority = operator.apply(authority);
 
         ProtectionManager protection = protection(context);
-        protection.replaceAuthority(authority, newAuthority, true);
+        protection.replaceAuthority(authority, newAuthority);
 
         context.getSource().sendSuccess(() -> Component.literal("Updated exclusions for '")
                 .append(Component.literal(authority.key()).withStyle(ChatFormatting.AQUA))
@@ -346,7 +346,7 @@ public final class ProtectCommand {
         ResourceLocation behaviorId = AuthorityBehaviorArgument.get(context, "behavior").getFirst();
 
         ProtectionManager protection = protection(context);
-        protection.replaceAuthority(authority, authority.addBehavior(behaviorId), true);
+        protection.replaceAuthority(authority, authority.addBehavior(behaviorId));
 
         context.getSource().sendSuccess(() -> Component.literal("Added behavior '")
                 .append(Component.literal(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
@@ -363,7 +363,7 @@ public final class ProtectCommand {
         ResourceLocation behaviorId = AuthorityBehaviorArgument.get(context, "behavior").getFirst();
 
         ProtectionManager protection = protection(context);
-        protection.replaceAuthority(authority, authority.removeBehavior(behaviorId), true);
+        protection.replaceAuthority(authority, authority.removeBehavior(behaviorId));
 
         context.getSource().sendSuccess(() -> Component.literal("Removed behavior '")
                 .append(Component.literal(behaviorId.toString()).withStyle(ChatFormatting.AQUA))
