@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -16,7 +15,8 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.*;
+import java.util.Set;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
 public final class ProtectionPlayerTracker {
@@ -97,7 +97,6 @@ public final class ProtectionPlayerTracker {
         try {
             lastBehaviors.addAll(tracker.behaviors);
             tracker.behaviors.clear();
-            tracker.inside.clear();
 
             final AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.level().dimension());
             if (authorities != null) {
@@ -105,7 +104,6 @@ public final class ProtectionPlayerTracker {
                 for (final Authority authority : authorities) {
                     if (authority.eventFilter().accepts(source)) {
                         tracker.behaviors.add(authority.behavior().getBehavior());
-                        tracker.inside.add(authority);
                     }
                 }
             }
@@ -136,7 +134,6 @@ public final class ProtectionPlayerTracker {
     }
 
     private static final class Tracker {
-        private final Set<Authority> inside = new ReferenceOpenHashSet<>();
         private final Set<AuthorityBehavior> behaviors = new ReferenceArraySet<>();
         private long lastBlockPos = -1;
     }
