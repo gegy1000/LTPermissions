@@ -61,6 +61,8 @@ public final class RolesConfig implements RoleProvider {
             JsonElement root = JsonParser.parseReader(reader);
             instance = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
             PermissionsApi.setRoleProvider(instance);
+            LTPermissions.LOGGER.debug("Loaded {} roles", instance.roles.size());
+            instance.roles.forEach((name, role) -> LTPermissions.LOGGER.debug("Role {} has configuration: {}", name, role));
         } catch (IOException e) {
             errorConsumer.report("Failed to read roles.json configuration", e);
             LTPermissions.LOGGER.warn("Failed to load roles.json configuration", e);

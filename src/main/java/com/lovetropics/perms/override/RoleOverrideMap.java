@@ -64,6 +64,11 @@ public final class RoleOverrideMap implements RoleOverrideReader {
         return combinedOverrides.keySet();
     }
 
+    @Override
+    public String toString() {
+        return overrides.toString();
+    }
+
     public static class Builder {
         private final Map<RoleOverrideType<?>, List<Object>> overrides = new Reference2ObjectOpenHashMap<>();
 
