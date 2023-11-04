@@ -25,9 +25,7 @@ public final class ProtectionPlayerTracker {
     private final Object2ObjectMap<UUID, Tracker> trackers = new Object2ObjectOpenHashMap<>();
     private final Set<UUID> queuedReset = new ObjectOpenHashSet<>();
 
-    private final List<Authority> enteringAuthorities = new ArrayList<>();
-    private final List<AuthorityBehavior> enteringBehaviors = new ArrayList<>();
-    private final Set<AuthorityBehavior> exitingBehaviors = new ReferenceArraySet<>();
+    private final Set<AuthorityBehavior> lastBehaviors = new ReferenceArraySet<>();
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -57,7 +55,7 @@ public final class ProtectionPlayerTracker {
     private void onPlayerChangeDimension(ServerPlayer player) {
         final Tracker tracker = trackers.get(player);
         if (tracker != null) {
-            resetTracker(player, tracker);
+            updateTracker(player, tracker);
         }
     }
 
@@ -66,7 +64,7 @@ public final class ProtectionPlayerTracker {
         if (queuedReset.remove(playerId)) {
             final Tracker tracker = trackers.get(player);
             if (tracker != null) {
-                resetTracker(player, tracker);
+                updateTracker(player, tracker);
                 // We already updated the tracker state for this tick, so we don't need to check it again
                 return;
             }
@@ -76,7 +74,7 @@ public final class ProtectionPlayerTracker {
 
         final long blockPos = player.blockPosition().asLong();
         if (blockPos != tracker.lastBlockPos) {
-            this.onPlayerMoved(player, tracker);
+            updateTracker(player, tracker);
             tracker.lastBlockPos = blockPos;
         }
     }
@@ -85,46 +83,46 @@ public final class ProtectionPlayerTracker {
         Tracker tracker = trackers.get(uuid);
         if (tracker == null) {
             tracker = new Tracker();
-            resetTracker(player, tracker);
+            updateTracker(player, tracker);
             trackers.put(uuid, tracker);
         }
         return tracker;
     }
 
-    private void resetTracker(final ServerPlayer player, final Tracker tracker) {
+    // TODO: Create an index of regions in the world such that we can know that within a given area, behaviors will never change, and search domain can be smaller
+    private void updateTracker(final ServerPlayer player, final Tracker tracker) {
         final ProtectionManager protection = ProtectionManager.get(player.server);
+        tracker.lastBlockPos = player.blockPosition().asLong();
 
         try {
-            exitingBehaviors.addAll(tracker.behaviors);
-
-            tracker.outside.clear();
-            tracker.inside.clear();
+            lastBehaviors.addAll(tracker.behaviors);
             tracker.behaviors.clear();
-            tracker.lastBlockPos = player.blockPosition().asLong();
+            tracker.inside.clear();
 
             final AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.level().dimension());
             if (authorities != null) {
                 final EventSource source = EventSource.forEntity(player);
                 for (final Authority authority : authorities) {
                     if (authority.eventFilter().accepts(source)) {
+                        tracker.behaviors.add(authority.behavior().getBehavior());
                         tracker.inside.add(authority);
-
-                        final AuthorityBehavior behavior = authority.behavior().getBehavior();
-                        if (tracker.behaviors.add(behavior)) {
-                            exitingBehaviors.remove(behavior);
-                            enteringBehaviors.add(behavior);
-                        }
-                    } else {
-                        tracker.outside.add(authority);
                     }
                 }
             }
 
-            applyBehaviors(player, enteringBehaviors, exitingBehaviors);
+            for (final AuthorityBehavior behavior : lastBehaviors) {
+                if (!tracker.behaviors.contains(behavior)) {
+                    behavior.onPlayerExit(player);
+                }
+            }
+
+            for (final AuthorityBehavior behavior : tracker.behaviors) {
+                if (!lastBehaviors.contains(behavior)) {
+                    behavior.onPlayerEnter(player);
+                }
+            }
         } finally {
-            enteringAuthorities.clear();
-            enteringBehaviors.clear();
-            exitingBehaviors.clear();
+            lastBehaviors.clear();
         }
     }
 
@@ -137,75 +135,8 @@ public final class ProtectionPlayerTracker {
         }
     }
 
-    private void onPlayerMoved(ServerPlayer player, Tracker tracker) {
-        final EventSource source = EventSource.forEntity(player);
-        try {
-            if (collectEnteringAndExiting(tracker, source)) {
-                applyBehaviors(player, enteringBehaviors, exitingBehaviors);
-            }
-        } finally {
-            enteringAuthorities.clear();
-            enteringBehaviors.clear();
-            exitingBehaviors.clear();
-        }
-    }
-
-    private boolean collectEnteringAndExiting(final Tracker tracker, final EventSource source) {
-        final Iterator<Authority> outsideIterator = tracker.outside.iterator();
-        while (outsideIterator.hasNext()) {
-            final Authority outside = outsideIterator.next();
-            if (!outside.eventFilter().accepts(source)) {
-                continue;
-            }
-
-            // Defer adding these to the inside set, as we're about to iterate through the old ones
-            enteringAuthorities.add(outside);
-            outsideIterator.remove();
-
-            final AuthorityBehavior behavior = outside.behavior().getBehavior();
-            if (tracker.behaviors.add(behavior)) {
-                enteringBehaviors.add(behavior);
-            }
-        }
-
-        final Iterator<Authority> insideIterator = tracker.inside.iterator();
-        while (insideIterator.hasNext()) {
-            final Authority inside = insideIterator.next();
-            if (inside.eventFilter().accepts(source)) {
-                continue;
-            }
-
-            insideIterator.remove();
-            tracker.outside.add(inside);
-            exitingBehaviors.add(inside.behavior().getBehavior());
-        }
-
-        tracker.inside.addAll(enteringAuthorities);
-
-        // If multiple authorities are applying a behavior to us, make sure that there's none left before removing it
-        if (!exitingBehaviors.isEmpty()) {
-            for (final Authority authority : tracker.inside) {
-                exitingBehaviors.remove(authority.behavior().getBehavior());
-            }
-        }
-
-        tracker.behaviors.removeAll(exitingBehaviors);
-
-        return !enteringBehaviors.isEmpty() || !exitingBehaviors.isEmpty();
-    }
-
-    private void applyBehaviors(final ServerPlayer player, final Collection<AuthorityBehavior> entering, final Collection<AuthorityBehavior> exiting) {
-        for (final AuthorityBehavior behavior : exiting) {
-            behavior.onPlayerExit(player);
-        }
-        for (final AuthorityBehavior behavior : entering) {
-            behavior.onPlayerEnter(player);
-        }
-    }
-
     private static final class Tracker {
         private final Set<Authority> inside = new ReferenceOpenHashSet<>();
-        private final Set<Authority> outside = new ReferenceOpenHashSet<>();
         private final Set<AuthorityBehavior> behaviors = new ReferenceArraySet<>();
         private long lastBlockPos = -1;
     }
