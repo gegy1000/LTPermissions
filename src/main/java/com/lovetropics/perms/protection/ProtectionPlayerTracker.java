@@ -16,11 +16,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Mod.EventBusSubscriber(modid = LTPermissions.ID)
 public final class ProtectionPlayerTracker {
@@ -28,6 +24,10 @@ public final class ProtectionPlayerTracker {
 
     private final Object2ObjectMap<UUID, Tracker> trackers = new Object2ObjectOpenHashMap<>();
     private final Set<UUID> queuedReset = new ObjectOpenHashSet<>();
+
+    private final List<Authority> enteringAuthorities = new ArrayList<>();
+    private final List<AuthorityBehavior> enteringBehaviors = new ArrayList<>();
+    private final Set<AuthorityBehavior> exitingBehaviors = new ReferenceArraySet<>();
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -94,117 +94,119 @@ public final class ProtectionPlayerTracker {
     private void resetTracker(final ServerPlayer player, final Tracker tracker) {
         final ProtectionManager protection = ProtectionManager.get(player.server);
 
-        final Set<AuthorityBehavior> exitingBehaviors = new ReferenceArraySet<>(tracker.inside.size());
-        for (final Authority authority : tracker.inside) {
-            exitingBehaviors.add(authority.behavior().getBehavior());
-        }
+        try {
+            exitingBehaviors.addAll(tracker.behaviors);
 
-        tracker.outside.clear();
-        tracker.inside.clear();
-        tracker.lastBlockPos = player.blockPosition().asLong();
+            tracker.outside.clear();
+            tracker.inside.clear();
+            tracker.behaviors.clear();
+            tracker.lastBlockPos = player.blockPosition().asLong();
 
-        final AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.level().dimension());
-        if (authorities != null) {
-            final EventSource source = EventSource.forEntity(player);
-            for (final Authority authority : authorities) {
-                if (authority.eventFilter().accepts(source)) {
-                    final AuthorityBehavior behavior = authority.behavior().getBehavior();
-                    if (!exitingBehaviors.remove(behavior)) {
-                        behavior.onPlayerEnter(player);
+            final AuthorityMap<Authority> authorities = protection.selectWithBehavior(player.level().dimension());
+            if (authorities != null) {
+                final EventSource source = EventSource.forEntity(player);
+                for (final Authority authority : authorities) {
+                    if (authority.eventFilter().accepts(source)) {
+                        tracker.inside.add(authority);
+
+                        final AuthorityBehavior behavior = authority.behavior().getBehavior();
+                        if (tracker.behaviors.add(behavior)) {
+                            exitingBehaviors.remove(behavior);
+                            enteringBehaviors.add(behavior);
+                        }
+                    } else {
+                        tracker.outside.add(authority);
                     }
-                    tracker.inside.add(authority);
-                } else {
-                    tracker.outside.add(authority);
                 }
             }
-        }
 
-        for (final AuthorityBehavior behavior : exitingBehaviors) {
-            behavior.onPlayerExit(player);
+            applyBehaviors(player, enteringBehaviors, exitingBehaviors);
+        } finally {
+            enteringAuthorities.clear();
+            enteringBehaviors.clear();
+            exitingBehaviors.clear();
         }
     }
 
     private void clearTracker(ServerPlayer player, UUID uuid) {
         Tracker tracker = trackers.remove(uuid);
         if (tracker != null) {
-            for (Authority authority : tracker.inside) {
-                authority.behavior().getBehavior().onPlayerExit(player);
-            }
-        }
-    }
-
-    private void onPlayerMoved(ServerPlayer player, Tracker tracker) {
-        EventSource source = EventSource.forEntity(player);
-
-        // TODO: how can we optimise this further?
-        List<Authority> entering = this.collectEntering(tracker, source);
-        List<Authority> exiting = this.collectExiting(tracker, source);
-        if (entering == null && exiting == null) {
-            return;
-        }
-
-        Set<AuthorityBehavior> enteringBehaviors = new ReferenceArraySet<>();
-        if (entering != null) {
-            for (Authority authority : entering) {
-                tracker.inside.add(authority);
-                tracker.outside.remove(authority);
-                enteringBehaviors.add(authority.behavior().getBehavior());
-            }
-        }
-
-        Set<AuthorityBehavior> exitingBehaviors = new ReferenceArraySet<>();
-        if (exiting != null) {
-            for (Authority authority : exiting) {
-                tracker.outside.add(authority);
-                tracker.inside.remove(authority);
-                exitingBehaviors.add(authority.behavior().getBehavior());
-            }
-        }
-
-        for (AuthorityBehavior behavior : enteringBehaviors) {
-            if (!exitingBehaviors.contains(behavior)) {
-                behavior.onPlayerEnter(player);
-            }
-        }
-
-        for (AuthorityBehavior behavior : exitingBehaviors) {
-            if (!enteringBehaviors.contains(behavior)) {
+            for (AuthorityBehavior behavior : tracker.behaviors) {
                 behavior.onPlayerExit(player);
             }
         }
     }
 
-    @Nullable
-    private List<Authority> collectEntering(Tracker tracker, EventSource source) {
-        List<Authority> entering = null;
-        for (Authority outside : tracker.outside) {
-            if (outside.eventFilter().accepts(source)) {
-                if (entering == null) {
-                    entering = new ArrayList<>();
-                }
-                entering.add(outside);
+    private void onPlayerMoved(ServerPlayer player, Tracker tracker) {
+        final EventSource source = EventSource.forEntity(player);
+        try {
+            if (collectEnteringAndExiting(tracker, source)) {
+                applyBehaviors(player, enteringBehaviors, exitingBehaviors);
             }
+        } finally {
+            enteringAuthorities.clear();
+            enteringBehaviors.clear();
+            exitingBehaviors.clear();
         }
-        return entering;
     }
 
-    @Nullable
-    private List<Authority> collectExiting(Tracker tracker, EventSource source) {
-        List<Authority> exiting = null;
-        for (Authority inside : tracker.inside) {
-            if (!inside.eventFilter().accepts(source)) {
-                if (exiting == null) {
-                    exiting = new ArrayList<>();
-                }
-                exiting.add(inside);
+    private boolean collectEnteringAndExiting(final Tracker tracker, final EventSource source) {
+        final Iterator<Authority> outsideIterator = tracker.outside.iterator();
+        while (outsideIterator.hasNext()) {
+            final Authority outside = outsideIterator.next();
+            if (!outside.eventFilter().accepts(source)) {
+                continue;
+            }
+
+            // Defer adding these to the inside set, as we're about to iterate through the old ones
+            enteringAuthorities.add(outside);
+            outsideIterator.remove();
+
+            final AuthorityBehavior behavior = outside.behavior().getBehavior();
+            if (tracker.behaviors.add(behavior)) {
+                enteringBehaviors.add(behavior);
             }
         }
-        return exiting;
+
+        final Iterator<Authority> insideIterator = tracker.inside.iterator();
+        while (insideIterator.hasNext()) {
+            final Authority inside = insideIterator.next();
+            if (inside.eventFilter().accepts(source)) {
+                continue;
+            }
+
+            insideIterator.remove();
+            tracker.outside.add(inside);
+            exitingBehaviors.add(inside.behavior().getBehavior());
+        }
+
+        tracker.inside.addAll(enteringAuthorities);
+
+        // If multiple authorities are applying a behavior to us, make sure that there's none left before removing it
+        if (!exitingBehaviors.isEmpty()) {
+            for (final Authority authority : tracker.inside) {
+                exitingBehaviors.remove(authority.behavior().getBehavior());
+            }
+        }
+
+        tracker.behaviors.removeAll(exitingBehaviors);
+
+        return !enteringBehaviors.isEmpty() || !exitingBehaviors.isEmpty();
+    }
+
+    private void applyBehaviors(final ServerPlayer player, final Collection<AuthorityBehavior> entering, final Collection<AuthorityBehavior> exiting) {
+        for (final AuthorityBehavior behavior : exiting) {
+            behavior.onPlayerExit(player);
+        }
+        for (final AuthorityBehavior behavior : entering) {
+            behavior.onPlayerEnter(player);
+        }
     }
 
     private static final class Tracker {
         private final Set<Authority> inside = new ReferenceOpenHashSet<>();
         private final Set<Authority> outside = new ReferenceOpenHashSet<>();
+        private final Set<AuthorityBehavior> behaviors = new ReferenceArraySet<>();
         private long lastBlockPos = -1;
     }
 }
