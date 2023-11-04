@@ -35,7 +35,7 @@ public class FlyCommand {
 
 	private static void setFlight(final ServerPlayer player, final boolean canFly) {
 		Abilities abilities = player.getAbilities();
-		abilities.mayfly = canFly || player.isCreative();
+		abilities.mayfly = canFly || player.isCreative() || player.isSpectator();
 		abilities.flying &= abilities.mayfly;
 		player.onUpdateAbilities();
 	}
