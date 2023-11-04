@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -170,7 +171,7 @@ public final class ProtectionEventDispatcher {
                 return;
             }
 
-            if (event.getSource().is(DamageTypeTags.IS_FALL) && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
+            if ((event.getSource().is(DamageTypeTags.IS_FALL) || event.getSource().is(DamageTypes.FLY_INTO_WALL)) && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
                 event.setCanceled(true);
             }
         }
