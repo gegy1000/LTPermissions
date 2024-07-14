@@ -6,7 +6,6 @@ plugins {
   id 'net.neoforged.moddev' version '1.0.8'
 }
 
-// jarJar.enable()
 
 group = mod_group_id
 base {
@@ -15,12 +14,11 @@ base {
 
 
 ext.buildnumber = 0
+version = "${mod_version}"
 
 if (System.getenv('GITHUB_RUN_NUMBER')) {
     project.buildnumber = System.getenv('GITHUB_RUN_NUMBER') as Integer
     version = "${mod_version}+${buildnumber}-gha"
-} else {
-    version = "${mod_version}"
 }
 
 
@@ -50,9 +48,6 @@ dependencies {
     exclude group: "com.google.guava"
   }
 
-  if (System.getProperty("idea.sync.active") != "true") {
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-  }
 }
 
 
@@ -116,10 +111,6 @@ tasks.withType(ProcessResources).configureEach {
     filesMatching(['META-INF/neoforge.mods.toml']) {
         expand replaceProperties
     }
-}
-
-tasks.named('jar', Jar).configure {
-  archiveClassifier = 'slim'
 }
 
 
