@@ -1,120 +1,136 @@
 plugins {
+  id 'java-library'
   id 'eclipse'
   id 'idea'
   id 'maven-publish'
-  id 'net.minecraftforge.gradle' version '[6.0,6.2)'
-  id 'org.parchmentmc.librarian.forgegradle' version '1.+'
-  id 'org.spongepowered.mixin' version '0.7+'
+  id 'net.neoforged.moddev' version '1.0.8'
 }
 
-jarJar.enable()
+// jarJar.enable()
 
-group = "com.lovetropics"
+group = mod_group_id
 base {
-  archivesName = 'LTPermissions'
+  archivesName = mod_id
 }
+
 
 ext.buildnumber = 0
 
 if (System.getenv('GITHUB_RUN_NUMBER')) {
-    project.buildnumber = System.getenv('GITHUB_RUN_NUMBER')
+    project.buildnumber = System.getenv('GITHUB_RUN_NUMBER') as Integer
     version = "${mod_version}+${buildnumber}-gha"
 } else {
     version = "${mod_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-
-minecraft {
-  mappings channel: 'parchment', version: parchment_version
-  runs {
-    configureEach {
-      copyIdeResources = true
-      workingDirectory project.file('run')
-      property 'forge.logging.console.level', 'info'
-      arg "-mixin.config=ltpermissions.mixins.json"
-      jvmArg '-Dmixin.env.disableRefMap=true'
-      mods {
-        ltperms {
-          sources sourceSets.main
-        }
-      }
-    }
-    client {
-    }
-    server {
-    }
-  }
-}
 
 repositories {
-  maven { url "https://maven.tterrag.com/" }
   maven { url "https://maven.enginehub.org/repo/" }
+  maven { url "https://maven.tterrag.com/" }
+  mavenLocal()
 }
 
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+
 dependencies {
-  minecraft "net.minecraftforge:forge:$minecraft_version-$forge_version"
 
-  jarJar(implementation(fg.deobf("com.lovetropics.lib:LTLib:$ltlib_version")))
+  jarJar(implementation("com.lovetropics.lib:LTLib:$ltlib_version"))
 
-  minecraftLibrary("com.sk89q.worldedit:worldedit-core:7.2.16-SNAPSHOT") {
+  implementation("com.sk89q.worldedit:worldedit-core:$worldedit_version") {
     exclude group: "com.google.guava"
     exclude group: "com.google.code.gson"
     exclude group: "it.unimi.dsi"
     exclude group: "org.apache.logging.log4j"
     exclude group: "org.antlr"
   }
-  implementation fg.deobf("com.sk89q.worldedit:worldedit-forge-mc1.20:7.2.16-SNAPSHOT")
-
-//  implementation fg.deobf('com.github.hexomod:WorldEdit-CUI-FE3:1.16.5-3.0.9')
+  
+  implementation("com.sk89q.worldedit:worldedit-neoforge-mc$minecraft_version:$worldedit_version")  {
+    exclude group: "com.google.guava"
+  }
 
   if (System.getProperty("idea.sync.active") != "true") {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
   }
 }
 
-mixin {
-  add sourceSets.main, "ltpermissions.refmap.json"
+
+neoForge {
+  version = project.neo_version
+
+  parchment {
+    minecraftVersion = project.minecraft_version
+    mappingsVersion = project.parchment_version
+  }
+
+  runs {
+    configureEach {
+      logLevel = org.slf4j.event.Level.INFO
+      gameDirectory = project.file('run')
+    }
+    client {
+      client()
+    }
+    server {
+      server()
+    }
+    data {
+      data()
+      programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+    }
+  }
+
+  mods {
+    "${mod_id}" {
+      sourceSet sourceSets.main
+    }
+  }
+
+  neoFormRuntime {
+    useEclipseCompiler = true
+  }
+
+}
+
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            fml_version_range      : fml_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
 }
 
 tasks.named('jar', Jar).configure {
   archiveClassifier = 'slim'
-  finalizedBy 'reobfJar'
-
-  manifest {
-    attributes([
-      "Specification-Title": "ltpermissions",
-      "Specification-Vendor": "lovetropics",
-      "Specification-Version": "1",
-      "Implementation-Title": project.name,
-      "Implementation-Version": archiveVersion,
-      "Implementation-Vendor" :"lovetropics",
-      "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-      "MixinConfigs": "ltpermissions.mixins.json"
-    ])
-  }
 }
 
-tasks.named('jarJar').configure {
-  archiveClassifier = ''
-  finalizedBy 'reobfJarJar'
-}
-
-reobf {
-  jarJar { }
-}
-
-tasks.named('processResources', ProcessResources).configure {
-  var replaceProperties = [
-          mod_version: mod_version,
-  ]
-  inputs.properties replaceProperties
-
-  filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-    expand replaceProperties + [project: project]
-  }
-}
 
 tasks.withType(JavaCompile).configureEach {
   options.encoding = 'UTF-8'
+}
+
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
 }
