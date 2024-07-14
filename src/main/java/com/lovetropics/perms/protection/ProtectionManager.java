@@ -16,6 +16,7 @@ import com.mojang.serialization.DataResult;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -27,10 +28,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -38,9 +39,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-@Mod.EventBusSubscriber(modid = LTPermissions.ID)
+@EventBusSubscriber(modid = LTPermissions.ID)
 public final class ProtectionManager extends SavedData {
     private static final String KEY = "protection";
+    private static final Factory<ProtectionManager> FACTORY = new Factory<>(
+            ProtectionManager::new,
+            (root, registries) -> ProtectionManager.read(root)
+    );
 
     private final SortedAuthorityHashMap<UserAuthority> userAuthorities = new SortedAuthorityHashMap<>();
     private final IndexedAuthorityMap<Authority> allAuthorities = new IndexedAuthorityMap<>();
@@ -53,7 +58,7 @@ public final class ProtectionManager extends SavedData {
     }
 
     public static ProtectionManager get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(ProtectionManager::read, ProtectionManager::new, KEY);
+        return server.overworld().getDataStorage().computeIfAbsent(FACTORY, KEY);
     }
 
     public PermissionResult test(EventSource source, ProtectionRule rule) {
@@ -108,8 +113,8 @@ public final class ProtectionManager extends SavedData {
     }
 
     @SubscribeEvent
-    public static void onLevelTick(TickEvent.LevelTickEvent event) {
-        if (event.phase == TickEvent.Phase.END && event.level instanceof ServerLevel level) {
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        if (event.getLevel() instanceof ServerLevel level) {
             if (AuthorityBehaviorConfigs.hasReloaded()) {
                 ProtectionManager protection = get(level.getServer());
                 protection.onReload();
@@ -226,7 +231,7 @@ public final class ProtectionManager extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag root) {
+    public CompoundTag save(CompoundTag root, HolderLookup.Provider registries) {
         ListTag authorityList = new ListTag();
 
         for (UserAuthority authority : this.userAuthorities) {
@@ -288,7 +293,7 @@ public final class ProtectionManager extends SavedData {
     private void readBuiltin(CompoundTag root) {
         CompoundTag dimensionsTag = root.getCompound("dimensions");
         for (String dimensionKey : dimensionsTag.getAllKeys()) {
-            ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(dimensionKey));
+            ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(dimensionKey));
 
             Codec<BuiltinAuthority> codec = BuiltinAuthority.dimensionCodec(dimension);
             codec.decode(NbtOps.INSTANCE, dimensionsTag.getCompound(dimensionKey))

@@ -3,22 +3,22 @@ package com.lovetropics.perms.protection.authority.shape;
 import com.lovetropics.lib.BlockBox;
 import com.lovetropics.perms.protection.EventSource;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.sk89q.worldedit.forge.ForgeAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector2;
 import com.sk89q.worldedit.math.Vector3;
+import com.sk89q.worldedit.neoforge.NeoForgeAdapter;
 import com.sk89q.worldedit.regions.CylinderRegion;
 import com.sk89q.worldedit.regions.Region;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 
 public final class CylinderShape implements AuthorityShape {
-    public static final Codec<CylinderShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+    public static final MapCodec<CylinderShape> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
             Codec.INT.fieldOf("center_x").forGetter(c -> c.centerX),
             Codec.INT.fieldOf("center_z").forGetter(c -> c.centerZ),
@@ -75,7 +75,7 @@ public final class CylinderShape implements AuthorityShape {
     }
 
     @Override
-    public Codec<? extends AuthorityShape> getCodec() {
+    public MapCodec<CylinderShape> getCodec() {
         return CODEC;
     }
 
@@ -88,9 +88,9 @@ public final class CylinderShape implements AuthorityShape {
 
         return new CylinderShape(
                 dimension,
-                Mth.floor(center.getX()), Mth.floor(center.getZ()),
+                center.blockX(), center.blockZ(),
                 minY, maxY,
-                Mth.floor(radius.getX()), Mth.floor(radius.getZ())
+                radius.blockX(), radius.blockZ()
         );
     }
 
@@ -98,7 +98,7 @@ public final class CylinderShape implements AuthorityShape {
     public Region tryIntoRegion(MinecraftServer server) {
         ServerLevel world = server.getLevel(this.dimension);
         return new CylinderRegion(
-                ForgeAdapter.adapt(world),
+                NeoForgeAdapter.adapt(world),
                 BlockVector3.at(this.centerX, 0, this.centerZ),
                 Vector2.at(this.radiusX, this.radiusZ),
                 this.minY, this.maxY

@@ -5,20 +5,18 @@ import com.lovetropics.lib.permission.PermissionsApi;
 import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.*;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.scores.PlayerTeam;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@Mod.EventBusSubscriber(modid = LTPermissions.ID)
+@EventBusSubscriber(modid = LTPermissions.ID)
 public record NameDecorationOverride(
 		Optional<AddPrefix> prefix,
 		Optional<AddSuffix> suffix,
@@ -78,9 +76,9 @@ public record NameDecorationOverride(
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
 		// TODO: temporary patch to make sure name style updates! in cases like teams changing we aren't refreshing.
-		if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+		if (event.getEntity() instanceof ServerPlayer player) {
 			if (player.tickCount % (SharedConstants.TICKS_PER_SECOND * 10) == 0) {
 				player.refreshDisplayName();
 				player.refreshTabListName();
@@ -129,7 +127,7 @@ public record NameDecorationOverride(
 	}
 
 	public record AddPrefix(Component prefix) {
-		public static final Codec<AddPrefix> CODEC = ExtraCodecs.COMPONENT.xmap(AddPrefix::new, AddPrefix::prefix);
+		public static final Codec<AddPrefix> CODEC = ComponentSerialization.CODEC.xmap(AddPrefix::new, AddPrefix::prefix);
 
 		public MutableComponent apply(final MutableComponent name) {
 			return Component.empty().append(this.prefix).append(name);
@@ -137,7 +135,7 @@ public record NameDecorationOverride(
 	}
 
 	public record AddSuffix(Component suffix) {
-		public static final Codec<AddSuffix> CODEC = ExtraCodecs.COMPONENT.xmap(AddSuffix::new, AddSuffix::suffix);
+		public static final Codec<AddSuffix> CODEC = ComponentSerialization.CODEC.xmap(AddSuffix::new, AddSuffix::suffix);
 
 		public MutableComponent apply(final MutableComponent name) {
 			return name.append(suffix);
@@ -155,9 +153,9 @@ public record NameDecorationOverride(
 						if (format != null) {
 							formats.add(format);
 						} else {
-							final TextColor parsedColor = TextColor.parseColor(formatKey);
-							if (parsedColor != null) {
-								color = parsedColor;
+							final DataResult<TextColor> parsedColor = TextColor.parseColor(formatKey);
+							if (parsedColor.isSuccess()) {
+								color = parsedColor.getOrThrow();
 							}
 						}
 					}

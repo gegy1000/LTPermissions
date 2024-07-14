@@ -3,6 +3,7 @@ package com.lovetropics.perms.protection.authority.shape;
 import com.lovetropics.lib.codec.MoreCodecs;
 import com.lovetropics.perms.protection.EventSource;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionIntersection;
 import com.sk89q.worldedit.world.World;
@@ -18,8 +19,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public record UnionShape(AuthorityShape... shapes) implements AuthorityShape {
-    public static final Codec<UnionShape> CODEC = MoreCodecs.arrayOrUnit(AuthorityShape.CODEC, AuthorityShape[]::new)
-            .xmap(UnionShape::new, shape -> shape.shapes);
+    public static final MapCodec<UnionShape> CODEC = MoreCodecs.arrayOrUnit(AuthorityShape.CODEC, AuthorityShape[]::new)
+            .xmap(UnionShape::new, shape -> shape.shapes)
+            .fieldOf("value");
 
     @Override
     public boolean accepts(EventSource source) {
@@ -32,7 +34,7 @@ public record UnionShape(AuthorityShape... shapes) implements AuthorityShape {
     }
 
     @Override
-    public Codec<? extends AuthorityShape> getCodec() {
+    public MapCodec<UnionShape> getCodec() {
         return CODEC;
     }
 

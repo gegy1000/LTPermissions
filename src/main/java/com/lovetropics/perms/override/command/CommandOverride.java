@@ -7,14 +7,14 @@ import com.lovetropics.perms.LTPermissions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.serialization.Codec;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = LTPermissions.ID)
+@EventBusSubscriber(modid = LTPermissions.ID)
 public final class CommandOverride {
     public static final Codec<CommandOverride> CODEC = CommandOverrideRules.CODEC.xmap(CommandOverride::new, CommandOverride::rules);
 

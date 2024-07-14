@@ -2,7 +2,6 @@ package com.lovetropics.perms.command;
 
 import com.lovetropics.lib.permission.PermissionsApi;
 import com.lovetropics.lib.permission.role.Role;
-import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.override.command.CommandOverride;
 import com.lovetropics.perms.store.PlayerRoleManager;

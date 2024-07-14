@@ -6,6 +6,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.math.transform.AffineTransform;
@@ -68,7 +69,7 @@ public final class TransformedShape implements AuthorityShape {
                     transform -> Lists.newArrayList(TransformListGetter.apply(transform))
             );
 
-    public static final Codec<TransformedShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+    public static final MapCodec<TransformedShape> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             AuthorityShape.CODEC.fieldOf("shape").forGetter(c -> c.shape),
             TRANSFORM_CODEC.fieldOf("transform").forGetter(c -> c.transform)
     ).apply(i, TransformedShape::new));
@@ -96,7 +97,7 @@ public final class TransformedShape implements AuthorityShape {
     }
 
     @Override
-    public Codec<? extends AuthorityShape> getCodec() {
+    public MapCodec<TransformedShape> getCodec() {
         return CODEC;
     }
 

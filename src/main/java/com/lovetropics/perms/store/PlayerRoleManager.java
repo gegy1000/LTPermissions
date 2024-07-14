@@ -8,11 +8,11 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 
-@Mod.EventBusSubscriber(modid = LTPermissions.ID)
+@EventBusSubscriber(modid = LTPermissions.ID)
 public final class PlayerRoleManager {
     private static PlayerRoleManager instance;
 

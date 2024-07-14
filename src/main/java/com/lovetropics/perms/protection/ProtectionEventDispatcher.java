@@ -15,20 +15,20 @@ import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-@Mod.EventBusSubscriber(modid = LTPermissions.ID)
+@EventBusSubscriber(modid = LTPermissions.ID)
 public final class ProtectionEventDispatcher {
     @SubscribeEvent
-    public static void onTickPlayer(TickEvent.PlayerTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && event.player instanceof ServerPlayer player) {
+    public static void onTickPlayer(PlayerTickEvent.Pre event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
             FoodData food = player.getFoodData();
             if (food.needsFood()) {
                 ProtectionManager protect = protect(player.serverLevel());
@@ -84,15 +84,15 @@ public final class ProtectionEventDispatcher {
             }
 
             if (protect.denies(source, ProtectionRule.INTERACT_BLOCKS)) {
-                event.setUseBlock(Event.Result.DENY);
+                event.setUseBlock(TriState.FALSE);
             }
             if (protect.denies(source, ProtectionRule.INTERACT_ITEMS) || (isBlockItem(event) && protect.denies(source, ProtectionRule.PLACE))) {
-                event.setUseItem(Event.Result.DENY);
+                event.setUseItem(TriState.FALSE);
             }
 
             final BlockState state = level.getBlockState(event.getPos());
             if (state.is(Blocks.CHISELED_BOOKSHELF) && protect.denies(source, ProtectionRule.MODIFY_BOOKSHELVES, ProtectionRule.MODIFY)) {
-                event.setUseBlock(Event.Result.DENY);
+                event.setUseBlock(TriState.FALSE);
             }
         }
     }
@@ -151,7 +151,7 @@ public final class ProtectionEventDispatcher {
     }
 
     @SubscribeEvent
-    public static void onEntityDamage(LivingDamageEvent event) {
+    public static void onEntityDamage(LivingDamageEvent.Pre event) {
         if (event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
@@ -162,17 +162,17 @@ public final class ProtectionEventDispatcher {
 
             EventSource source = EventSource.forEntity(entity);
             if (protect.denies(source, ProtectionRule.DAMAGE)) {
-                event.setCanceled(true);
+                event.setNewDamage(0);
                 return;
             }
 
             if (entity instanceof Player && protect.denies(source, ProtectionRule.PLAYER_DAMAGE)) {
-                event.setCanceled(true);
+                event.setNewDamage(0);
                 return;
             }
 
             if ((event.getSource().is(DamageTypeTags.IS_FALL) || event.getSource().is(DamageTypes.FLY_INTO_WALL)) && protect.denies(source, ProtectionRule.FALL_DAMAGE)) {
-                event.setCanceled(true);
+                event.setNewDamage(0);
             }
         }
     }

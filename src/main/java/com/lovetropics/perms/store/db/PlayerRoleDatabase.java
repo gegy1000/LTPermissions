@@ -4,6 +4,7 @@ import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.store.PlayerRoleSet;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import org.slf4j.Logger;
@@ -73,7 +74,7 @@ public final class PlayerRoleDatabase implements Closeable {
         RolesConfig config = RolesConfig.get();
 
         try (ByteArrayInputStream input = new ByteArrayInputStream(bytes.array())) {
-            CompoundTag nbt = NbtIo.readCompressed(input);
+            CompoundTag nbt = NbtIo.readCompressed(input, NbtAccounter.unlimitedHeap());
             roles.deserialize(config, nbt.getList("roles", Tag.TAG_STRING));
             roles.rebuildOverridesAndInitialize();
         }

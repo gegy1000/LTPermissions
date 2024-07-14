@@ -28,8 +28,8 @@ import com.mojang.datafixers.util.Pair;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.forge.ForgeAdapter;
-import com.sk89q.worldedit.forge.ForgePlayer;
+import com.sk89q.worldedit.neoforge.NeoForgeAdapter;
+import com.sk89q.worldedit.neoforge.NeoForgePlayer;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.session.SessionManager;
@@ -310,7 +310,7 @@ public final class ProtectCommand {
 
     private static void applySelectionFor(CommandSourceStack source, AuthorityShape shape) throws CommandSyntaxException {
         SessionManager sessionManager = WorldEdit.getInstance().getSessionManager();
-        ForgePlayer player = ForgeAdapter.adaptPlayer(source.getPlayerOrException());
+        NeoForgePlayer player = NeoForgeAdapter.adaptPlayer(source.getPlayerOrException());
         LocalSession session = sessionManager.get(player);
 
         RegionSelector selector = WorldEditShapes.tryIntoRegionSelector(source.getServer(), shape);
@@ -326,7 +326,7 @@ public final class ProtectCommand {
         ServerPlayer player = source.getPlayerOrException();
 
         SessionManager sessionManager = WorldEdit.getInstance().getSessionManager();
-        LocalSession session = sessionManager.get(ForgeAdapter.adaptPlayer(player));
+        LocalSession session = sessionManager.get(NeoForgeAdapter.adaptPlayer(player));
 
         try {
             Region selection = session.getSelection();

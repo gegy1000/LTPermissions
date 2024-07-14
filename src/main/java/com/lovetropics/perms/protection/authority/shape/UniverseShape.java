@@ -1,12 +1,12 @@
 package com.lovetropics.perms.protection.authority.shape;
 
 import com.lovetropics.perms.protection.EventSource;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 
 public final class UniverseShape implements AuthorityShape {
     public static final UniverseShape INSTANCE = new UniverseShape();
 
-    public static final Codec<UniverseShape> CODEC = Codec.unit(INSTANCE);
+    public static final MapCodec<UniverseShape> CODEC = MapCodec.unit(INSTANCE);
 
     private UniverseShape() {
     }
@@ -17,7 +17,7 @@ public final class UniverseShape implements AuthorityShape {
     }
 
     @Override
-    public Codec<? extends AuthorityShape> getCodec() {
+    public MapCodec<UniverseShape> getCodec() {
         return CODEC;
     }
 }

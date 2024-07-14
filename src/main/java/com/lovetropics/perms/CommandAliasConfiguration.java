@@ -45,7 +45,7 @@ public record CommandAliasConfiguration(Map<String, String[]> aliases) {
     }
 
     private static boolean setupDefaultConfig(Path path) {
-        try (InputStream input = LTPermissions.class.getResourceAsStream("/data/ltperms/default_command_aliases.json")) {
+        try (InputStream input = LTPermissions.class.getResourceAsStream("/data/" + LTPermissions.ID + "/default_command_aliases.json")) {
             Files.copy(input, path);
             return true;
         } catch (IOException e) {

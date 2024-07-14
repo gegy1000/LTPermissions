@@ -2,21 +2,21 @@ package com.lovetropics.perms.protection.authority.shape;
 
 import com.lovetropics.lib.BlockBox;
 import com.lovetropics.perms.protection.EventSource;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.sk89q.worldedit.forge.ForgeAdapter;
+import com.sk89q.worldedit.neoforge.NeoForgeAdapter;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
 public record BoxShape(ResourceKey<Level> dimension, BlockBox box) implements AuthorityShape {
-    public static final Codec<BoxShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+    public static final MapCodec<BoxShape> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
             BlockBox.CODEC.fieldOf("box").forGetter(c -> c.box)
     ).apply(i, BoxShape::new));
@@ -29,14 +29,14 @@ public record BoxShape(ResourceKey<Level> dimension, BlockBox box) implements Au
     }
 
     @Override
-    public Codec<? extends AuthorityShape> getCodec() {
+    public MapCodec<BoxShape> getCodec() {
         return CODEC;
     }
 
     public static BoxShape fromRegion(Region region) {
         ResourceKey<Level> dimension = WorldEditShapes.asDimension(region.getWorld());
-        BlockPos min = ForgeAdapter.toBlockPos(region.getMinimumPoint());
-        BlockPos max = ForgeAdapter.toBlockPos(region.getMaximumPoint());
+        BlockPos min = NeoForgeAdapter.toBlockPos(region.getMinimumPoint());
+        BlockPos max = NeoForgeAdapter.toBlockPos(region.getMaximumPoint());
         return new BoxShape(dimension, BlockBox.of(min, max));
     }
 
@@ -45,9 +45,9 @@ public record BoxShape(ResourceKey<Level> dimension, BlockBox box) implements Au
     public Region tryIntoRegion(MinecraftServer server) {
         ServerLevel world = server.getLevel(this.dimension);
         return new CuboidRegion(
-                ForgeAdapter.adapt(world),
-                ForgeAdapter.adapt(this.box.min()),
-                ForgeAdapter.adapt(this.box.max())
+                NeoForgeAdapter.adapt(world),
+                NeoForgeAdapter.adapt(this.box.min()),
+                NeoForgeAdapter.adapt(this.box.max())
         );
     }
 }

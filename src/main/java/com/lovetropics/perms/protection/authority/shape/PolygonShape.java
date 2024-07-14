@@ -3,9 +3,10 @@ package com.lovetropics.perms.protection.authority.shape;
 import com.lovetropics.lib.BlockBox;
 import com.lovetropics.perms.protection.EventSource;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.sk89q.worldedit.forge.ForgeAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
+import com.sk89q.worldedit.neoforge.NeoForgeAdapter;
 import com.sk89q.worldedit.regions.Polygonal2DRegion;
 import com.sk89q.worldedit.regions.Region;
 import net.minecraft.server.MinecraftServer;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public final class PolygonShape implements AuthorityShape {
-    public static final Codec<PolygonShape> CODEC = RecordCodecBuilder.create(i -> i.group(
+    public static final MapCodec<PolygonShape> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(c -> c.dimension),
             BlockPos.CODEC.listOf().fieldOf("points").forGetter(c -> c.points),
             Codec.INT.fieldOf("min_y").forGetter(c -> c.minY),
@@ -40,11 +41,11 @@ public final class PolygonShape implements AuthorityShape {
         this.minY = minY;
         this.maxY = maxY;
 
-        BlockPos min = points.get(0);
-        BlockPos max = points.get(0);
+        BlockPos min = points.getFirst();
+        BlockPos max = points.getFirst();
         for (BlockPos point : points) {
-            min = BlockBox.min(min, point);
-            max = BlockBox.max(max, point);
+            min = BlockPos.min(min, point);
+            max = BlockPos.max(max, point);
         }
         this.bounds = BlockBox.of(
                 new BlockPos(min.getX(), minY, min.getZ()),
@@ -65,7 +66,7 @@ public final class PolygonShape implements AuthorityShape {
         if (pos == null) return true;
 
         if (this.bounds.contains(pos)) {
-            return Polygonal2DRegion.contains(this.worldEditPoints, this.minY, this.maxY, ForgeAdapter.adapt(pos));
+            return Polygonal2DRegion.contains(this.worldEditPoints, this.minY, this.maxY, NeoForgeAdapter.adapt(pos));
         } else {
             return false;
         }
@@ -76,7 +77,7 @@ public final class PolygonShape implements AuthorityShape {
     }
 
     @Override
-    public Codec<? extends AuthorityShape> getCodec() {
+    public MapCodec<PolygonShape> getCodec() {
         return CODEC;
     }
 
@@ -87,11 +88,11 @@ public final class PolygonShape implements AuthorityShape {
     public static PolygonShape fromRegion(Region region, List<BlockVector2> points) {
         ResourceKey<Level> dimension = WorldEditShapes.asDimension(region.getWorld());
         List<BlockPos> blockPoints = points.stream()
-                .map(pos -> new BlockPos(pos.getX(), 0, pos.getZ()))
+                .map(pos -> new BlockPos(pos.x(), 0, pos.z()))
                 .toList();
 
-        int minY = region.getMinimumPoint().getY();
-        int maxY = region.getMaximumPoint().getY();
+        int minY = region.getMinimumPoint().y();
+        int maxY = region.getMaximumPoint().y();
 
         return new PolygonShape(dimension, blockPoints, minY, maxY);
     }
@@ -99,6 +100,6 @@ public final class PolygonShape implements AuthorityShape {
     @Override
     public Region tryIntoRegion(MinecraftServer server) {
         ServerLevel world = server.getLevel(this.dimension);
-        return new Polygonal2DRegion(ForgeAdapter.adapt(world), this.worldEditPoints, this.minY, this.maxY);
+        return new Polygonal2DRegion(NeoForgeAdapter.adapt(world), this.worldEditPoints, this.minY, this.maxY);
     }
 }

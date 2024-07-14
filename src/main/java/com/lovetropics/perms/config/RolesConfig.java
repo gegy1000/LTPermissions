@@ -80,7 +80,7 @@ public final class RolesConfig implements RoleProvider {
                 Files.createDirectories(path.getParent());
             }
 
-            try (InputStream input = LTPermissions.class.getResourceAsStream("/data/ltperms/default_roles.json")) {
+            try (InputStream input = LTPermissions.class.getResourceAsStream("/data/" + LTPermissions.ID + "/default_roles.json")) {
                 Files.copy(input, path);
                 return true;
             }
