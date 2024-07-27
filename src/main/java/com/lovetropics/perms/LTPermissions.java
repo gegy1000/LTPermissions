@@ -28,8 +28,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.IExtensionPoint;
-import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -38,7 +36,6 @@ import net.neoforged.neoforge.event.ServerChatEvent;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.Map;
 
 @Mod(LTPermissions.ID)
@@ -110,16 +107,6 @@ public class LTPermissions {
     }
 
     private void setup(FMLCommonSetupEvent event) {
-        List<String> errors = RolesConfig.setup();
-        if (!errors.isEmpty()) {
-            LOGGER.warn("Failed to load roles config! ({} errors)", errors.size());
-            for (String error : errors) {
-                LOGGER.warn(" - {}", error);
-            }
-        }
-
-        CommandAliasConfiguration.load();
-
         AuthorityShape.register();
     }
 

@@ -1,20 +1,17 @@
 package com.lovetropics.perms;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.lovetropics.lib.codec.MoreCodecs;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 
 public record CommandAliasConfiguration(Map<String, String[]> aliases) {
     private static final CommandAliasConfiguration EMPTY = new CommandAliasConfiguration(Map.of());
@@ -22,35 +19,33 @@ public record CommandAliasConfiguration(Map<String, String[]> aliases) {
     public static final Codec<CommandAliasConfiguration> CODEC = Codec.unboundedMap(Codec.STRING, MoreCodecs.arrayOrUnit(Codec.STRING, String[]::new))
             .xmap(CommandAliasConfiguration::new, CommandAliasConfiguration::aliases);
 
+    private static final ThreadLocal<ResourceManager> RESOURCE_MANAGER = new ThreadLocal<>();
+
+    public static void setResourceManager(ResourceManager resourceManager) {
+        RESOURCE_MANAGER.set(resourceManager);
+    }
+
+    public static void clearResourceManager() {
+        RESOURCE_MANAGER.remove();
+    }
+
     public static CommandAliasConfiguration load() {
-        Path path = Paths.get("config/command_aliases.json");
-        if (!Files.exists(path)) {
-            if (!setupDefaultConfig(path)) {
-                return EMPTY;
-            }
+        ResourceManager resourceManager = RESOURCE_MANAGER.get();
+        if (resourceManager == null) {
+            LTPermissions.LOGGER.error("Resources not available, not loading command aliases");
+            return CommandAliasConfiguration.EMPTY;
         }
-
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-            DataResult<CommandAliasConfiguration> result = CODEC.parse(JsonOps.INSTANCE, root);
-            result.error().ifPresent(error -> {
-                LTPermissions.LOGGER.warn("Malformed command aliases configuration: {}", error);
-            });
-
-            return result.result().orElse(EMPTY);
+        Optional<Resource> resource = resourceManager.getResource(ResourceLocation.fromNamespaceAndPath(LTPermissions.ID, "command_aliases.json"));
+        if (resource.isEmpty()) {
+            return CommandAliasConfiguration.EMPTY;
+        }
+        try (BufferedReader reader = resource.get().openAsReader()) {
+            return CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader))
+                    .resultOrPartial(error -> LTPermissions.LOGGER.warn("Malformed command aliases configuration: {}", error))
+                    .orElse(EMPTY);
         } catch (IOException e) {
             LTPermissions.LOGGER.warn("Failed to load command_aliases.json configuration", e);
             return EMPTY;
-        }
-    }
-
-    private static boolean setupDefaultConfig(Path path) {
-        try (InputStream input = LTPermissions.class.getResourceAsStream("/data/" + LTPermissions.ID + "/default_command_aliases.json")) {
-            Files.copy(input, path);
-            return true;
-        } catch (IOException e) {
-            LTPermissions.LOGGER.warn("Failed to load default command_aliases.json configuration", e);
-            return false;
         }
     }
 }

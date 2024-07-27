@@ -1,6 +1,5 @@
 package com.lovetropics.perms.config;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -10,24 +9,37 @@ import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.lib.permission.role.RoleProvider;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.role.SimpleRole;
+import com.lovetropics.perms.store.PlayerRoleManager;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
+@EventBusSubscriber(modid = LTPermissions.ID)
 public final class RolesConfig implements RoleProvider {
-    private static RolesConfig instance = new RolesConfig(Collections.emptyList(), SimpleRole.empty(Role.EVERYONE));
+    private static final RolesConfig DEFAULT_CONFIG = new RolesConfig(List.of(), SimpleRole.empty(Role.EVERYONE));
+
+    private static RolesConfig instance = DEFAULT_CONFIG;
 
     private final Map<String, Role> roles;
     private final Role everyone;
@@ -46,48 +58,63 @@ public final class RolesConfig implements RoleProvider {
         return instance;
     }
 
-    public static List<String> setup() {
-        Path path = Paths.get("config/roles.json");
-        if (!Files.exists(path)) {
-            if (!createDefaultConfig(path)) {
-                return ImmutableList.of();
+    @SubscribeEvent
+    public static void onAddReloadListeners(AddReloadListenerEvent event) {
+        event.addListener(new SimplePreparableReloadListener<LoadResult>() {
+            @Override
+            protected LoadResult prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+                return load(resourceManager);
             }
+
+            @Override
+            protected void apply(LoadResult result, ResourceManager resourceManager, ProfilerFiller profiler) {
+                RolesConfig.apply(result);
+            }
+        });
+    }
+
+    private static void apply(LoadResult result) {
+        instance = result.config;
+        PermissionsApi.setRoleProvider(result.config);
+        LTPermissions.LOGGER.debug("Loaded {} roles", result.config.roles.size());
+        result.config.roles.forEach((name, role) -> LTPermissions.LOGGER.debug("Role {} has configuration: {}", name, role));
+
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            PlayerRoleManager roleManager = PlayerRoleManager.get();
+            roleManager.onRoleReload(server, RolesConfig.get());
+        }
+    }
+
+    private static LoadResult load(ResourceManager resourceManager) {
+        Optional<Resource> resource = resourceManager.getResource(ResourceLocation.fromNamespaceAndPath(LTPermissions.ID, "roles.json"));
+        if (resource.isEmpty()) {
+            return new LoadResult(DEFAULT_CONFIG, List.of("Found no roles config"));
         }
 
         List<String> errors = new ArrayList<>();
-        ConfigErrorConsumer errorConsumer = errors::add;
+        ConfigErrorConsumer errorConsumer = error -> {
+            LTPermissions.LOGGER.warn("{}", error);
+            errors.add(error);
+        };
 
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = resource.get().openAsReader()) {
             JsonElement root = JsonParser.parseReader(reader);
-            instance = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
-            PermissionsApi.setRoleProvider(instance);
-            LTPermissions.LOGGER.debug("Loaded {} roles", instance.roles.size());
-            instance.roles.forEach((name, role) -> LTPermissions.LOGGER.debug("Role {} has configuration: {}", name, role));
+            RolesConfig config = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
+            return new LoadResult(config, errors);
         } catch (IOException e) {
             errorConsumer.report("Failed to read roles.json configuration", e);
-            LTPermissions.LOGGER.warn("Failed to load roles.json configuration", e);
         } catch (JsonSyntaxException e) {
             errorConsumer.report("Malformed syntax in roles.json configuration", e);
-            LTPermissions.LOGGER.warn("Malformed syntax in roles.json configuration", e);
         }
 
-        return errors;
+        return new LoadResult(DEFAULT_CONFIG, errors);
     }
 
-    private static boolean createDefaultConfig(Path path) {
-        try {
-            if (!Files.exists(path.getParent())) {
-                Files.createDirectories(path.getParent());
-            }
-
-            try (InputStream input = LTPermissions.class.getResourceAsStream("/data/" + LTPermissions.ID + "/default_roles.json")) {
-                Files.copy(input, path);
-                return true;
-            }
-        } catch (IOException e) {
-            LTPermissions.LOGGER.warn("Failed to load default roles.json configuration", e);
-            return false;
-        }
+    public static List<String> reload(ResourceManager resourceManager) {
+        LoadResult results = load(resourceManager);
+        apply(results);
+        return results.errors;
     }
 
     private static <T> RolesConfig parse(Dynamic<T> root, ConfigErrorConsumer error) {
@@ -131,5 +158,8 @@ public final class RolesConfig implements RoleProvider {
     @Override
     public Stream<Role> stream() {
         return this.roles.values().stream();
+    }
+
+    private record LoadResult(RolesConfig config, List<String> errors) {
     }
 }

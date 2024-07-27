@@ -14,16 +14,16 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.GameProfileArgument;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.ComponentUtils;
-import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.server.MinecraftServer;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -116,23 +116,17 @@ public final class RoleCommand {
 
     private static int reloadRoles(CommandSourceStack source) {
         MinecraftServer server = source.getServer();
+        List<String> errors = RolesConfig.reload(server.getResourceManager());
 
-        server.execute(() -> {
-            List<String> errors = RolesConfig.setup();
-
-            PlayerRoleManager roleManager = PlayerRoleManager.get();
-            roleManager.onRoleReload(server, RolesConfig.get());
-
-            if (errors.isEmpty()) {
-                source.sendSuccess(() -> Component.literal("Role configuration successfully reloaded"), false);
-            } else {
-                MutableComponent errorFeedback = Component.literal("Failed to reload roles configuration!");
-                for (String error : errors) {
-                    errorFeedback = errorFeedback.append("\n - " + error);
-                }
-                source.sendFailure(errorFeedback);
+        if (errors.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Role configuration successfully reloaded"), false);
+        } else {
+            MutableComponent errorFeedback = Component.literal("Failed to reload roles configuration!");
+            for (String error : errors) {
+                errorFeedback = errorFeedback.append("\n - " + error);
             }
-        });
+            source.sendFailure(errorFeedback);
+        }
 
         return Command.SINGLE_SUCCESS;
     }
