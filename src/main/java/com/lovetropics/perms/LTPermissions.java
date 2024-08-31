@@ -8,6 +8,7 @@ import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.command.FlyCommand;
 import com.lovetropics.perms.command.RoleCommand;
 import com.lovetropics.perms.config.RolesConfig;
+import com.lovetropics.perms.keycloak.KeycloakService;
 import com.lovetropics.perms.override.NameDecorationOverride;
 import com.lovetropics.perms.override.command.CommandOverride;
 import com.lovetropics.perms.protection.authority.shape.AuthorityShape;
@@ -88,6 +89,7 @@ public class LTPermissions {
     };
 
     public LTPermissions() {
+        KeycloakService.getInstance();
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         MinecraftForge.EVENT_BUS.addListener(this::registerCommands);
         MinecraftForge.EVENT_BUS.addListener(this::onServerChat);

@@ -5,6 +5,7 @@ plugins {
   id 'net.minecraftforge.gradle' version '[6.0,6.2)'
   id 'org.parchmentmc.librarian.forgegradle' version '1.+'
   id 'org.spongepowered.mixin' version '0.7+'
+  id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 jarJar.enable()
@@ -68,6 +69,9 @@ dependencies {
 
 //  implementation fg.deobf('com.github.hexomod:WorldEdit-CUI-FE3:1.16.5-3.0.9')
 
+  implementation 'org.keycloak:keycloak-admin-client:24.0.2'
+
+
   if (System.getProperty("idea.sync.active") != "true") {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
   }
@@ -77,9 +81,31 @@ mixin {
   add sourceSets.main, "ltpermissions.refmap.json"
 }
 
+shadowJar {
+  configurations = [project.configurations.implementation]
+  zip64 true
+  // Ensure that the shadowJar task includes the keycloak-admin dependency
+  relocate 'org.keycloak', 'shadow.org.keycloak'
+}
+
+//jar {
+//  dependsOn shadowJar
+//  from {
+//    configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+//  }
+//  // other configurations...
+//  // Ensure that the jar task includes the output of the shadowJar task
+//  from shadowJar.outputs.files
+//}
+
 tasks.named('jar', Jar).configure {
   archiveClassifier = 'slim'
   finalizedBy 'reobfJar'
+  dependsOn shadowJar
+//  dependsOn shadowJar
+//  from {
+//    configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+//  }
 
   manifest {
     attributes([
@@ -93,6 +119,8 @@ tasks.named('jar', Jar).configure {
       "MixinConfigs": "ltpermissions.mixins.json"
     ])
   }
+
+  from shadowJar.outputs.files
 }
 
 tasks.named('jarJar').configure {

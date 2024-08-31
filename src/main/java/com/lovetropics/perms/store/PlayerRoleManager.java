@@ -3,6 +3,7 @@ package com.lovetropics.perms.store;
 import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.config.RolesConfig;
+import com.lovetropics.perms.keycloak.KeycloakService;
 import com.lovetropics.perms.store.db.PlayerRoleDatabase;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.server.MinecraftServer;
@@ -27,16 +28,19 @@ import java.util.function.Function;
 public final class PlayerRoleManager {
     private static PlayerRoleManager instance;
 
-    private final PlayerRoleDatabase database;
+    //    private final PlayerRoleDatabase database;
+    private final KeycloakService keycloakService;
 
     private final Map<UUID, PlayerRoleSet> onlinePlayerRoles = new Object2ObjectOpenHashMap<>();
 
-    private PlayerRoleManager(PlayerRoleDatabase database) {
-        this.database = database;
+    //    private PlayerRoleManager(PlayerRoleDatabase database) {
+    private PlayerRoleManager(final KeycloakService keycloakService) {
+        this.keycloakService = keycloakService;
     }
 
     @SubscribeEvent
     public static void onServerStarting(ServerStartingEvent event) {
+        //TODO hook keycloak things in here maybe
         instance = PlayerRoleManager.open(event.getServer());
     }
 
@@ -66,13 +70,15 @@ public final class PlayerRoleManager {
     }
 
     private static PlayerRoleManager open(MinecraftServer server) {
-        try {
-            Path path = server.getWorldPath(LevelResource.PLAYER_DATA_DIR).resolve("player_roles");
-            PlayerRoleDatabase database = PlayerRoleDatabase.open(path);
-            return new PlayerRoleManager(database);
-        } catch (IOException e) {
-            throw new RuntimeException("failed to open player roles database");
-        }
+//        try {
+//            Path path = server.getWorldPath(LevelResource.PLAYER_DATA_DIR).resolve("player_roles");
+//            PlayerRoleDatabase database = PlayerRoleDatabase.open(path);
+//            return new PlayerRoleManager(database);
+        KeycloakService keycloakService = new KeycloakService();
+        return new PlayerRoleManager(keycloakService);
+//        } catch (IOException e) {
+//            throw new RuntimeException("failed to open player roles database");
+//        }
     }
 
     public static PlayerRoleManager get() {
@@ -83,14 +89,14 @@ public final class PlayerRoleManager {
         if (!this.onlinePlayerRoles.containsKey(player.getUUID())) {
             RolesConfig config = RolesConfig.get();
             PlayerRoleSet roles = this.loadPlayerRoles(player, config);
-            this.database.tryLoadInto(player.getUUID(), roles);
+//            this.database.tryLoadInto(player.getUUID(), roles);
         }
     }
 
     public void onPlayerLeave(ServerPlayer player) {
         PlayerRoleSet roles = this.onlinePlayerRoles.remove(player.getUUID());
         if (roles != null && roles.isDirty()) {
-            this.database.trySave(player.getUUID(), roles);
+//            this.database.trySave(player.getUUID(), roles);
             roles.setDirty(false);
         }
     }
@@ -124,7 +130,7 @@ public final class PlayerRoleManager {
                 this.onPlayerLeave(player);
             }
         } finally {
-            IOUtils.closeQuietly(this.database);
+//            IOUtils.closeQuietly(this.database);
         }
     }
 
@@ -139,7 +145,7 @@ public final class PlayerRoleManager {
                 return update.apply(roles);
             } finally {
                 if (roles.isDirty()) {
-                    this.database.trySave(uuid, roles);
+//                    this.database.trySave(uuid, roles);
                 }
             }
         }
@@ -154,7 +160,7 @@ public final class PlayerRoleManager {
         RolesConfig config = RolesConfig.get();
 
         PlayerRoleSet roles = new PlayerRoleSet(config.everyone(), null);
-        this.database.tryLoadInto(uuid, roles);
+//        this.database.tryLoadInto(uuid, roles);
 
         return roles;
     }

@@ -9,10 +9,12 @@ import com.lovetropics.lib.permission.PermissionsApi;
 import com.lovetropics.lib.permission.role.Role;
 import com.lovetropics.lib.permission.role.RoleProvider;
 import com.lovetropics.perms.LTPermissions;
+import com.lovetropics.perms.keycloak.KeycloakService;
 import com.lovetropics.perms.role.SimpleRole;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
+import org.keycloak.admin.client.Keycloak;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,6 +35,9 @@ public final class RolesConfig implements RoleProvider {
     private final Role everyone;
 
     private RolesConfig(List<Role> roles, Role everyone) {
+        //TODO keycloak things in this class too.
+        //TODO or maybe not? this seems to configure what the roles are and what they can do.
+        //probably annoying to get from kc for now, but maybe later.
         ImmutableMap.Builder<String, Role> roleMap = ImmutableMap.builder();
         for (Role role : roles) {
             roleMap.put(role.id(), role);
@@ -47,6 +52,7 @@ public final class RolesConfig implements RoleProvider {
     }
 
     public static List<String> setup() {
+        //todo load roles from keycloak
         Path path = Paths.get("config/roles.json");
         if (!Files.exists(path)) {
             if (!createDefaultConfig(path)) {
@@ -60,6 +66,9 @@ public final class RolesConfig implements RoleProvider {
         try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             JsonElement root = JsonParser.parseReader(reader);
             instance = parse(new Dynamic<>(JsonOps.INSTANCE, root), errorConsumer);
+
+            //instead of parse() returning an instance, just figure out the roles here. but is it necessary to preload? maybe - for ingame stuff
+
             PermissionsApi.setRoleProvider(instance);
             LTPermissions.LOGGER.debug("Loaded {} roles", instance.roles.size());
             instance.roles.forEach((name, role) -> LTPermissions.LOGGER.debug("Role {} has configuration: {}", name, role));
@@ -90,6 +99,20 @@ public final class RolesConfig implements RoleProvider {
         }
     }
 
+    private static <T> RolesConfig loadFromKeycloak(final KeycloakService keycloakService) {
+
+        List<String> roles = new ArrayList<>();
+
+        /*
+
+        use a role_config.json from server (at least initially). what is in there? need to map that file to roles in keycloak
+
+         */
+
+        //todo
+
+        return null;
+    }
     private static <T> RolesConfig parse(Dynamic<T> root, ConfigErrorConsumer error) {
         RoleConfigMap roleConfigs = RoleConfigMap.parse(root, error);
 
