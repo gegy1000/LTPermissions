@@ -202,6 +202,12 @@ public final class ProtectionEventDispatcher {
         return protect.denies(source, ProtectionRule.MODIFY_LECTERNS, ProtectionRule.MODIFY);
     }
 
+    public static boolean onCraft(final ServerPlayer player) {
+        final ProtectionManager protect = protect(player.serverLevel());
+        final EventSource source = EventSource.forEntity(player);
+        return protect.denies(source, ProtectionRule.CRAFT);
+    }
+
     private static ProtectionManager protect(ServerLevel level) {
         return ProtectionManager.get(level.getServer());
     }

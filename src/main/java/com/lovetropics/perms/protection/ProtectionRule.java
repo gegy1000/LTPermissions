@@ -34,6 +34,8 @@ public final class ProtectionRule {
     public static final ProtectionRule DAMAGE = register("damage");
     public static final ProtectionRule PLAYER_DAMAGE = register("player_damage");
 
+    public static final ProtectionRule CRAFT = register("craft");
+
     private final String key;
 
     ProtectionRule(String key) {
