@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "ltpermissions.refmap.json",
   "mixins": [
+    "CommandSourceStackMixin",
     "ReloadableServerResourcesMixin",
     "rule.CraftingMenuMixin",
     "rule.LecternMenuMixin",
