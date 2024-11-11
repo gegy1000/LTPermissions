@@ -20,24 +20,24 @@ public final class PlayerRoleSet implements RoleReader {
     private final Role everyoneRole;
 
     @Nullable
-    private final ServerPlayer player;
+    private ServerPlayer player;
 
     private final ObjectSortedSet<Role> roles = new ObjectAVLTreeSet<>();
     private RoleOverrideMap overrides = RoleOverrideMap.EMPTY;
 
     private boolean dirty;
 
-    public PlayerRoleSet(Role everyoneRole, @Nullable ServerPlayer player) {
+    public PlayerRoleSet(Role everyoneRole) {
         this.everyoneRole = everyoneRole;
-        this.player = player;
-
-        this.rebuildOverridesAndInitialize();
+        this.rebuildOverrides();
     }
 
-    public void rebuildOverridesAndInitialize() {
-        this.rebuildOverrides();
-        if (this.player != null) {
-            this.overrides.notifyInitialize(this.player);
+    public void attachPlayer(ServerPlayer player, boolean initial) {
+        this.player = player;
+        if (initial) {
+            overrides.notifyInitialize(player);
+        } else {
+            overrides.notifyChange(player);
         }
     }
 
@@ -140,19 +140,5 @@ public final class PlayerRoleSet implements RoleReader {
         this.deserialize(roleProvider, nbt);
 
         this.dirty |= roles.dirty;
-    }
-
-    public void copyFrom(PlayerRoleSet roles) {
-        this.roles.clear();
-        this.roles.addAll(roles.roles);
-        this.dirty = roles.dirty;
-
-        this.rebuildOverrides();
-    }
-
-    public PlayerRoleSet copy() {
-        PlayerRoleSet copy = new PlayerRoleSet(this.everyoneRole, this.player);
-        copy.copyFrom(this);
-        return copy;
     }
 }

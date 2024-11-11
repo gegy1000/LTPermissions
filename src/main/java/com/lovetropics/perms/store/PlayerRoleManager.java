@@ -50,10 +50,18 @@ public final class PlayerRoleManager {
     }
 
     @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerEvent.LoadFromFile event) {
+    public static void onPlayerLoaded(PlayerEvent.LoadFromFile event) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
         if (instance != null && event.getEntity() instanceof ServerPlayer player) {
-            instance.onPlayerJoin(player);
+            instance.onPlayerLoad(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        PlayerRoleManager instance = PlayerRoleManager.instance;
+        if (instance != null && event.getEntity() instanceof ServerPlayer player) {
+            instance.onPlayerJoined(player);
         }
     }
 
@@ -79,11 +87,19 @@ public final class PlayerRoleManager {
         return Objects.requireNonNull(instance, "player role manager not initialized");
     }
 
-    public void onPlayerJoin(ServerPlayer player) {
+    public void onPlayerLoad(ServerPlayer player) {
         if (!this.onlinePlayerRoles.containsKey(player.getUUID())) {
-            RolesConfig config = RolesConfig.get();
-            PlayerRoleSet roles = this.loadPlayerRoles(player, config);
-            this.database.tryLoadInto(player.getUUID(), roles);
+            // Load it, but delay initialization for now, as the player connection isn't quite ready
+			PlayerRoleSet newRoles = new PlayerRoleSet(RolesConfig.get().everyone());
+            this.onlinePlayerRoles.put(player.getUUID(), newRoles);
+			this.database.tryLoadInto(player.getUUID(), newRoles);
+        }
+    }
+
+    public void onPlayerJoined(ServerPlayer player) {
+        PlayerRoleSet roles = onlinePlayerRoles.get(player.getUUID());
+        if (roles != null) {
+            roles.attachPlayer(player, true);
         }
     }
 
@@ -97,25 +113,17 @@ public final class PlayerRoleManager {
 
     public void onRoleReload(MinecraftServer server, RolesConfig config) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            this.loadPlayerRoles(player, config);
+            PlayerRoleSet oldRoles = onlinePlayerRoles.get(player.getUUID());
+
+            PlayerRoleSet newRoles = new PlayerRoleSet(config.everyone());
+            if (oldRoles != null) {
+                newRoles.reloadFrom(config, oldRoles);
+            }
+
+            onlinePlayerRoles.put(player.getUUID(), newRoles);
+
+            newRoles.attachPlayer(player, false);
         }
-    }
-
-    private PlayerRoleSet loadPlayerRoles(ServerPlayer player, RolesConfig config) {
-        PlayerRoleSet oldRoles = this.onlinePlayerRoles.get(player.getUUID());
-
-        PlayerRoleSet newRoles = new PlayerRoleSet(config.everyone(), player);
-        if (oldRoles != null) {
-            newRoles.reloadFrom(config, oldRoles);
-        }
-
-        this.onlinePlayerRoles.put(player.getUUID(), newRoles);
-
-        if (oldRoles != null) {
-            newRoles.rebuildOverridesAndNotify();
-        }
-
-        return newRoles;
     }
 
     private void close(MinecraftServer server) {
@@ -153,7 +161,7 @@ public final class PlayerRoleManager {
     private PlayerRoleSet loadOfflinePlayerRoles(UUID uuid) {
         RolesConfig config = RolesConfig.get();
 
-        PlayerRoleSet roles = new PlayerRoleSet(config.everyone(), null);
+        PlayerRoleSet roles = new PlayerRoleSet(config.everyone());
         this.database.tryLoadInto(uuid, roles);
 
         return roles;
