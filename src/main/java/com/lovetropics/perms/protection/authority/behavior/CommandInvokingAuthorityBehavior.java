@@ -35,11 +35,7 @@ public final class CommandInvokingAuthorityBehavior implements AuthorityBehavior
         CommandSourceStack source = this.getSource(player);
         Commands commandManager = player.server.getCommands();
         for (String command : commands) {
-            try {
-                commandManager.getDispatcher().execute(command, source);
-            } catch (CommandSyntaxException e) {
-                LTPermissions.LOGGER.error("Failed to execute command `{}`", command, e);
-            }
+            commandManager.performPrefixedCommand(source, command);
         }
     }
 
