@@ -12,7 +12,9 @@ public final class EventSource {
     private static final EventSource GLOBAL = new EventSource(null, null, null);
 
     private final ResourceKey<Level> dimension;
+    @Nullable
     private final BlockPos pos;
+    @Nullable
     private final Entity entity;
 
     private EventSource(ResourceKey<Level> dimension, BlockPos pos, Entity entity) {
@@ -47,6 +49,10 @@ public final class EventSource {
 
     public static EventSource forEntityAt(Entity entity, BlockPos pos) {
         return new EventSource(entity.level().dimension(), pos, entity);
+    }
+
+    public static EventSource forOptionalEntityAt(Level level, @Nullable Entity entity, BlockPos pos) {
+        return new EventSource(level.dimension(), pos, entity);
     }
 
     public static EventSource transform(EventSource source, UnaryOperator<BlockPos> transform) {

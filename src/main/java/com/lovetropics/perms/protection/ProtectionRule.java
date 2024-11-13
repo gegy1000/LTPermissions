@@ -13,6 +13,7 @@ public final class ProtectionRule {
 
     public static final ProtectionRule BREAK = register("break");
     public static final ProtectionRule PLACE = register("place");
+    public static final ProtectionRule EXPLOSION = register("explosion");
 
     public static final ProtectionRule INTERACT_BLOCKS = register("interact_blocks");
     public static final ProtectionRule INTERACT_ENTITIES = register("interact_entities");

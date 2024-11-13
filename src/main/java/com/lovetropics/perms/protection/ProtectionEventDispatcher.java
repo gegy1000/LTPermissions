@@ -13,6 +13,7 @@ import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @EventBusSubscriber(modid = LTPermissions.ID)
@@ -184,6 +186,31 @@ public final class ProtectionEventDispatcher {
             EventSource source = EventSource.at(level, event.getPos());
             if (protect.denies(source, ProtectionRule.PORTALS)) {
                 event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onExplosionStart(ExplosionEvent.Start event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            Explosion explosion = event.getExplosion();
+            EventSource source = EventSource.forOptionalEntityAt(level, explosion.getIndirectSourceEntity(), BlockPos.containing(explosion.center()));
+            if (protect.denies(source, ProtectionRule.EXPLOSION)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            ProtectionManager protect = protect(level);
+            Explosion explosion = event.getExplosion();
+            EventSource source = EventSource.forOptionalEntityAt(level, explosion.getIndirectSourceEntity(), BlockPos.containing(explosion.center()));
+            // Approximation - ideally we'd check each block rather than just the center, but it's  performance heavy. We might revisit it later.
+            if (protect.denies(source, ProtectionRule.BREAK)) {
+                event.getAffectedBlocks().clear();
             }
         }
     }
