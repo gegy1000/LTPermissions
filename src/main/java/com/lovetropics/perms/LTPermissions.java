@@ -131,11 +131,10 @@ public class LTPermissions {
             LiteralArgumentBuilder<CommandSourceStack> last = nodes[nodes.length - 1];
             last.executes(context -> {
                 CommandSourceStack source = context.getSource().withPermission(4).withSuppressedOutput();
-                int result = Command.SINGLE_SUCCESS;
                 for (String command : commands) {
-                    result = dispatcher.execute(command, source);
+                    source.getServer().getCommands().performPrefixedCommand(source, command);
                 }
-                return result;
+                return Command.SINGLE_SUCCESS;
             });
 
             for (int i = nodes.length - 2; i >= 0; i--) {
