@@ -30,7 +30,7 @@ public final class ProtectionPlayerTracker {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof final ServerPlayer player) {
-            INSTANCE.clearTracker(player, player.getUUID());
+            INSTANCE.clearTracker(player);
         }
     }
 
@@ -53,7 +53,7 @@ public final class ProtectionPlayerTracker {
     }
 
     private void onPlayerChangeDimension(ServerPlayer player) {
-        final Tracker tracker = trackers.get(player);
+        final Tracker tracker = trackers.get(player.getUUID());
         if (tracker != null) {
             updateTracker(player, tracker);
         }
@@ -62,7 +62,7 @@ public final class ProtectionPlayerTracker {
     private void tickPlayer(final ServerPlayer player) {
         final UUID playerId = player.getUUID();
         if (queuedReset.remove(playerId)) {
-            final Tracker tracker = trackers.get(player);
+            final Tracker tracker = trackers.get(playerId);
             if (tracker != null) {
                 updateTracker(player, tracker);
                 // We already updated the tracker state for this tick, so we don't need to check it again
@@ -70,7 +70,7 @@ public final class ProtectionPlayerTracker {
             }
         }
 
-        final Tracker tracker = getOrInitializeTracker(player, playerId);
+        final Tracker tracker = getOrInitializeTracker(player);
 
         final long blockPos = player.blockPosition().asLong();
         if (blockPos != tracker.lastBlockPos) {
@@ -79,12 +79,13 @@ public final class ProtectionPlayerTracker {
         }
     }
 
-    private Tracker getOrInitializeTracker(ServerPlayer player, UUID uuid) {
-        Tracker tracker = trackers.get(uuid);
+    private Tracker getOrInitializeTracker(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        Tracker tracker = trackers.get(playerId);
         if (tracker == null) {
             tracker = new Tracker();
             updateTracker(player, tracker);
-            trackers.put(uuid, tracker);
+            trackers.put(playerId, tracker);
         }
         return tracker;
     }
@@ -124,8 +125,8 @@ public final class ProtectionPlayerTracker {
         }
     }
 
-    private void clearTracker(ServerPlayer player, UUID uuid) {
-        Tracker tracker = trackers.remove(uuid);
+    private void clearTracker(ServerPlayer player) {
+        Tracker tracker = trackers.remove(player.getUUID());
         if (tracker != null) {
             for (AuthorityBehavior behavior : tracker.behaviors) {
                 behavior.onPlayerExit(player);
