@@ -1,6 +1,7 @@
 package com.lovetropics.perms.config;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
@@ -141,6 +142,9 @@ public final class RolesConfig implements RoleProvider {
     @Override
     @Nullable
     public Role get(String name) {
+        if (name.equals(Role.EVERYONE)) {
+            return this.everyone;
+        }
         return this.roles.get(name);
     }
 
@@ -152,12 +156,12 @@ public final class RolesConfig implements RoleProvider {
     @Nonnull
     @Override
     public Iterator<Role> iterator() {
-        return this.roles.values().iterator();
+        return Iterators.concat(this.roles.values().iterator(), Iterators.singletonIterator(this.everyone));
     }
 
     @Override
     public Stream<Role> stream() {
-        return this.roles.values().stream();
+        return Stream.concat(this.roles.values().stream(), Stream.of(this.everyone));
     }
 
     private record LoadResult(RolesConfig config, List<String> errors) {

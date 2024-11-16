@@ -82,7 +82,7 @@ public final class RoleCommand {
     // @formatter:on
 
     private static int updateRoles(CommandSourceStack source, Collection<GameProfile> players, String roleName, BiPredicate<PlayerRoleSet, Role> apply, String success) throws CommandSyntaxException {
-        Role role = getRole(roleName);
+        Role role = getAssignableRole(roleName);
         requireHasPower(source, role);
 
         PlayerRoleManager roleManager = PlayerRoleManager.get();
@@ -142,9 +142,9 @@ public final class RoleCommand {
         }
     }
 
-    private static Role getRole(String roleName) throws CommandSyntaxException {
+    private static Role getAssignableRole(String roleName) throws CommandSyntaxException {
         Role role = RolesConfig.get().get(roleName);
-        if (role == null) throw ROLE_NOT_FOUND.create(roleName);
+        if (role == null || roleName.equals(Role.EVERYONE)) throw ROLE_NOT_FOUND.create(roleName);
         return role;
     }
 
@@ -158,6 +158,7 @@ public final class RoleCommand {
 
             return SharedSuggestionProvider.suggest(
                     RolesConfig.get().stream()
+                            .filter(role -> !role.id().equals(Role.EVERYONE))
                             .filter(role -> admin || comparator.compare(role, highestRole) < 0)
                             .map(Role::id),
                     builder
