@@ -35,6 +35,7 @@ import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.session.SessionManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -63,7 +64,7 @@ public final class ProtectCommand {
         // @formatter:off
         dispatcher.register(
             literal("protect")
-                .requires(source -> source.hasPermission(3))
+                .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(literal("add")
                     .then(argument("authority", StringArgumentType.string())
                     .then(argument("level", IntegerArgumentType.integer())
