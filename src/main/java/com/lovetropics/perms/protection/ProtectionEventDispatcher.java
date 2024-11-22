@@ -116,20 +116,33 @@ public final class ProtectionEventDispatcher {
 
     @SubscribeEvent
     public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
-        if (event.getLevel() instanceof ServerLevel level) {
+        if (isInteractionBlocked(event.getEntity(), event.getTarget(), event.getPos())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onInteractEntitySpecific(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (isInteractionBlocked(event.getEntity(), event.getTarget(), event.getPos())) {
+            event.setCanceled(true);
+        }
+    }
+
+    private static boolean isInteractionBlocked(Entity entity, Entity target, BlockPos pos) {
+        if (entity.level() instanceof ServerLevel level) {
             ProtectionManager protect = protect(level);
-            EventSource source = EventSource.forEntityAt(event.getEntity(), event.getPos());
+            EventSource source = EventSource.forEntityAt(entity, pos);
             if (protect.denies(source, ProtectionRule.INTERACT) || protect.denies(source, ProtectionRule.INTERACT_ENTITIES)) {
-                event.setCanceled(true);
-                return;
+                return true;
             }
 
-            if (event.getTarget() instanceof ItemFrame && protect.denies(source, ProtectionRule.MODIFY_ITEM_FRAMES, ProtectionRule.MODIFY)) {
-                event.setCanceled(true);
-            } else if (event.getTarget() instanceof ArmorStand && protect.denies(source, ProtectionRule.MODIFY_ARMOR_STANDS, ProtectionRule.MODIFY)) {
-                event.setCanceled(true);
+            if (target instanceof ItemFrame && protect.denies(source, ProtectionRule.MODIFY_ITEM_FRAMES, ProtectionRule.MODIFY)) {
+                return true;
+            } else if (target instanceof ArmorStand && protect.denies(source, ProtectionRule.MODIFY_ARMOR_STANDS, ProtectionRule.MODIFY)) {
+                return true;
             }
         }
+        return false;
     }
 
     @SubscribeEvent
