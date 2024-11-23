@@ -4,6 +4,7 @@ import com.lovetropics.lib.permission.role.RoleReader;
 import com.lovetropics.perms.LTPermissions;
 import com.lovetropics.perms.config.RolesConfig;
 import com.lovetropics.perms.store.db.PlayerRoleDatabase;
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -25,6 +27,8 @@ import java.util.function.Function;
 
 @EventBusSubscriber(modid = LTPermissions.ID)
 public final class PlayerRoleManager {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private static PlayerRoleManager instance;
 
     private final PlayerRoleDatabase database;
@@ -49,10 +53,9 @@ public final class PlayerRoleManager {
         }
     }
 
-    @SubscribeEvent
-    public static void onPlayerLoaded(PlayerEvent.LoadFromFile event) {
+    public static void onPlayerLoaded(ServerPlayer player) {
         PlayerRoleManager instance = PlayerRoleManager.instance;
-        if (instance != null && event.getEntity() instanceof ServerPlayer player) {
+        if (instance != null) {
             instance.onPlayerLoad(player);
         }
     }
@@ -100,6 +103,8 @@ public final class PlayerRoleManager {
         PlayerRoleSet roles = onlinePlayerRoles.get(player.getUUID());
         if (roles != null) {
             roles.attachPlayer(player, true);
+        } else {
+            LOGGER.error("Player joined, but their roles were not loaded yet: {}", player.getGameProfile().getName());
         }
     }
 

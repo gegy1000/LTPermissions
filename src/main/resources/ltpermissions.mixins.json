@@ -5,6 +5,7 @@
   "refmap": "ltpermissions.refmap.json",
   "mixins": [
     "CommandSourceStackMixin",
+    "PlayerListMixin",
     "ReloadableServerResourcesMixin",
     "rule.CraftingMenuMixin",
     "rule.LecternMenuMixin",
