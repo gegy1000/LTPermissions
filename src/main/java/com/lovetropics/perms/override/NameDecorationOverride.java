@@ -13,6 +13,7 @@ import net.minecraft.network.chat.*;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.scores.PlayerTeam;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -86,7 +87,7 @@ public record NameDecorationOverride(
 		}
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.LOW)
 	public static void onFormatName(PlayerEvent.NameFormat event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
 			final Component displayName = formatDisplayName(player, event.getDisplayname());
@@ -96,7 +97,7 @@ public record NameDecorationOverride(
 		}
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.LOW)
 	public static void onFormatName(PlayerEvent.TabListNameFormat event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
 			final Component displayName = formatDisplayName(player, player.getName());
