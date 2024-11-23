@@ -101,11 +101,13 @@ public final class PlayerRoleManager {
 
     public void onPlayerJoined(ServerPlayer player) {
         PlayerRoleSet roles = onlinePlayerRoles.get(player.getUUID());
-        if (roles != null) {
-            roles.attachPlayer(player, true);
-        } else {
-            LOGGER.error("Player joined, but their roles were not loaded yet: {}", player.getGameProfile().getName());
+        if (roles == null) {
+            // Load it, but delay initialization for now, as the player connection isn't quite ready
+            roles = new PlayerRoleSet(RolesConfig.get().everyone());
+            onlinePlayerRoles.put(player.getUUID(), roles);
+            database.tryLoadInto(player.getUUID(), roles);
         }
+        roles.attachPlayer(player, true);
     }
 
     public void onPlayerLeave(ServerPlayer player) {
